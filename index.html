@@ -3985,8 +3985,7 @@
         this.leads   = (leadsRes.data   || []).map(mapLead);
         this.clients = (clientsRes.data || []).map(mapClient);
         refreshStats();
-        renderLeads();
-        refreshCRMBadge();
+        renderSavedLeads();
         renderClientsTable();
       } catch (e) {
         console.warn('FINCO load error', e);
@@ -5068,7 +5067,6 @@
   const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   let calYear = 2026, calMonth = 4; // May 2026 (0-indexed)
 
-  // Demo events keyed by YYYY-MM-DD
   const calEvents = {
     '2026-05-04': [{t:'10:00', n:'Estudio Veridia · Growth', type:'p02', client:'Estudio Veridia'}],
     '2026-05-05': [
@@ -5077,240 +5075,90 @@
       {t:'17:00', n:'Tomás Linares · Diagn.',   type:'lead', client:'Tomás Linares'}
     ],
     '2026-05-06': [{t:'11:00', n:'Refugio Café · Soporte', type:'p01', client:'Refugio Café'}],
-    '2026-05-07': [{t:'16:00', n:'Camila Rivas · Diagn.', type:'lead', client:'Camila Rivas'}],
+    '2026-05-07': [
+      {t:'09:30', n:'La Nube Digital · Review', type:'p02', client:'La Nube Digital'},
+      {t:'15:00', n:'Call: Fernanda Quiroga',   type:'lead', client:'Fernanda Quiroga'}
+    ],
     '2026-05-08': [
-      {t:'10:30', n:'Costas · Iteración', type:'p01', client:'Marina Costas'},
-      {t:'15:00', n:'Galván · Growth',    type:'p02', client:'Joaquín Galván'}
+      {t:'10:00', n:'El Estudio · Growth',       type:'p02', client:'El Estudio'},
+      {t:'12:00', n:'Naturalia · Mensual',       type:'p01', client:'Naturalia'}
     ],
-    '2026-05-09': [{t:'11:00', n:'Saavedra · Diagn.', type:'lead', client:'Mateo Saavedra'}],
-    '2026-05-11': [{t:'10:00', n:'Aurora Salud · Onboarding', type:'p02', client:'Aurora Salud'}],
     '2026-05-12': [
-      {t:'10:00', n:'Estudio Veridia · Growth', type:'p02', client:'Estudio Veridia'},
-      {t:'14:30', n:'Pereyra · weekly',         type:'p02', client:'Hernán Pereyra'},
-      {t:'17:00', n:'Belmonte · Diagn.',        type:'lead', client:'Ignacio Belmonte'}
+      {t:'10:00', n:'Estudio Veridia · Growth',  type:'p02', client:'Estudio Veridia'},
+      {t:'16:00', n:'Sofia Larralde · Propuesta',type:'lead', client:'Sofia Larralde'}
     ],
-    '2026-05-13': [{t:'14:00', n:'Granja Sta. Lucía · Soporte', type:'p01', client:'Granja Santa Lucía'}],
-    '2026-05-14': [
-      {t:'11:00', n:'Aurora Salud · Demo', type:'p02', client:'Aurora Salud'},
-      {t:'16:00', n:'Cruz · Diagn.',       type:'lead', client:'Valentina Cruz'}
+    '2026-05-13': [
+      {t:'14:30', n:'Pereyra · Sprint review',   type:'p02', client:'Hernán Pereyra'},
+      {t:'17:30', n:'Cine & Arte · Soporte',     type:'p01', client:'Cine & Arte'}
     ],
-    '2026-05-15': [{t:'15:00', n:'Galván · weekly', type:'p02', client:'Joaquín Galván'}],
-    '2026-05-18': [{t:'10:00', n:'Aurora Salud · weekly', type:'p02', client:'Aurora Salud'}],
+    '2026-05-14': [{t:'11:00', n:'La Nube Digital · Iteración 2', type:'p02', client:'La Nube Digital'}],
+    '2026-05-15': [
+      {t:'09:00', n:'Review mensual general',    type:'interno', client:'FINCO'},
+      {t:'15:00', n:'Espacio Verde · Mensual',   type:'p01', client:'Espacio Verde'}
+    ],
     '2026-05-19': [
-      {t:'10:00', n:'Estudio Veridia · weekly', type:'p02', client:'Estudio Veridia'},
-      {t:'14:30', n:'Pereyra · weekly',         type:'p02', client:'Hernán Pereyra'},
-      {t:'17:00', n:'FINCO · Planning interno', type:'intern'}
+      {t:'10:00', n:'Estudio Veridia · Growth',  type:'p02', client:'Estudio Veridia'},
+      {t:'14:00', n:'Marcos Villanueva · Demo',  type:'lead', client:'Marcos Villanueva'}
     ],
-    '2026-05-21': [{t:'16:00', n:'Granja Verde · Propuesta', type:'lead', client:'Granja Verde'}],
+    '2026-05-20': [{t:'14:30', n:'Pereyra · Growth weekly', type:'p02', client:'Hernán Pereyra'}],
+    '2026-05-21': [{t:'11:00', n:'La Nube Digital · Growth', type:'p02', client:'La Nube Digital'}],
     '2026-05-22': [
-      {t:'10:30', n:'Costas · Iteración', type:'p01', client:'Marina Costas'},
-      {t:'15:00', n:'Galván · weekly',    type:'p02', client:'Joaquín Galván'}
+      {t:'10:00', n:'El Estudio · Iteración 3',  type:'p02', client:'El Estudio'},
+      {t:'16:00', n:'Andrés Campos · Follow-up', type:'lead', client:'Andrés Campos'}
     ],
     '2026-05-26': [
-      {t:'10:00', n:'Estudio Veridia · Cierre Mayo', type:'p02', client:'Estudio Veridia'},
-      {t:'14:30', n:'Pereyra · Cierre Mayo',         type:'p02', client:'Hernán Pereyra'}
+      {t:'10:00', n:'Estudio Veridia · Review mensual', type:'p02', client:'Estudio Veridia'},
+      {t:'15:00', n:'Naturalia · Mensual',              type:'p01', client:'Naturalia'}
     ],
-    '2026-05-28': [{t:'16:00', n:'Méndez Joyería · Cierre',  type:'lead', client:'Carolina Méndez'}],
-    '2026-05-29': [{t:'17:00', n:'FINCO · Cierre mensual',   type:'intern'}]
+    '2026-05-27': [
+      {t:'14:30', n:'Pereyra · Growth weekly',   type:'p02', client:'Hernán Pereyra'},
+      {t:'17:00', n:'Cine & Arte · Soporte',     type:'p01', client:'Cine & Arte'}
+    ],
+    '2026-05-28': [{t:'11:00', n:'La Nube Digital · Cierre Mayo', type:'p02', client:'La Nube Digital'}],
+    '2026-05-29': [{t:'10:00', n:'Espacio Verde · Mensual',        type:'p01', client:'Espacio Verde'}]
   };
 
   function renderCalendar(year, month) {
     const grid = document.getElementById('calGrid');
-    if (!grid) return;
-    document.getElementById('calMonthTitle').textContent = `${monthNames[month]} ${year}`;
-    document.getElementById('calHeader').textContent = `${monthNames[month]} ${year}`;
-    grid.innerHTML = '';
+    const title = document.getElementById('calTitle');
+    if (!grid || !title) return;
+    title.textContent = monthNames[month] + ' ' + year;
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const offset = (firstDay === 0) ? 6 : firstDay - 1; // lunes primero
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
 
-    const firstDay = new Date(year, month, 1);
-    // Lunes = 0
-    const startOffset = (firstDay.getDay() + 6) % 7;
-    const startDate = new Date(year, month, 1 - startOffset);
-    const today = new Date(2026, 4, 5); // hardcoded "today" for demo
-
-    for (let i = 0; i < 42; i++) {
-      const d = new Date(startDate);
-      d.setDate(startDate.getDate() + i);
-      const isOther = d.getMonth() !== month;
-      const isToday = d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
-      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-      const events = calEvents[key] || [];
-
-      const cell = document.createElement('div');
-      cell.className = 'cal-cell' + (isOther ? ' other-month' : '') + (isToday ? ' today' : '');
-      let html = `<div class="cal-day">${d.getDate()}</div>`;
-      events.slice(0, 3).forEach(ev => {
-        html += `<div class="cal-event ${ev.type}" onclick="event.stopPropagation();${ev.client ? `openClient('${ev.client}')` : ''}">${ev.t} · ${ev.n}</div>`;
-      });
-      if (events.length > 3) html += `<div class="cal-more">+${events.length - 3} más</div>`;
-      cell.innerHTML = html;
-      grid.appendChild(cell);
-      // Stop after 5 rows if rest of month is in the next month
-      if (i >= 34 && d.getMonth() !== month) {
-        // continue, fill row
-      }
+    let html = '';
+    // Celdas vacías al inicio
+    for (let i = 0; i < offset; i++) html += '<div class="cal-day cal-day-empty"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const events = calEvents[dateStr] || [];
+      // También buscar en FINCO.leads y clientes futuros (por ahora demo)
+      const isToday = dateStr === todayStr;
+      const isPast = dateStr < todayStr;
+      let evHtml = events.map(ev => {
+        const cls = ev.type === 'p02' ? 'gold' : ev.type === 'lead' ? 'muted' : ev.type === 'interno' ? 'blue' : 'dim';
+        return `<div class="cal-event ${cls}" title="${ev.n}">${ev.t} ${ev.n}</div>`;
+      }).join('');
+      html += `<div class="cal-day${isToday ? ' today' : ''}${isPast ? ' past' : ''}" data-date="${dateStr}">
+        <span class="cal-day-num">${d}</span>
+        <div class="cal-events">${evHtml}</div>
+      </div>`;
     }
+    grid.innerHTML = html;
   }
 
-  function changeMonth(delta) {
-    calMonth += delta;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-    if (calMonth > 11) { calMonth = 0; calYear++; }
+  // Nav botones del calendario
+  document.getElementById('calPrev').addEventListener('click', () => {
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
     renderCalendar(calYear, calMonth);
-  }
-  function goToday() {
-    calYear = 2026; calMonth = 4;
+  });
+  document.getElementById('calNext').addEventListener('click', () => {
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
     renderCalendar(calYear, calMonth);
-  }
-
-  // ============ CHARTS ============
-  Chart.defaults.font.family = "'DM Sans', sans-serif";
-  Chart.defaults.color = 'rgba(245,240,232,0.55)';
-  Chart.defaults.borderColor = 'rgba(201,168,76,0.08)';
-
-  const charts = {};
-  function makeGradient(ctx, color, alpha = 0.25) {
-    const g = ctx.createLinearGradient(0, 0, 0, 280);
-    g.addColorStop(0, color.replace('1)', alpha + ')'));
-    g.addColorStop(1, color.replace('1)', '0)'));
-    return g;
-  }
-
-  function initCharts() {
-    // Cashflow
-    const cf = document.getElementById('cashflowChart');
-    if (cf && !charts.cashflow) {
-      const ctx = cf.getContext('2d');
-      charts.cashflow = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May'],
-          datasets: [{
-            label: 'Ingresos',
-            data: [1800, 2400, 3200, 3900, 5100, 5720],
-            borderColor: '#c9a84c',
-            backgroundColor: makeGradient(ctx, 'rgba(201,168,76,1)', 0.18),
-            borderWidth: 2,
-            tension: 0.35,
-            fill: true,
-            pointBackgroundColor: '#c9a84c',
-            pointBorderColor: '#071a0e',
-            pointBorderWidth: 2,
-            pointRadius: 4
-          }, {
-            label: 'Egresos',
-            data: [1200, 1400, 1500, 1700, 1700, 1840],
-            borderColor: 'rgba(217,119,87,0.7)',
-            backgroundColor: 'rgba(217,119,87,0.05)',
-            borderWidth: 1.5,
-            tension: 0.35,
-            fill: false,
-            pointBackgroundColor: 'rgba(217,119,87,0.7)',
-            pointBorderColor: '#071a0e',
-            pointBorderWidth: 2,
-            pointRadius: 3,
-            borderDash: [5, 4]
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 16, font: { size: 11 } } } },
-          scales: {
-            y: { grid: { color: 'rgba(201,168,76,0.06)' }, ticks: { callback: v => '$' + v } },
-            x: { grid: { display: false } }
-          }
-        }
-      });
-    }
-
-    // PnL chart
-    const pnl = document.getElementById('pnlChart');
-    if (pnl && !charts.pnl) {
-      const ctx = pnl.getContext('2d');
-      charts.pnl = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Jun','Jul','Ago','Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May'],
-          datasets: [{
-            label: 'Ingresos',
-            data: [600, 800, 1100, 1300, 1500, 1700, 1800, 2400, 3200, 3900, 5100, 5720],
-            backgroundColor: '#c9a84c',
-            borderRadius: 2,
-            barThickness: 14
-          }, {
-            label: 'Egresos',
-            data: [400, 500, 600, 700, 900, 1100, 1200, 1400, 1500, 1700, 1700, 1840],
-            backgroundColor: 'rgba(42,110,63,0.7)',
-            borderRadius: 2,
-            barThickness: 14
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, padding: 16, font: { size: 11 } } } },
-          scales: {
-            y: { grid: { color: 'rgba(201,168,76,0.06)' }, ticks: { callback: v => '$' + v } },
-            x: { grid: { display: false } }
-          }
-        }
-      });
-    }
-
-    // Mix chart (donut)
-    const mix = document.getElementById('mixChart');
-    if (mix && !charts.mix) {
-      charts.mix = new Chart(mix.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-          labels: ['P02 · Growth', 'P01 · Sistema', 'Otros'],
-          datasets: [{
-            data: [3480, 1640, 600],
-            backgroundColor: ['#c9a84c', '#2a6e3f', '#8a6e2a'],
-            borderColor: '#0b2212',
-            borderWidth: 3,
-            hoverOffset: 6
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          cutout: '70%',
-          plugins: { legend: { display: false } }
-        }
-      });
-    }
-
-    // MRR chart
-    const mrr = document.getElementById('mrrChart');
-    if (mrr && !charts.mrr) {
-      const ctx = mrr.getContext('2d');
-      charts.mrr = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['Jun','Jul','Ago','Sep','Oct','Nov','Dic','Ene','Feb','Mar','Abr','May'],
-          datasets: [{
-            label: 'MRR',
-            data: [200, 400, 700, 900, 1100, 1400, 1500, 1900, 2400, 3000, 3700, 4380],
-            borderColor: '#c9a84c',
-            backgroundColor: makeGradient(ctx, 'rgba(201,168,76,1)', 0.22),
-            borderWidth: 2.5,
-            tension: 0.4,
-            fill: true,
-            pointBackgroundColor: '#c9a84c',
-            pointBorderColor: '#071a0e',
-            pointBorderWidth: 2,
-            pointRadius: 4
-          }]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { grid: { color: 'rgba(201,168,76,0.06)' }, ticks: { callback: v => '$' + v } },
-            x: { grid: { display: false } }
-          }
-        }
-      });
-    }
-  }
+  });
 
   // ============ MÓDULO DOCUMENTOS ============
   const DOCS_BUCKET = 'finco-docs';
@@ -5356,7 +5204,7 @@
     if (badge) badge.textContent = docs.length || '—';
     const sub = document.getElementById('docsSub');
     if (sub) sub.textContent = `${docs.length} ${docs.length === 1 ? 'documento' : 'documentos'} · almacenados en Supabase Storage`;
-
+    if (!wrap) return;
     if (!docs.length) {
       wrap.innerHTML = `<div class="docs-empty"><div class="docs-empty-icon">◫</div><div>No hay documentos todavía. Arrastrá uno o hacé clic en la zona de subida.</div></div>`;
       return;
@@ -5365,32 +5213,25 @@
       const iconClass = docIconClass(doc.mime_type);
       const iconLabel = docIconLabel(doc.mime_type);
       const tags = (doc.tags || []).map(t => `<span class="doc-tag">${escapeHtml(t)}</span>`).join('');
-      return `
-        <tr>
-          <td style="width:44px">
-            <div class="doc-icon ${iconClass}">${iconLabel}</div>
-          </td>
-          <td>
-            <div class="doc-name">${escapeHtml(doc.name)}</div>
-            <div class="doc-meta">${formatDocDate(doc.created_at)} · ${formatBytes(doc.file_size)}${doc.description ? ' · ' + escapeHtml(doc.description) : ''}</div>
-            <div style="margin-top:4px">${tags}</div>
-          </td>
-          <td style="width:130px">
-            <div class="doc-actions">
-              <button class="doc-btn" onclick="downloadDoc('${doc.id}','${escapeHtml(doc.storage_path)}','${escapeHtml(doc.name)}')">↓ Descargar</button>
-              <button class="doc-btn danger" onclick="deleteDoc('${doc.id}','${escapeHtml(doc.storage_path)}')">×</button>
-            </div>
-          </td>
-        </tr>`;
+      return `<tr>
+        <td style="width:44px"><div class="doc-icon ${iconClass}">${iconLabel}</div></td>
+        <td>
+          <div class="doc-name">${escapeHtml(doc.name)}</div>
+          <div class="doc-meta">${formatDocDate(doc.created_at)} · ${formatBytes(doc.file_size)}${doc.description ? ' · ' + escapeHtml(doc.description) : ''}</div>
+          <div style="margin-top:4px">${tags}</div>
+        </td>
+        <td style="width:150px">
+          <div class="doc-actions">
+            <button class="doc-btn" onclick="downloadDoc('${doc.id}','${doc.storage_path.replace(/'/g,"\\'")}','${escapeHtml(doc.name).replace(/'/g,"\\'")}')">↓ Descargar</button>
+            <button class="doc-btn danger" onclick="deleteDoc('${doc.id}','${doc.storage_path.replace(/'/g,"\\'")}')">×</button>
+          </div>
+        </td>
+      </tr>`;
     }).join('');
-
-    wrap.innerHTML = `
-      <table class="docs-table">
-        <thead><tr>
-          <th></th><th>Archivo</th><th></th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
+    wrap.innerHTML = `<table class="docs-table">
+      <thead><tr><th></th><th>Archivo</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
   }
 
   async function refreshDocs() {
@@ -5401,45 +5242,35 @@
   async function uploadDoc(file) {
     const progress = document.getElementById('docsUploadProgress');
     const label    = document.getElementById('docsUploadLabel');
-    const desc     = document.getElementById('docsMetaDesc').value.trim();
-    const tagsRaw  = document.getElementById('docsMetaTags').value.trim();
+    const desc     = (document.getElementById('docsMetaDesc') || {}).value || '';
+    const tagsRaw  = (document.getElementById('docsMetaTags') || {}).value || '';
     const tags     = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
-
     const ext      = file.name.split('.').pop();
-    const path     = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-
-    progress.classList.add('show');
-    label.textContent = `Subiendo "${file.name}"…`;
-
+    const path     = Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+    if (progress) progress.classList.add('show');
+    if (label) label.textContent = 'Subiendo "' + file.name + '"…';
     try {
-      // 1. Upload a Storage
       const { error: upErr } = await sb.storage.from(DOCS_BUCKET).upload(path, file, {
-        contentType: file.type, upsert: false
+        contentType: file.type || 'application/octet-stream', upsert: false
       });
       if (upErr) throw upErr;
-
-      // 2. Insertar metadata en tabla documents
       const { error: dbErr } = await sb.from('documents').insert({
-        name: file.name,
-        description: desc || null,
-        storage_path: path,
-        file_size: file.size,
-        mime_type: file.type || null,
-        tags: tags.length ? tags : null
+        name: file.name, description: desc.trim() || null,
+        storage_path: path, file_size: file.size,
+        mime_type: file.type || null, tags: tags.length ? tags : null
       });
       if (dbErr) throw dbErr;
-
-      // Limpiar campos metadata
-      document.getElementById('docsMetaDesc').value = '';
-      document.getElementById('docsMetaTags').value = '';
-
-      showToast(`"${file.name}" subido correctamente`);
+      const descEl = document.getElementById('docsMetaDesc');
+      const tagsEl = document.getElementById('docsMetaTags');
+      if (descEl) descEl.value = '';
+      if (tagsEl) tagsEl.value = '';
+      showToast('"' + file.name + '" subido correctamente');
       await refreshDocs();
     } catch(err) {
       console.error('upload error', err);
-      showToast('Error al subir el archivo — ' + (err.message || 'revisá la conexión'));
+      showToast('Error al subir — ' + (err.message || 'revisá la conexión'));
     } finally {
-      progress.classList.remove('show');
+      if (progress) progress.classList.remove('show');
     }
   }
 
@@ -5451,10 +5282,7 @@
       const a = document.createElement('a');
       a.href = url; a.download = name; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
-    } catch(err) {
-      showToast('Error descargando el archivo');
-      console.error(err);
-    }
+    } catch(err) { showToast('Error descargando el archivo'); console.error(err); }
   }
 
   async function deleteDoc(id, storagePath) {
@@ -5464,26 +5292,19 @@
       await sb.from('documents').delete().eq('id', id);
       showToast('Documento eliminado');
       await refreshDocs();
-    } catch(err) {
-      showToast('Error eliminando el documento');
-      console.error(err);
-    }
+    } catch(err) { showToast('Error eliminando el documento'); console.error(err); }
   }
 
-  // Wiring del drop zone y file input
   function initDocsModule() {
     const dropZone  = document.getElementById('docsDropZone');
     const fileInput = document.getElementById('docsFileInput');
-
+    if (!dropZone || !fileInput) return;
     fileInput.addEventListener('change', e => {
       const file = e.target.files[0];
       if (file) uploadDoc(file);
       fileInput.value = '';
     });
-
-    dropZone.addEventListener('dragover', e => {
-      e.preventDefault(); dropZone.classList.add('drag-over');
-    });
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
     dropZone.addEventListener('drop', e => {
       e.preventDefault(); dropZone.classList.remove('drag-over');
@@ -5492,17 +5313,147 @@
     });
   }
 
-  // Cargar docs cuando se navega a la página
-  const _origGoToPage = goToPage;
-  function goToPage(page, fromNav) {
-    _origGoToPage(page, fromNav);
-    if (page === 'documentos') refreshDocs();
-  }
+  // Cargar documentos al navegar a esa página
+  const _goToPageOrig = goToPage.bind({});
+  navItems.forEach(item => {
+    if (item.dataset.page === 'documentos') {
+      item.addEventListener('click', () => refreshDocs(), { capture: false });
+    }
+  });
 
   initDocsModule();
 
-  // init on load
-  setTimeout(initCharts, 100);
+  // ============ GRÁFICOS (Chart.js) ============
+  let chartInstances = {};
+
+  function initCharts() {
+    const clients = FINCO.allClients();
+    const live = clients.filter(c => c.status !== 'paused' && c.status !== 'churned');
+    const mrr = live.reduce((s, c) => s + (parseFloat(c.fee) || 0), 0);
+    const p01 = live.filter(c => c.service === 'P01').length;
+    const p02 = live.filter(c => c.service === 'P02').length;
+
+    // Destruir instancias previas para evitar error de canvas reutilizado
+    Object.values(chartInstances).forEach(ch => { try { ch.destroy(); } catch(e) {} });
+    chartInstances = {};
+
+    // ── Cashflow (Dashboard) ──────────────────────────────────
+    const cashflowEl = document.getElementById('cashflowChart');
+    if (cashflowEl && cashflowEl.offsetParent !== null) {
+      const months = ['Nov','Dic','Ene','Feb','Mar','Abr','May'];
+      // Base: mrr actual, proyectar 6 meses atrás con variación leve
+      const base = mrr || 3200;
+      const cashData = [
+        Math.round(base * 0.72), Math.round(base * 0.78),
+        Math.round(base * 0.83), Math.round(base * 0.88),
+        Math.round(base * 0.93), Math.round(base * 0.97),
+        Math.round(base)
+      ];
+      chartInstances.cashflow = new Chart(cashflowEl, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [{
+            data: cashData,
+            borderColor: '#c9a84c', borderWidth: 2,
+            backgroundColor: 'rgba(201,168,76,0.06)',
+            tension: 0.4, fill: true,
+            pointBackgroundColor: '#c9a84c',
+            pointBorderColor: '#071a0e', pointBorderWidth: 2, pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: 'rgba(201,168,76,0.06)' }, ticks: { color: 'rgba(245,240,232,0.45)', callback: v => '$' + v.toLocaleString() } },
+            x: { grid: { display: false }, ticks: { color: 'rgba(245,240,232,0.45)' } }
+          }
+        }
+      });
+    }
+
+    // ── P&L (Finanzas) ───────────────────────────────────────
+    const pnlEl = document.getElementById('pnlChart');
+    if (pnlEl && pnlEl.offsetParent !== null) {
+      const base = mrr || 3200;
+      const ingresos = [base*0.83, base*0.88, base*0.93, base*0.97, base, base*1.03, base*1.06].map(Math.round);
+      const gastos   = ingresos.map(v => Math.round(v * 0.58));
+      chartInstances.pnl = new Chart(pnlEl, {
+        type: 'bar',
+        data: {
+          labels: ['Nov','Dic','Ene','Feb','Mar','Abr','May'],
+          datasets: [
+            { label: 'Ingresos', data: ingresos, backgroundColor: 'rgba(201,168,76,0.55)', borderRadius: 4 },
+            { label: 'Gastos',   data: gastos,   backgroundColor: 'rgba(217,119,87,0.45)', borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: 'rgba(245,240,232,0.55)', font: { size: 11 } } } },
+          scales: {
+            y: { grid: { color: 'rgba(201,168,76,0.06)' }, ticks: { color: 'rgba(245,240,232,0.45)', callback: v => '$' + v.toLocaleString() } },
+            x: { grid: { display: false }, ticks: { color: 'rgba(245,240,232,0.45)' } }
+          }
+        }
+      });
+    }
+
+    // ── Mix de servicios (Finanzas) ───────────────────────────
+    const mixEl = document.getElementById('mixChart');
+    if (mixEl && mixEl.offsetParent !== null) {
+      const p01fee = live.filter(c => c.service==='P01').reduce((s,c) => s+(parseFloat(c.fee)||0), 0) || Math.round(mrr*0.3);
+      const p02fee = live.filter(c => c.service==='P02').reduce((s,c) => s+(parseFloat(c.fee)||0), 0) || Math.round(mrr*0.7);
+      chartInstances.mix = new Chart(mixEl, {
+        type: 'doughnut',
+        data: {
+          labels: ['P01 · Implementación', 'P02 · Growth Partner'],
+          datasets: [{ data: [p01fee || 1, p02fee || 1], backgroundColor: ['rgba(201,168,76,0.7)', 'rgba(127,176,105,0.7)'], borderWidth: 0 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: 'rgba(245,240,232,0.55)', font: { size: 11 }, padding: 16 } } },
+          cutout: '68%'
+        }
+      });
+    }
+
+    // ── MRR Crecimiento (Resultados) ─────────────────────────
+    const mrrEl = document.getElementById('mrrChart');
+    if (mrrEl && mrrEl.offsetParent !== null) {
+      const base = mrr || 3200;
+      const mrrData = [
+        Math.round(base*0.65), Math.round(base*0.70), Math.round(base*0.76),
+        Math.round(base*0.82), Math.round(base*0.88), Math.round(base*0.94),
+        Math.round(base)
+      ];
+      chartInstances.mrr = new Chart(mrrEl, {
+        type: 'line',
+        data: {
+          labels: ['Nov','Dic','Ene','Feb','Mar','Abr','May'],
+          datasets: [{
+            data: mrrData,
+            borderColor: '#7fb069', borderWidth: 2,
+            backgroundColor: 'rgba(127,176,105,0.07)',
+            tension: 0.4, fill: true,
+            pointBackgroundColor: '#7fb069',
+            pointBorderColor: '#071a0e', pointBorderWidth: 2, pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { grid: { color: 'rgba(201,168,76,0.06)' }, ticks: { color: 'rgba(245,240,232,0.45)', callback: v => '$' + v.toLocaleString() } },
+            x: { grid: { display: false }, ticks: { color: 'rgba(245,240,232,0.45)' } }
+          }
+        }
+      });
+    }
+  }
+
+  // ============ INIT ============
+  setTimeout(initCharts, 150);
 </script>
 </body>
 </html>
