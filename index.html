@@ -6,6 +6,7 @@
 <title>FINCO — Sistema de Gestión</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root {
     --green-deep:  #071a0e;
@@ -1277,6 +1278,71 @@
     border-top: 1px solid var(--line);
   }
 
+  /* ============ OBJETIVOS ============ */
+  .objectives-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .objective-card {
+    padding: 22px 24px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: rgba(21,61,34,0.25);
+    transition: border-color 0.25s;
+    position: relative;
+  }
+  .objective-card:hover { border-color: var(--line-bright); }
+  .objective-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px;
+  }
+  .objective-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600; color: var(--cream);
+    line-height: 1.2; margin-bottom: 6px;
+  }
+  .objective-desc {
+    font-size: 13px; color: var(--text-muted);
+    line-height: 1.6; margin-bottom: 16px;
+  }
+  .objective-metric-row {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(201,168,76,0.06);
+  }
+  .objective-metric-label {
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 4px;
+  }
+  .objective-metric-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-weight: 600; color: var(--cream);
+  }
+  .objective-metric-val.gold { color: var(--gold); }
+  @media (max-width: 1100px) {
+    .objectives-grid { grid-template-columns: 1fr; }
+    .objective-metric-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Delete buttons en timeline / notas */
+  .timeline-item { position: relative; }
+  .timeline-item .item-delete,
+  .note-card .item-delete {
+    position: absolute; top: 4px; right: 0;
+    background: transparent; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 16px;
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 3px; opacity: 0;
+    transition: all 0.2s;
+  }
+  .timeline-item:hover .item-delete,
+  .note-card:hover .item-delete { opacity: 1; }
+  .item-delete:hover { color: var(--danger); background: rgba(217,119,87,0.1); }
+  .note-card { position: relative; }
+
   /* Card / Row delete buttons */
   .lead-card { position: relative; }
   .card-delete, .row-delete {
@@ -1344,6 +1410,105 @@
     .topbar { padding: 14px 24px; flex-wrap: wrap; gap: 12px; }
     .search-box { width: 100%; }
   }
+
+  /* ============ DOCUMENTOS ============ */
+  .docs-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+  .drop-zone {
+    border: 1.5px dashed var(--line-bright);
+    border-radius: 12px;
+    padding: 48px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all .2s;
+    background: rgba(201,168,76,0.03);
+    margin-bottom: 28px;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--gold);
+    background: var(--gold-glow);
+  }
+  .drop-zone-icon { font-size: 32px; margin-bottom: 12px; opacity: .5; }
+  .drop-zone-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: var(--gold); margin-bottom: 6px; }
+  .drop-zone-sub { font-size: 12px; color: var(--text-muted); }
+  .drop-zone input[type="file"] { display: none; }
+  .docs-upload-progress {
+    display: none;
+    align-items: center; gap: 12px;
+    padding: 12px 16px;
+    background: rgba(201,168,76,0.08);
+    border: 1px solid var(--line-bright);
+    border-radius: 8px; margin-bottom: 20px;
+    font-size: 13px; color: var(--gold);
+  }
+  .docs-upload-progress.show { display: flex; }
+  .upload-spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(201,168,76,.3);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .docs-table { width: 100%; border-collapse: collapse; }
+  .docs-table th {
+    text-align: left; font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--text-muted); padding: 0 12px 10px; font-weight: 400;
+  }
+  .docs-table td {
+    padding: 14px 12px; border-top: 1px solid var(--line);
+    font-size: 13px; vertical-align: middle;
+  }
+  .docs-table tr:hover td { background: rgba(201,168,76,0.03); }
+  .doc-icon {
+    width: 32px; height: 32px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 600; letter-spacing: .05em;
+    flex-shrink: 0;
+  }
+  .doc-icon.pdf { background: rgba(217,119,87,0.15); color: var(--danger); }
+  .doc-icon.doc { background: rgba(127,176,105,0.15); color: var(--success); }
+  .doc-icon.img { background: rgba(201,168,76,0.15); color: var(--gold); }
+  .doc-icon.other { background: rgba(245,240,232,0.08); color: var(--text-soft); }
+  .doc-name { font-weight: 400; color: var(--text-strong); margin-bottom: 2px; }
+  .doc-meta { font-size: 11px; color: var(--text-muted); }
+  .doc-tag {
+    display: inline-block; padding: 2px 8px;
+    background: rgba(201,168,76,0.1); border: 1px solid var(--line-bright);
+    border-radius: 20px; font-size: 10px; color: var(--text-soft);
+    margin: 2px 2px 0 0;
+  }
+  .doc-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .doc-btn {
+    padding: 5px 10px; border-radius: 6px; font-size: 11px;
+    cursor: pointer; border: 1px solid var(--line-bright);
+    background: transparent; color: var(--text-soft); transition: all .15s;
+  }
+  .doc-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .doc-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+  .docs-empty {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-muted); font-size: 14px;
+  }
+  .docs-empty-icon { font-size: 36px; margin-bottom: 12px; opacity: .3; }
+  .docs-panel {
+    background: rgba(11,34,18,0.6); border: 1px solid var(--line);
+    border-radius: 12px; padding: 24px;
+  }
+  .docs-panel-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 14px;
+    color: var(--gold); letter-spacing: .05em; text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .doc-form-field { margin-bottom: 14px; }
+  .doc-form-field label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; letter-spacing:.05em; text-transform: uppercase; }
+  .doc-form-field input, .doc-form-field textarea {
+    width: 100%; background: rgba(255,255,255,0.04);
+    border: 1px solid var(--line-bright); border-radius: 8px;
+    padding: 9px 12px; color: var(--cream); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; outline: none; transition: border-color .15s;
+  }
+  .doc-form-field input:focus, .doc-form-field textarea:focus { border-color: var(--gold); }
+  .doc-form-field textarea { resize: vertical; min-height: 60px; }
 </style>
 </head>
 <body>
@@ -1409,12 +1574,12 @@
       <div class="nav-item" data-page="clientes">
         <span class="nav-icon">◈</span>
         <span>Clientes</span>
-        <span class="nav-badge">12</span>
+        <span class="nav-badge" id="navBadgeClientes">—</span>
       </div>
       <div class="nav-item" data-page="crm">
         <span class="nav-icon">◇</span>
         <span>CRM</span>
-        <span class="nav-badge">14</span>
+        <span class="nav-badge" id="navBadgeCRM">—</span>
       </div>
       <div class="nav-item" data-page="finanzas">
         <span class="nav-icon">✦</span>
@@ -1437,6 +1602,11 @@
         <span class="nav-icon">◌</span>
         <span>Calendario</span>
         <span class="nav-badge">17</span>
+      </div>
+      <div class="nav-item" data-page="documentos">
+        <span class="nav-icon">◫</span>
+        <span>Documentos</span>
+        <span class="nav-badge" id="navBadgeDocs">—</span>
       </div>
       <div class="nav-item" data-page="dashboard">
         <span class="nav-icon">◍</span>
@@ -1485,13 +1655,13 @@
       <div class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-label">Clientes Activos</div>
-          <div class="kpi-value">12</div>
-          <div class="kpi-trend">↑ 2 vs. abril</div>
+          <div class="kpi-value" id="dashKpiClientes">—</div>
+          <div class="kpi-trend" id="dashKpiClientesTrend">—</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">MRR (USD)</div>
-          <div class="kpi-value gold">$4.380</div>
-          <div class="kpi-trend">↑ 18% vs. abril</div>
+          <div class="kpi-value gold" id="dashKpiMRR">—</div>
+          <div class="kpi-trend">Recurrente mensual</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Ingresos del Mes</div>
@@ -1619,19 +1789,19 @@
           <div class="card-body" style="padding:18px 28px 22px;">
             <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:12px;">
               <span style="color:var(--text-muted);">Leads</span>
-              <span style="color:var(--cream);">5</span>
+              <span style="color:var(--cream);" id="dashLeadStage0">—</span>
             </div>
             <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:12px;">
               <span style="color:var(--text-muted);">Diagnóstico</span>
-              <span style="color:var(--cream);">4</span>
+              <span style="color:var(--cream);" id="dashLeadStage1">—</span>
             </div>
             <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:12px;">
               <span style="color:var(--text-muted);">Propuesta enviada</span>
-              <span style="color:var(--cream);">3</span>
+              <span style="color:var(--cream);" id="dashLeadStage2">—</span>
             </div>
             <div style="display:flex; justify-content:space-between; padding:6px 0; font-size:12px;">
               <span style="color:var(--text-muted);">Negociación</span>
-              <span style="color:var(--cream);">2</span>
+              <span style="color:var(--cream);" id="dashLeadStage3">—</span>
             </div>
             <div class="gold-divider"></div>
             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
@@ -1690,7 +1860,7 @@
         <div>
           <div class="page-eyebrow">Cartera Activa · Mayo 2026</div>
           <h1 class="page-title">Tus <em>clientes</em>.</h1>
-          <p class="page-sub">12 clientes activos · 5 en P01 · 6 en P02 · 1 en onboarding · MRR consolidado USD 4.380.</p>
+          <p class="page-sub" id="clientesSub">—</p>
         </div>
         <div style="display:flex; gap:10px;">
           <button class="btn btn-ghost">Exportar cartera</button>
@@ -1702,18 +1872,18 @@
       <div class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-label">Clientes Activos</div>
-          <div class="kpi-value">12</div>
-          <div class="kpi-trend">↑ 3 vs. trimestre</div>
+          <div class="kpi-value" id="kpiClientesActivos">—</div>
+          <div class="kpi-trend" id="kpiClientesActivosTrend">—</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">MRR Consolidado</div>
-          <div class="kpi-value gold">$4.380</div>
-          <div class="kpi-trend">↑ 18% vs. abril</div>
+          <div class="kpi-value gold" id="kpiMRR">—</div>
+          <div class="kpi-trend">USD recurrentes mensuales</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Ticket Promedio</div>
-          <div class="kpi-value">$365</div>
-          <div class="kpi-trend">↑ 26% vs. abril</div>
+          <div class="kpi-value" id="kpiTicket">—</div>
+          <div class="kpi-trend">Por cliente activo</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Retención</div>
@@ -1724,10 +1894,10 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <span class="tab active">Activos · 11</span>
-        <span class="tab">Onboarding · 1</span>
-        <span class="tab">Pausados · 0</span>
-        <span class="tab">Histórico · 3</span>
+        <span class="tab active" id="tabClientesActivos">Activos · —</span>
+        <span class="tab" id="tabClientesOnboarding">Onboarding · —</span>
+        <span class="tab" id="tabClientesPausados">Pausados · —</span>
+        <span class="tab" id="tabClientesHistorico">Histórico · —</span>
       </div>
 
       <!-- Tabla de clientes activos -->
@@ -1754,7 +1924,7 @@
         <div>
           <div class="page-eyebrow">Pipeline Comercial · Mayo 2026</div>
           <h1 class="page-title">Pipeline <em>comercial</em></h1>
-          <p class="page-sub">14 contactos en gestión · 5 leads · 4 en diagnóstico · 3 con propuesta · 2 en negociación.</p>
+          <p class="page-sub" id="crmSub">—</p>
         </div>
         <div style="display:flex; gap:10px;">
           <button class="btn btn-ghost">Exportar</button>
@@ -2955,11 +3125,15 @@
       <!-- Tabs -->
       <div class="tabs" id="detailTabs">
         <span class="tab active" data-detail-tab="info">Información</span>
-        <span class="tab" data-detail-tab="procesos">Procesos · 12</span>
-        <span class="tab" data-detail-tab="reuniones">Reuniones · 8</span>
-        <span class="tab" data-detail-tab="notas">Notas · 6</span>
-        <span class="tab" data-detail-tab="docs">Documentos · 14</span>
+        <span class="tab" data-detail-tab="objetivos">Objetivos y métricas</span>
+        <span class="tab" data-detail-tab="procesos">Procesos</span>
+        <span class="tab" data-detail-tab="reuniones">Reuniones</span>
+        <span class="tab" data-detail-tab="notas">Notas</span>
+        <span class="tab" data-detail-tab="docs">Documentos</span>
       </div>
+
+      <!-- OBJETIVOS Y MÉTRICAS -->
+      <div class="detail-tab-content" id="tab-objetivos"></div>
 
       <!-- INFO -->
       <div class="detail-tab-content active" id="tab-info">
@@ -3371,6 +3545,59 @@
         </div>
       </div>
     </div>
+    <!-- ============ PAGE: DOCUMENTOS ============ -->
+    <div class="page" id="page-documentos">
+      <div class="page-header">
+        <div>
+          <div class="page-eyebrow">FINCO · Biblioteca</div>
+          <h1 class="page-title">Documentos</h1>
+          <p class="page-sub" id="docsSub">Cargando…</p>
+        </div>
+      </div>
+
+      <div class="docs-layout">
+        <div>
+          <!-- Upload progress -->
+          <div class="docs-upload-progress" id="docsUploadProgress">
+            <div class="upload-spinner"></div>
+            <span id="docsUploadLabel">Subiendo archivo…</span>
+          </div>
+
+          <!-- Drop zone -->
+          <label class="drop-zone" id="docsDropZone">
+            <div class="drop-zone-icon">◫</div>
+            <div class="drop-zone-title">Arrastrá un archivo o hacé clic para seleccionar</div>
+            <div class="drop-zone-sub">PDF, Word, Excel, imágenes — hasta 50 MB</div>
+            <input type="file" id="docsFileInput" accept="*/*">
+          </label>
+
+          <!-- Lista de documentos -->
+          <div id="docsListWrap">
+            <div class="docs-empty">
+              <div class="docs-empty-icon">◫</div>
+              <div>No hay documentos todavía.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel lateral: metadata del próximo upload -->
+        <div class="docs-panel">
+          <div class="docs-panel-title">Opciones de subida</div>
+          <div class="doc-form-field">
+            <label>Descripción (opcional)</label>
+            <textarea id="docsMetaDesc" placeholder="¿De qué trata este archivo?"></textarea>
+          </div>
+          <div class="doc-form-field">
+            <label>Etiquetas (separadas por coma)</label>
+            <input type="text" id="docsMetaTags" placeholder="contrato, cliente, 2026">
+          </div>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+            Completá estos campos antes de seleccionar el archivo. Se aplican al próximo documento que subas.
+          </p>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -3506,17 +3733,158 @@
   </div>
 </div>
 
+<!-- ============ MODAL: NUEVO PROCESO ============ -->
+<div class="modal-overlay" id="newProcessModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewProcess()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow">Cliente · Nuevo Proceso</div>
+      <h2>Agregar <em>proceso</em></h2>
+    </div>
+    <form class="modal-form" onsubmit="submitNewProcess(event); return false;">
+      <div class="form-row">
+        <label class="form-label">Título<span class="req">*</span></label>
+        <input type="text" name="title" class="form-input" placeholder="Ej: Iteración 1 · Reportes para clientes" required>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Descripción</label>
+        <textarea name="desc" class="form-textarea" placeholder="Qué se hizo, qué impacto tuvo..."></textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Estado<span class="req">*</span></label>
+          <select name="status" class="form-select" required>
+            <option value="active">En curso</option>
+            <option value="done">Completado</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Fecha</label>
+          <input type="date" name="date" class="form-input">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Tags (separados por coma)</label>
+        <input type="text" name="tags" class="form-input" placeholder="Ej: CRM, En progreso">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeNewProcess()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar proceso</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: NUEVA NOTA ============ -->
+<div class="modal-overlay" id="newNoteModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewNote()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow">Cliente · Nueva Nota</div>
+      <h2>Nueva <em>nota</em></h2>
+    </div>
+    <form class="modal-form" onsubmit="submitNewNote(event); return false;">
+      <div class="form-row">
+        <label class="form-label">Texto<span class="req">*</span></label>
+        <textarea name="text" class="form-textarea" placeholder="Qué pasó, qué se acordó, qué seguir..." required style="min-height:120px;"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeNewNote()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar nota</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: NUEVO OBJETIVO ============ -->
+<div class="modal-overlay" id="newObjectiveModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewObjective()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow">Cliente · Nuevo Objetivo</div>
+      <h2>Agregar <em>objetivo</em></h2>
+    </div>
+    <form class="modal-form" onsubmit="submitNewObjective(event); return false;">
+      <div class="form-row">
+        <label class="form-label">Título del objetivo<span class="req">*</span></label>
+        <input type="text" name="title" class="form-input" placeholder="Ej: + 25% facturación Q2" required>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Descripción</label>
+        <textarea name="desc" class="form-textarea" placeholder="Por qué este objetivo, cómo se mide..."></textarea>
+      </div>
+      <div class="form-row-3">
+        <div class="form-row">
+          <label class="form-label">Métrica</label>
+          <input type="text" name="metric" class="form-input" placeholder="Ej: Facturación">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Valor actual</label>
+          <input type="text" name="current" class="form-input" placeholder="$8.4k">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Target</label>
+          <input type="text" name="target" class="form-input" placeholder="$10k">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Estado<span class="req">*</span></label>
+          <select name="status" class="form-select" required>
+            <option value="ontrack">En track</option>
+            <option value="atrasado">Atrasado</option>
+            <option value="completado">Completado</option>
+            <option value="pausado">Pausado</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Deadline</label>
+          <input type="date" name="deadline" class="form-input">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeNewObjective()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar objetivo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
   // ===================================================
-  // ============ FINCO DATA LAYER (persistence) =======
+  // ============ SUPABASE CONFIG ======================
   // ===================================================
-  // Esta capa guarda en localStorage todo lo que cargues
-  // (clientes, leads). Los datos demo del HTML quedan
-  // como referencia visual. Tus datos reales se guardan
-  // sobre eso y se restauran al recargar la página.
+  const SUPABASE_URL = 'https://rppvtkwwnqwdabqeobtb.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJwcHZ0a3d3bnF3ZGFicWVvYnRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5Mzc2MjQsImV4cCI6MjA5MzUxMzYyNH0.m4mXuXeoUu7sNipsq8lJTVQBLkUyChxysLPbPWgVt3Q';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Mappers Supabase row → FINCO format
+  function mapLead(row) {
+    return {
+      id: row.id, name: row.name, company: row.company,
+      industry: row.industry, value: row.value, stageIdx: row.stage_idx,
+      source: row.source, email: row.email, notes: row.notes,
+      createdAt: row.created_at
+    };
+  }
+  function mapClient(row) {
+    return {
+      id: row.id, name: row.name, company: row.company,
+      industry: row.industry, service: row.service, status: row.status,
+      fee: row.fee, startDate: row.start_date, email: row.email,
+      notes: row.notes, createdAt: row.created_at,
+      processes: [], meetings: { upcoming: [], past: [] },
+      notesList: [], docs: []
+    };
+  }
+
+  // ===================================================
+  // ============ FINCO DATA LAYER (Supabase) ==========
+  // ===================================================
+  // Los datos se guardan en Supabase (multi-dispositivo).
+  // Los clientes demo siguen hardcodeados como referencia visual.
   //
-  // Para limpiar todos los datos cargados, abrí la consola
-  // del navegador y ejecutá: FINCO.reset()
+  // Para limpiar todos los datos: FINCO.reset() en consola
   // ===================================================
   // ============ DEMO CLIENTS (semilla) ============
   // Estos son los 12 clientes pre-cargados. Editalos o borralos
@@ -3595,275 +3963,218 @@
       meetings: { upcoming: [{ time: '14:30', dayLabel: 'HOY · Mar 5', title: 'Growth weekly', meta: '45 min · Presencial' }], past: [] },
       notes: [{ authorInitials: 'JC', author: 'Juan Cruz · FINCO', date: '28 ABR 2026', text: 'Hernán pide foco en reportes para sus clientes finales. Es su mayor pain point hoy.' }],
       docs: [{ type: 'PDF', name: 'Propuesta P02 · Pereyra', meta: 'Firmada 01 Feb 2026', status: 'success', statusLabel: 'Firmada', size: '290 KB' }]
-    },
-    {
-      id: 'mc', name: 'Marina Costas', company: 'Costas Diseño', industry: 'Diseño gráfico',
-      service: 'P01', status: 'active', fee: 100, startDate: '2026-03-10',
-      email: 'marina@costasdiseno.com', phone: '+54 9 11 6688-1140', city: 'La Plata',
-      contactRole: 'Fundadora', teamSize: '4 personas', teamDetail: '1 diseñadora senior · 2 junior · 1 PM',
-      recurringMeeting: 'Viernes · 10:30 hs', recurringMeetingMeta: 'Soporte mensual · 30 min',
-      summary: 'Estudio de diseño con foco en branding. Necesitaban ordenar pipeline de proyectos y cobros. Sistema P01 implementado con módulo de propuestas y facturación.',
-      kpis: [
-        { label: 'Proyectos activos', value: '11', trend: '↑ 3 vs. mes pasado' },
-        { label: 'Cobros del mes', value: '$3.200', gold: true, trend: '↑ 22%' },
-        { label: 'Tiempo entrega', value: '12<span style="font-size:18px;opacity:.5;"> días</span>', trend: '↓ 4 días' },
-        { label: 'Satisfacción NPS', value: '9.4', trend: '+ 0.6 vs. Q1' }
-      ],
-      processes: [
-        { date: '15 Abr 2026 · Completado', status: 'done', title: 'Sistema entregado', desc: 'Pipeline de proyectos, cobros y dashboard operativo.', tags: ['Hito'] },
-        { date: '10 Mar 2026 · Completado', status: 'done', title: 'Inicio del proyecto', desc: 'Firma propuesta P01.', tags: ['Hito'] }
-      ],
-      meetings: { upcoming: [{ time: '10:30', dayLabel: 'Vie 8 may', title: 'Soporte mensual', meta: '30 min · Google Meet' }], past: [] },
-      notes: [{ authorInitials: 'JC', author: 'Juan Cruz · FINCO', date: '20 ABR 2026', text: 'Sistema funcionando perfecto. Marina pide pequeñas mejoras visuales para próxima iteración.' }],
-      docs: [{ type: 'PDF', name: 'Propuesta P01 · Costas', meta: 'Firmada 08 Mar 2026', status: 'success', statusLabel: 'Firmada', size: '210 KB' }]
-    },
-    {
-      id: 'lm', name: 'Lautaro Méndez', company: 'Refugio Café', industry: 'Gastronomía',
-      service: 'P01', status: 'active', fee: 100, startDate: '2026-01-22',
-      email: 'lautaro@refugiocafe.com.ar', phone: '+54 9 11 7799-3322', city: 'Buenos Aires · Palermo',
-      contactRole: 'Dueño', teamSize: '8 personas', teamDetail: '2 baristas · 4 mozos · 1 cocinera · 1 admin',
-      recurringMeeting: 'Miércoles · 11:00 hs', recurringMeetingMeta: 'Soporte mensual · 30 min',
-      summary: 'Café de especialidad con foco en producto. Sistema P01 implementado con módulos de stock, caja y reservas. Migración completa desde POS antiguo.',
-      kpis: [
-        { label: 'Tickets/mes', value: '1.840', trend: '↑ 12% vs. inicio' },
-        { label: 'Ticket promedio', value: '$8.4', gold: true, trend: '↑ 18%' },
-        { label: 'Costo merma', value: '4.2%', trend: '↓ 2pp' },
-        { label: 'NPS clientes', value: '8.8', trend: '+ 0.3' }
-      ],
-      processes: [], meetings: { upcoming: [], past: [] }, notes: [], docs: []
-    },
-    {
-      id: 'pe', name: 'Dra. Paula Esteban', company: 'Aurora Salud', industry: 'Wellness',
-      service: 'P02', status: 'onboarding', fee: 320, startDate: '2026-04-18',
-      email: 'paula@aurorasalud.com', phone: '+54 9 11 8821-4455', city: 'Rosario',
-      contactRole: 'Directora médica', teamSize: '14 personas', teamDetail: '6 profesionales · 4 administrativos · 4 recepción',
-      recurringMeeting: 'Lunes · 10:00 hs', recurringMeetingMeta: 'Onboarding weekly · 60 min',
-      summary: 'Centro de wellness integrativo. En onboarding P02. Línea base de KPIs en captura. Foco inicial: reducir no-shows y aumentar recurrencia de pacientes.',
-      kpis: [
-        { label: 'Pacientes/mes', value: '142', trend: 'Línea base' },
-        { label: 'Recurrencia', value: '2.1×', trend: 'Línea base' },
-        { label: 'Ticket promedio', value: '$48', gold: true, trend: 'Línea base' },
-        { label: 'No-shows', value: '18%', trend: 'A reducir' }
-      ],
-      processes: [{ date: '18 Abr 2026 · En curso', status: 'active', title: 'Onboarding', desc: 'Diagnóstico y mapeo de procesos.', tags: ['Onboarding'] }],
-      meetings: { upcoming: [{ time: '10:00', dayLabel: 'Lun 11 may', title: 'Onboarding weekly', meta: '60 min' }], past: [] },
-      notes: [], docs: []
-    },
-    {
-      id: 'sl', name: 'Familia Sotelo', company: 'Granja Santa Lucía', industry: 'Agro',
-      service: 'P01', status: 'active', fee: 100, startDate: '2026-02-05',
-      email: 'sotelo@granjasantalucia.com.ar', phone: '+54 9 11 4455-6677', city: 'Mercedes, BA',
-      contactRole: 'Producción', teamSize: '6 personas', teamDetail: 'Familia + 2 empleados',
-      summary: 'Granja agroecológica familiar. Sistema P01 con foco en trazabilidad de productos y logística de entrega.',
-      kpis: [
-        { label: 'Pedidos/mes', value: '320', trend: '↑ 8%' },
-        { label: 'Facturación', value: '$2.100', gold: true, trend: '↑ 15%' },
-        { label: 'Cobertura ruta', value: '94%', trend: '↑ 6pp' },
-        { label: 'Cliente recurrente', value: '78%', trend: '+ 4pp' }
-      ],
-      processes: [], meetings: { upcoming: [], past: [] }, notes: [], docs: []
-    },
-    {
-      id: 'jg', name: 'Joaquín Galván', company: 'Galván Inmobiliaria', industry: 'Inmobiliaria',
-      service: 'P02', status: 'active', fee: 540, startDate: '2026-03-28',
-      email: 'joaquin@galvaninmobiliaria.com', phone: '+54 9 11 9988-7766', city: 'Córdoba',
-      contactRole: 'Broker principal', teamSize: '5 personas', teamDetail: '1 broker · 3 corredores · 1 admin',
-      recurringMeeting: 'Viernes · 15:00 hs', recurringMeetingMeta: 'Growth weekly · 60 min',
-      summary: 'Inmobiliaria con 5 personas en Córdoba. P02 activo con foco en pipeline comercial, leads y tiempo de respuesta.',
-      kpis: [
-        { label: 'Cierres/mes', value: '11', gold: true, trend: '↑ 4 vs. mes 1' },
-        { label: 'Leads cualificados', value: '68', trend: '↑ 24%' },
-        { label: 'Comisiones', value: '$5.4k', trend: '↑ 21%' },
-        { label: 'Tiempo respuesta', value: '8 min', trend: '↓ 22 min' }
-      ],
-      processes: [{ date: '28 Mar 2026 · Completado', status: 'done', title: 'Pipeline activo', desc: 'CRM con leads, tags, asignación y seguimiento.', tags: ['CRM'] }],
-      meetings: { upcoming: [{ time: '15:00', dayLabel: 'Vie 8 may', title: 'Growth weekly', meta: '60 min' }], past: [] },
-      notes: [], docs: []
-    },
-    {
-      id: 'vl', name: 'Vera López', company: 'López Pilates Studio', industry: 'Fitness',
-      service: 'P01', status: 'active', fee: 100, startDate: '2026-04-12',
-      email: 'vera@lopezpilates.com', phone: '+54 9 11 3322-1100', city: 'Mendoza',
-      contactRole: 'Dueña / Instructora', teamSize: '3 personas', summary: 'Estudio de pilates. P01 con módulos de reservas, cobros y comunicación con alumnas.',
-      kpis: [
-        { label: 'Alumnas activas', value: '74', trend: '↑ 8 nuevas' },
-        { label: 'Ingresos mes', value: '$1.480', gold: true, trend: '↑ 11%' },
-        { label: 'Asistencia', value: '88%', trend: '+ 4pp' },
-        { label: 'Cancel. tardía', value: '6%', trend: '↓ 3pp' }
-      ],
-      processes: [], meetings: { upcoming: [], past: [] }, notes: [], docs: []
-    },
-    {
-      id: 'mf', name: 'Mariana Ferraro', company: 'Ferraro Boutique', industry: 'Indumentaria',
-      service: 'P01', status: 'active', fee: 100, startDate: '2026-03-20',
-      email: 'mariana@ferrarobtq.com', phone: '+54 9 11 5566-9988', city: 'Buenos Aires',
-      contactRole: 'Dueña', teamSize: '4 personas', summary: 'Boutique multimarca con e-commerce. P01 con foco en stock y conexión online-offline.',
-      kpis: [
-        { label: 'Ventas mes', value: '$4.200', gold: true, trend: '↑ 18%' },
-        { label: 'Stock rotación', value: '2.1×', trend: '+ 0.4' },
-        { label: 'Online %', value: '34%', trend: '+ 8pp' },
-        { label: 'Devoluciones', value: '3.8%', trend: '↓ 1.2pp' }
-      ],
-      processes: [], meetings: { upcoming: [], past: [] }, notes: [], docs: []
-    },
-    {
-      id: 'so', name: 'Sebastián Otero', company: 'Otero Distribución', industry: 'Logística',
-      service: 'P02', status: 'active', fee: 460, startDate: '2026-02-10',
-      email: 'sebastian@oterodist.com.ar', phone: '+54 9 11 7711-4422', city: 'Buenos Aires',
-      contactRole: 'CEO', teamSize: '11 personas', summary: 'Distribuidora B2B con 11 personas. P02 con foco en optimización de rutas y gestión de cuentas corrientes.',
-      kpis: [
-        { label: 'Facturación', value: '$28k', gold: true, trend: '↑ 22%' },
-        { label: 'Clientes B2B', value: '46', trend: '↑ 7 nuevos' },
-        { label: 'Días de stock', value: '18<span style="font-size:18px;opacity:.5;"> días</span>', trend: '↓ 5 días' },
-        { label: 'Cobranza', value: '21<span style="font-size:18px;opacity:.5;"> días</span>', trend: '↓ 8 días' }
-      ],
-      processes: [], meetings: { upcoming: [], past: [] }, notes: [], docs: []
-    },
-    {
-      id: 'fr', name: 'Florencia Ruíz', company: 'Ruíz Constructora', industry: 'Construcción',
-      service: 'P02', status: 'active', fee: 510, startDate: '2026-03-05',
-      email: 'florencia@ruizconst.com', phone: '+54 9 11 8844-5566', city: 'San Isidro',
-      contactRole: 'Directora', teamSize: '18 personas', summary: 'Constructora boutique con foco en obra residencial. P02 con foco en gestión de obras, presupuestos y certificaciones.',
-      kpis: [
-        { label: 'Obras activas', value: '6', trend: '↑ 1 nueva' },
-        { label: 'Margen obra', value: '24%', gold: true, trend: '+ 4pp' },
-        { label: 'Tiempo certificación', value: '11<span style="font-size:18px;opacity:.5;"> días</span>', trend: '↓ 6 días' },
-        { label: 'Subcontratos', value: '14', trend: '↑ 3' }
-      ],
-      processes: [], meetings: { upcoming: [], past: [] }, notes: [], docs: []
-    },
-    {
-      id: 'dv', name: 'Diego Valverde', company: 'Valverde & Co', industry: 'Contabilidad',
-      service: 'P02', status: 'active', fee: 390, startDate: '2026-04-14',
-      email: 'diego@valverdeco.com.ar', phone: '+54 9 11 6677-8899', city: 'Buenos Aires',
-      contactRole: 'Socio fundador', teamSize: '7 personas', summary: 'Estudio contable. Llegó por referido de Hernán Pereyra. P02 recién iniciado.',
-      kpis: [
-        { label: 'Clientes', value: '52', trend: 'Línea base' },
-        { label: 'Facturación', value: '$3.8k', gold: true, trend: 'Línea base' },
-        { label: 'Hrs facturables', value: '184h', trend: 'Línea base' },
-        { label: 'Margen', value: '36%', trend: 'Línea base' }
-      ],
-      processes: [], meetings: { upcoming: [], past: [] }, notes: [], docs: []
     }
+    /* Demos extras eliminados: mc, lm, pe, sl, jg, vl, mf, so, fr, dv */
   ];
 
-  const FINCO_STORAGE_KEY = 'finco_v2';
   const FINCO = {
     leads: [],
-    clients: [],          // clientes agregados por el usuario via formulario
-    clientOverrides: {},  // ediciones a clientes demo: { id: { ...changes } }
-    deletedDemoIds: [],   // ids de demo clients que el usuario eliminó
+    clients: [],          // clientes reales en Supabase
+    clientOverrides: {},  // ediciones locales a clientes demo
+    deletedDemoIds: [],   // demos ocultados localmente
 
-    load() {
+    async load() {
       try {
-        const raw = localStorage.getItem(FINCO_STORAGE_KEY);
-        if (raw) {
-          const data = JSON.parse(raw);
-          this.leads = data.leads || [];
-          this.clients = data.clients || [];
-          this.clientOverrides = data.clientOverrides || {};
-          this.deletedDemoIds = data.deletedDemoIds || [];
-        }
-      } catch (e) { console.warn('FINCO load error', e); }
-    },
-    save() {
-      try {
-        localStorage.setItem(FINCO_STORAGE_KEY, JSON.stringify({
-          leads: this.leads,
-          clients: this.clients,
-          clientOverrides: this.clientOverrides,
-          deletedDemoIds: this.deletedDemoIds
-        }));
-      } catch (e) { console.warn('FINCO save error', e); }
-    },
-    addLead(lead) {
-      lead.id = 'lead_' + Date.now();
-      lead.createdAt = new Date().toISOString();
-      this.leads.push(lead);
-      this.save();
-      return lead;
-    },
-    addClient(client) {
-      client.id = 'client_' + Date.now();
-      client.createdAt = new Date().toISOString();
-      client.processes = client.processes || [];
-      client.meetings = client.meetings || { upcoming: [], past: [] };
-      client.notesList = client.notesList || [];
-      client.docs = client.docs || [];
-      this.clients.push(client);
-      this.save();
-      return client;
-    },
-    updateClient(id, changes) {
-      const userClient = this.clients.find(c => c.id === id);
-      if (userClient) {
-        Object.assign(userClient, changes);
-      } else {
-        // Es un demo client → guardar override
-        this.clientOverrides[id] = Object.assign({}, this.clientOverrides[id] || {}, changes);
+        showToast('Conectando con Supabase…', 2000);
+        const [leadsRes, clientsRes] = await Promise.all([
+          sb.from('leads').select('*').order('created_at', { ascending: false }),
+          sb.from('clients').select('*').order('created_at', { ascending: false })
+        ]);
+        if (leadsRes.error) throw leadsRes.error;
+        if (clientsRes.error) throw clientsRes.error;
+        this.leads   = (leadsRes.data   || []).map(mapLead);
+        this.clients = (clientsRes.data || []).map(mapClient);
+        refreshStats();
+        renderLeads();
+        refreshCRMBadge();
+        renderClientsTable();
+      } catch (e) {
+        console.warn('FINCO load error', e);
+        showToast('⚠ Sin conexión a Supabase — modo offline', 4000);
       }
-      this.save();
     },
-    removeLead(id) {
+
+    async addLead(lead) {
+      const { data, error } = await sb.from('leads').insert({
+        name: lead.name, company: lead.company, industry: lead.industry,
+        value: lead.value || 0, stage_idx: lead.stageIdx || 0,
+        source: lead.source, email: lead.email, notes: lead.notes
+      }).select().single();
+      if (error) throw error;
+      const mapped = mapLead(data);
+      this.leads.unshift(mapped);
+      return mapped;
+    },
+
+    async addClient(client) {
+      const { data, error } = await sb.from('clients').insert({
+        name: client.name, company: client.company, industry: client.industry,
+        service: client.service, status: client.status || 'active',
+        fee: client.fee || 0, start_date: client.startDate,
+        email: client.email, notes: client.notes
+      }).select().single();
+      if (error) throw error;
+      const mapped = mapClient(data);
+      this.clients.unshift(mapped);
+      return mapped;
+    },
+
+    async updateClient(id, changes) {
+      const isDemo = FINCO_DEMO_CLIENTS.some(c => c.id === id);
+      if (isDemo) {
+        this.clientOverrides[id] = Object.assign({}, this.clientOverrides[id] || {}, changes);
+      } else {
+        await sb.from('clients').update({
+          name: changes.name, company: changes.company, industry: changes.industry,
+          service: changes.service, status: changes.status,
+          fee: changes.fee, start_date: changes.startDate,
+          email: changes.email, notes: changes.notes
+        }).eq('id', id);
+        const idx = this.clients.findIndex(c => c.id === id);
+        if (idx >= 0) Object.assign(this.clients[idx], changes);
+      }
+    },
+
+    async removeLead(id) {
+      await sb.from('leads').delete().eq('id', id);
       this.leads = this.leads.filter(l => l.id !== id);
-      this.save();
     },
-    removeClient(id) {
+
+    async removeClient(id) {
       const isDemo = FINCO_DEMO_CLIENTS.some(c => c.id === id);
       if (isDemo) {
         if (!this.deletedDemoIds.includes(id)) this.deletedDemoIds.push(id);
       } else {
+        await sb.from('clients').delete().eq('id', id);
         this.clients = this.clients.filter(c => c.id !== id);
       }
-      this.save();
     },
-    // Devuelve todos los clientes visibles: demo (con overrides aplicados) + agregados
+
+    // Devuelve todos los clientes visibles: demo (con overrides) + reales
     allClients() {
       const demos = FINCO_DEMO_CLIENTS
         .filter(c => !this.deletedDemoIds.includes(c.id))
         .map(c => Object.assign({}, c, this.clientOverrides[c.id] || {}));
       return demos.concat(this.clients);
     },
-    getClient(id) {
-      return this.allClients().find(c => c.id === id);
-    },
+    getClient(id) { return this.allClients().find(c => c.id === id); },
     getClientByName(name) {
       if (!name) return null;
       const lower = String(name).toLowerCase();
       return this.allClients().find(c =>
-        c.name === name ||
-        c.company === name ||
+        c.name === name || c.company === name ||
         (c.name && c.name.toLowerCase() === lower) ||
         (c.company && c.company.toLowerCase() === lower) ||
         (c.name && c.name.toLowerCase().includes(lower)) ||
         (c.company && c.company.toLowerCase().includes(lower))
       );
     },
+
     reset() {
-      if (confirm('¿Borrar todos los datos cargados y ediciones? Esta acción no se puede deshacer.')) {
-        localStorage.removeItem(FINCO_STORAGE_KEY);
-        location.reload();
-      }
+      if (!confirm('¿Borrar todos los datos reales en Supabase? Esta acción no se puede deshacer.')) return;
+      Promise.all([
+        sb.from('leads').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        sb.from('clients').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+        sb.from('documents').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+      ]).then(() => location.reload());
     },
+
     exportJSON() {
-      const blob = new Blob([JSON.stringify({
-        leads: this.leads, clients: this.clients,
-        clientOverrides: this.clientOverrides, deletedDemoIds: this.deletedDemoIds
-      }, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify({ leads: this.leads, clients: this.clients }, null, 2)],
+        { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `finco-data-${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
+      a.href = url; a.download = `finco-data-${new Date().toISOString().split('T')[0]}.json`;
+      a.click(); URL.revokeObjectURL(url);
     }
   };
+
+  // Iniciar: carga datos desde Supabase
+  window.FINCO = FINCO;
   FINCO.load();
-  window.FINCO = FINCO; // exponer en consola
 
   function getInitials(name) {
     if (!name) return '··';
     return name.split(' ').filter(Boolean).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  // ============ STATS DINÁMICOS ============
+  function setText(id, txt) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = txt;
+  }
+  function refreshStats() {
+    const clients = FINCO.allClients();
+    const active = clients.filter(c => c.status === 'active');
+    const onboarding = clients.filter(c => c.status === 'onboarding');
+    const paused = clients.filter(c => c.status === 'paused');
+    const total = clients.length;
+    const live = clients.filter(c => c.status !== 'paused');
+    const p01 = live.filter(c => c.service === 'P01').length;
+    const p02 = live.filter(c => c.service === 'P02').length;
+    const mrr = live.reduce((s, c) => s + (parseInt(c.fee, 10) || 0), 0);
+    const ticket = active.length ? Math.round(mrr / active.length) : 0;
+
+    // Sidebar
+    setText('navBadgeClientes', total);
+
+    // Clientes — sub
+    const sub = total === 1 ? 'cliente activo' : 'clientes activos';
+    setText('clientesSub', `${total} ${sub} · ${p01} en P01 · ${p02} en P02 · ${onboarding.length} en onboarding · MRR consolidado USD ${mrr.toLocaleString('es-AR')}.`);
+
+    // Clientes — KPIs
+    setText('kpiClientesActivos', total);
+    setText('kpiClientesActivosTrend', `${p01} P01 · ${p02} P02`);
+    setText('kpiMRR', `$${mrr.toLocaleString('es-AR')}`);
+    setText('kpiTicket', `$${ticket.toLocaleString('es-AR')}`);
+
+    // Clientes — tabs
+    setText('tabClientesActivos', `Activos · ${active.length}`);
+    setText('tabClientesOnboarding', `Onboarding · ${onboarding.length}`);
+    setText('tabClientesPausados', `Pausados · ${paused.length}`);
+    setText('tabClientesHistorico', `Histórico · ${(FINCO.deletedDemoIds || []).length}`);
+
+    // Dashboard
+    setText('dashKpiClientes', total);
+    setText('dashKpiClientesTrend', `${active.length} activos · ${onboarding.length} onboarding`);
+    setText('dashKpiMRR', `$${mrr.toLocaleString('es-AR')}`);
+
+    // CRM — sidebar badge + sub + counts
+    const cols = document.querySelectorAll('#page-crm .pipeline-col');
+    let leadCount = 0;
+    const stageCounts = [0, 0, 0, 0];
+    cols.forEach((col, idx) => {
+      const cards = col.querySelectorAll('.lead-card').length;
+      stageCounts[idx] = cards;
+      leadCount += cards;
+      const head = col.querySelector('.pipeline-head-count');
+      if (head) head.textContent = cards;
+    });
+    setText('navBadgeCRM', leadCount);
+    setText('crmSub', `${leadCount} contactos en gestión · ${stageCounts[0]} leads · ${stageCounts[1]} en diagnóstico · ${stageCounts[2]} con propuesta · ${stageCounts[3]} en negociación.`);
+    // Dashboard pipeline summary
+    setText('dashLeadStage0', stageCounts[0]);
+    setText('dashLeadStage1', stageCounts[1]);
+    setText('dashLeadStage2', stageCounts[2]);
+    setText('dashLeadStage3', stageCounts[3]);
+  }
+
+  // Agregar botón × a las cards de leads demo del HTML para poder borrarlas
+  function wireDemoLeadCards() {
+    document.querySelectorAll('#page-crm .lead-card').forEach(card => {
+      if (card.querySelector('.card-delete')) return;
+      const btn = document.createElement('button');
+      btn.className = 'card-delete';
+      btn.textContent = '×';
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (!confirm('¿Eliminar este lead?')) return;
+        card.remove();
+        refreshStats();
+        showToast('Lead eliminado');
+      };
+      card.appendChild(btn);
+    });
   }
 
   // Renderiza la tabla completa de clientes desde FINCO.allClients()
@@ -3897,6 +4208,7 @@
       tr.addEventListener('click', () => openClient(client.id));
       tbody.appendChild(tr);
     });
+    refreshStats();
   }
 
   // Render de leads guardados al cargar
@@ -3924,27 +4236,20 @@
       <button class="card-delete" onclick="event.stopPropagation(); deleteLead('${lead.id}')">×</button>
     `;
     cols[stageIdx].querySelector('.pipeline-body').appendChild(card);
-    const countEl = cols[stageIdx].querySelector('.pipeline-head-count');
-    countEl.textContent = parseInt(countEl.textContent, 10) + 1;
+    refreshStats();
   }
 
-  function deleteLead(id) {
+  async function deleteLead(id) {
     if (!confirm('¿Eliminar este lead?')) return;
     const card = document.querySelector(`.lead-card[data-id="${id}"]`);
-    if (card) {
-      const col = card.closest('.pipeline-col');
-      card.remove();
-      if (col) {
-        const countEl = col.querySelector('.pipeline-head-count');
-        countEl.textContent = Math.max(0, parseInt(countEl.textContent, 10) - 1);
-      }
-    }
-    FINCO.removeLead(id);
+    if (card) card.remove();
+    await FINCO.removeLead(id);
+    refreshStats();
     showToast('Lead eliminado');
   }
-  function deleteClient(id) {
-    if (!confirm('¿Eliminar este cliente? Si es un cliente demo, podés recuperarlo con FINCO.reset()')) return;
-    FINCO.removeClient(id);
+  async function deleteClient(id) {
+    if (!confirm('¿Eliminar este cliente?')) return;
+    await FINCO.removeClient(id);
     renderClientsTable();
     showToast('Cliente eliminado');
   }
@@ -3970,14 +4275,15 @@
   const pages = document.querySelectorAll('.page');
   const breadcrumb = document.getElementById('breadcrumbCurrent');
   const labels = {
-    dashboard:  'Dashboard',
-    clientes:   'Clientes',
-    crm:        'CRM',
-    finanzas:   'Finanzas',
-    servicios:  'Servicios',
-    resultados: 'Resultados',
-    calendario: 'Calendario',
-    cliente:    'Ficha de cliente'
+    dashboard:   'Dashboard',
+    clientes:    'Clientes',
+    crm:         'CRM',
+    finanzas:    'Finanzas',
+    servicios:   'Servicios',
+    resultados:  'Resultados',
+    calendario:  'Calendario',
+    documentos:  'Documentos',
+    cliente:     'Ficha de cliente'
   };
 
   let currentPage = 'dashboard';
@@ -4163,6 +4469,26 @@
       `;
     }
 
+    // OBJETIVOS Y MÉTRICAS
+    const objPanel = document.getElementById('tab-objetivos');
+    if (objPanel) {
+      const objs = c.objectives || [];
+      const tabO = document.querySelector('[data-detail-tab="objetivos"]');
+      if (tabO) tabO.textContent = `Objetivos y métricas${objs.length ? ' · ' + objs.length : ''}`;
+      if (objs.length) {
+        objPanel.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <p style="color:var(--text-muted); font-size:13px;">${objs.length} ${objs.length === 1 ? 'objetivo activo' : 'objetivos activos'} · Tracking mensual</p>
+            <button class="btn" onclick="openNewObjective()">+ Nuevo objetivo</button>
+          </div>
+          <div class="objectives-grid">
+            ${objs.map((o, idx) => objectiveCardHTML(o, idx)).join('')}
+          </div>`;
+      } else {
+        objPanel.innerHTML = emptyState('Sin objetivos definidos', 'Acordá objetivos trimestrales con el cliente y trackealos mes a mes desde acá.', '+ Definir primer objetivo', 'openNewObjective()');
+      }
+    }
+
     // PROCESOS
     const procPanel = document.getElementById('tab-procesos');
     if (procPanel) {
@@ -4177,12 +4503,13 @@
                 <div class="card-title">Línea de tiempo</div>
                 <div class="card-sub">${procs.length} procesos cargados</div>
               </div>
-              <button class="btn btn-ghost">+ Agregar proceso</button>
+              <button class="btn btn-ghost" onclick="openNewProcess()">+ Agregar proceso</button>
             </div>
             <div class="card-body">
               <div class="timeline">
-                ${procs.map(p => `
+                ${procs.map((p, idx) => `
                   <div class="timeline-item ${p.status || 'done'}">
+                    <button class="item-delete" onclick="deleteProcess(${idx})" title="Eliminar">×</button>
                     <div class="timeline-date">${escapeHtml(p.date || '')}</div>
                     <div class="timeline-title">${escapeHtml(p.title || '')}</div>
                     <div class="timeline-desc">${escapeHtml(p.desc || '')}</div>
@@ -4193,7 +4520,7 @@
             </div>
           </div>`;
       } else {
-        procPanel.innerHTML = emptyState('Sin procesos cargados aún', 'Cuando este cliente avance, los hitos se registran acá.', '+ Agregar primer proceso');
+        procPanel.innerHTML = emptyState('Sin procesos cargados aún', 'Cuando este cliente avance, los hitos se registran acá.', '+ Agregar primer proceso', 'openNewProcess()');
       }
     }
 
@@ -4239,10 +4566,11 @@
       if (notes.length) {
         notesPanel.innerHTML = `
           <div style="display:flex; justify-content:flex-end; margin-bottom: 20px;">
-            <button class="btn">+ Nueva nota</button>
+            <button class="btn" onclick="openNewNote()">+ Nueva nota</button>
           </div>
-          ${notes.map(n => `
+          ${notes.map((n, idx) => `
             <div class="note-card">
+              <button class="item-delete" onclick="deleteNote(${idx})" title="Eliminar">×</button>
               <div class="note-head">
                 <div class="note-author">
                   <div class="client-avatar">${escapeHtml(n.authorInitials || 'JC')}</div>
@@ -4254,7 +4582,7 @@
             </div>
           `).join('')}`;
       } else {
-        notesPanel.innerHTML = emptyState('Sin notas todavía', 'Las observaciones de cada reunión y los apuntes del seguimiento se guardan acá.', '+ Primera nota');
+        notesPanel.innerHTML = emptyState('Sin notas todavía', 'Las observaciones de cada reunión y los apuntes del seguimiento se guardan acá.', '+ Primera nota', 'openNewNote()');
       }
     }
 
@@ -4286,6 +4614,46 @@
     }
   }
 
+  function objectiveCardHTML(o, idx) {
+    const statusMap = {
+      ontrack:    { label: 'En track',     cls: 'success' },
+      atrasado:   { label: 'Atrasado',     cls: 'danger' },
+      completado: { label: 'Completado',   cls: 'success' },
+      pausado:    { label: 'Pausado',      cls: 'muted' }
+    };
+    const s = statusMap[o.status] || { label: o.status || '—', cls: '' };
+    const deadlineLabel = o.deadline
+      ? new Date(o.deadline).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' })
+      : '—';
+    return `
+      <div class="objective-card">
+        <div class="objective-head">
+          <span class="badge dot ${s.cls}">${escapeHtml(s.label)}</span>
+          <button class="card-delete" onclick="deleteObjective(${idx})" style="opacity:1; position:relative; top:auto; right:auto;">×</button>
+        </div>
+        <div class="objective-title">${escapeHtml(o.title || '')}</div>
+        ${o.desc ? `<div class="objective-desc">${escapeHtml(o.desc)}</div>` : ''}
+        <div class="objective-metric-row">
+          <div>
+            <div class="objective-metric-label">Métrica</div>
+            <div class="objective-metric-val">${escapeHtml(o.metric || '—')}</div>
+          </div>
+          <div>
+            <div class="objective-metric-label">Actual</div>
+            <div class="objective-metric-val gold">${escapeHtml(o.current || '—')}</div>
+          </div>
+          <div>
+            <div class="objective-metric-label">Target</div>
+            <div class="objective-metric-val">${escapeHtml(o.target || '—')}</div>
+          </div>
+          <div>
+            <div class="objective-metric-label">Deadline</div>
+            <div class="objective-metric-val" style="font-size:14px;">${deadlineLabel}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+
   function meetingRowHTML(m, past) {
     return `
       <div class="meeting-row">
@@ -4300,13 +4668,13 @@
       </div>`;
   }
 
-  function emptyState(title, subtitle, btnLabel) {
+  function emptyState(title, subtitle, btnLabel, onclick) {
     return `
       <div class="card">
         <div class="card-body" style="text-align:center; padding: 64px 32px;">
           <div style="font-family:'Cormorant Garamond',serif; font-size:24px; font-style:italic; color:var(--text-muted); margin-bottom: 8px;">${escapeHtml(title)}</div>
           <div style="font-size:13px; color:var(--text-muted); margin-bottom: 24px;">${escapeHtml(subtitle)}</div>
-          ${btnLabel ? `<button class="btn">${escapeHtml(btnLabel)}</button>` : ''}
+          ${btnLabel ? `<button class="btn"${onclick ? ` onclick="${onclick}"` : ''}>${escapeHtml(btnLabel)}</button>` : ''}
         </div>
       </div>`;
   }
@@ -4358,6 +4726,159 @@
     renderClientsTable();
     showToast(`Cliente "${c.name}" eliminado`);
     goToPage('clientes');
+  }
+
+  // ============ AGREGAR PROCESO / NOTA / OBJETIVO ============
+  function ensureCurrentClient() {
+    if (!currentClientId) { showToast('Abrí primero un cliente'); return null; }
+    const c = FINCO.getClient(currentClientId);
+    if (!c) { showToast('Cliente no encontrado'); return null; }
+    return c;
+  }
+
+  function openNewProcess() {
+    if (!ensureCurrentClient()) return;
+    const m = document.getElementById('newProcessModal');
+    m.querySelector('form').reset();
+    const di = m.querySelector('input[name="date"]');
+    if (di) di.value = new Date().toISOString().split('T')[0];
+    m.classList.add('show');
+  }
+  function closeNewProcess() { document.getElementById('newProcessModal').classList.remove('show'); }
+  function submitNewProcess(e) {
+    e.preventDefault();
+    const c = ensureCurrentClient();
+    if (!c) return;
+    const f = e.target;
+    const dateStr = f.date.value
+      ? new Date(f.date.value).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' })
+      : new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+    const statusLabel = f.status.value === 'active' ? 'En curso' : 'Completado';
+    const newProcess = {
+      date: `${dateStr} · ${statusLabel}`,
+      status: f.status.value,
+      title: f.title.value.trim(),
+      desc: f.desc.value.trim(),
+      tags: f.tags.value.split(',').map(t => t.trim()).filter(Boolean)
+    };
+    if (!c.processes) c.processes = [];
+    c.processes.unshift(newProcess);
+    persistClientChange(c);
+    renderClientDetail(c);
+    activateDetailTab('procesos');
+    closeNewProcess();
+    showToast('Proceso agregado');
+  }
+
+  function openNewNote() {
+    if (!ensureCurrentClient()) return;
+    const m = document.getElementById('newNoteModal');
+    m.querySelector('form').reset();
+    m.classList.add('show');
+  }
+  function closeNewNote() { document.getElementById('newNoteModal').classList.remove('show'); }
+  function submitNewNote(e) {
+    e.preventDefault();
+    const c = ensureCurrentClient();
+    if (!c) return;
+    const f = e.target;
+    const now = new Date();
+    const newNote = {
+      authorInitials: 'JC',
+      author: 'Juan Cruz · FINCO',
+      date: now.toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase() + ' · ' + now.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' }),
+      text: f.text.value.trim()
+    };
+    if (!c.notes) c.notes = [];
+    c.notes.unshift(newNote);
+    persistClientChange(c);
+    renderClientDetail(c);
+    activateDetailTab('notas');
+    closeNewNote();
+    showToast('Nota agregada');
+  }
+
+  function openNewObjective() {
+    if (!ensureCurrentClient()) return;
+    const m = document.getElementById('newObjectiveModal');
+    m.querySelector('form').reset();
+    m.classList.add('show');
+  }
+  function closeNewObjective() { document.getElementById('newObjectiveModal').classList.remove('show'); }
+  function submitNewObjective(e) {
+    e.preventDefault();
+    const c = ensureCurrentClient();
+    if (!c) return;
+    const f = e.target;
+    const newObj = {
+      title: f.title.value.trim(),
+      desc: f.desc.value.trim(),
+      metric: f.metric.value.trim(),
+      current: f.current.value.trim(),
+      target: f.target.value.trim(),
+      status: f.status.value,
+      deadline: f.deadline.value
+    };
+    if (!c.objectives) c.objectives = [];
+    c.objectives.push(newObj);
+    persistClientChange(c);
+    renderClientDetail(c);
+    activateDetailTab('objetivos');
+    closeNewObjective();
+    showToast('Objetivo agregado');
+  }
+
+  function deleteObjective(idx) {
+    const c = ensureCurrentClient();
+    if (!c || !c.objectives) return;
+    if (!confirm('¿Eliminar este objetivo?')) return;
+    c.objectives.splice(idx, 1);
+    persistClientChange(c);
+    renderClientDetail(c);
+    showToast('Objetivo eliminado');
+  }
+  function deleteProcess(idx) {
+    const c = ensureCurrentClient();
+    if (!c || !c.processes) return;
+    if (!confirm('¿Eliminar este proceso?')) return;
+    c.processes.splice(idx, 1);
+    persistClientChange(c);
+    renderClientDetail(c);
+    showToast('Proceso eliminado');
+  }
+  function deleteNote(idx) {
+    const c = ensureCurrentClient();
+    if (!c || !c.notes) return;
+    if (!confirm('¿Eliminar esta nota?')) return;
+    c.notes.splice(idx, 1);
+    persistClientChange(c);
+    renderClientDetail(c);
+    showToast('Nota eliminada');
+  }
+
+  function persistClientChange(c) {
+    // Los cambios de ficha (notas, procesos) son locales en sesión.
+    // Para cambios de datos del cliente usar el form de Alta/Editar.
+    const isDemo = FINCO_DEMO_CLIENTS.some(d => d.id === c.id);
+    if (isDemo) {
+      FINCO.clientOverrides[c.id] = Object.assign({}, FINCO.clientOverrides[c.id] || {}, {
+        processes: c.processes, notes: c.notes, docs: c.docs, objectives: c.objectives, kpis: c.kpis
+      });
+    } else {
+      const idx = FINCO.clients.findIndex(x => x.id === c.id);
+      if (idx >= 0) FINCO.clients[idx] = c;
+    }
+    // Nota: los cambios de ficha se persisten en sesión.
+    // Los campos de datos del cliente se sincronizan via updateClient().
+  }
+
+  function activateDetailTab(name) {
+    document.querySelectorAll('#detailTabs .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.detail-tab-content').forEach(c => c.classList.remove('active'));
+    const tab = document.querySelector(`[data-detail-tab="${name}"]`);
+    const panel = document.getElementById('tab-' + name);
+    if (tab) tab.classList.add('active');
+    if (panel) panel.classList.add('active');
   }
 
   // ============ LOGIN / LOGOUT ============
@@ -4419,22 +4940,31 @@
     document.getElementById('newLeadModal').classList.remove('show');
     document.querySelector('#newLeadModal form').reset();
   }
-  function submitNewLead(e) {
+  async function submitNewLead(e) {
     e.preventDefault();
     const f = e.target;
-    const lead = FINCO.addLead({
-      name: f.name.value.trim(),
-      company: f.company.value.trim(),
-      industry: f.industry.value.trim(),
-      value: parseInt(f.value.value || '0', 10),
-      stageIdx: parseInt(f.stage.value, 10),
-      source: f.source.value,
-      email: f.email.value.trim(),
-      notes: f.notes.value.trim()
-    });
-    insertLeadCard(lead);
-    closeNewLead();
-    showToast(`Lead "${lead.name}" agregado al pipeline`);
+    const btn = f.querySelector('button[type="submit"]');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      const lead = await FINCO.addLead({
+        name: f.name.value.trim(),
+        company: f.company.value.trim(),
+        industry: f.industry.value.trim(),
+        value: parseInt(f.value.value || '0', 10),
+        stageIdx: parseInt(f.stage.value, 10),
+        source: f.source.value,
+        email: f.email.value.trim(),
+        notes: f.notes.value.trim()
+      });
+      insertLeadCard(lead);
+      closeNewLead();
+      showToast(`Lead "${lead.name}" agregado al pipeline`);
+    } catch(err) {
+      showToast('Error guardando el lead — revisá la conexión');
+      console.error(err);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Agregar al pipeline';
+    }
   }
 
   // ============ MODAL: ALTA CLIENTE ============
@@ -4453,9 +4983,11 @@
     document.getElementById('newClientModal').classList.remove('show');
     editMode = null;
   }
-  function submitNewClient(e) {
+  async function submitNewClient(e) {
     e.preventDefault();
     const f = e.target;
+    const btn = f.querySelector('button[type="submit"]');
+    btn.disabled = true; btn.textContent = 'Guardando…';
     const data = {
       name: f.name.value.trim(),
       company: f.company.value.trim(),
@@ -4467,27 +4999,36 @@
       email: f.email.value.trim(),
       notes: f.notes.value.trim()
     };
-    if (editMode) {
-      FINCO.updateClient(editMode, data);
-      renderClientsTable();
-      // Si la ficha está abierta, refrescarla
-      if (currentClientId === editMode) {
-        const updated = FINCO.getClient(editMode);
-        if (updated) renderClientDetail(updated);
+    try {
+      if (editMode) {
+        await FINCO.updateClient(editMode, data);
+        renderClientsTable();
+        if (currentClientId === editMode) {
+          const updated = FINCO.getClient(editMode);
+          if (updated) renderClientDetail(updated);
+        }
+        closeNewClient();
+        showToast(`Cliente "${data.name}" actualizado`);
+      } else {
+        const client = await FINCO.addClient(data);
+        renderClientsTable();
+        closeNewClient();
+        showToast(`Cliente "${client.name}" agregado a la cartera`);
       }
-      closeNewClient();
-      showToast(`Cliente "${data.name}" actualizado`);
-    } else {
-      const client = FINCO.addClient(data);
-      renderClientsTable();
-      closeNewClient();
-      showToast(`Cliente "${client.name}" agregado a la cartera`);
+    } catch(err) {
+      showToast('Error guardando el cliente — revisá la conexión');
+      console.error(err);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = editMode ? 'Guardar cambios' : 'Dar de alta';
     }
   }
 
-  // Render inicial: clientes desde data + leads guardados
+  // Render inicial: clientes desde data + leads guardados + wire de demos + stats
   renderClientsTable();
+  wireDemoLeadCards();
   renderSavedLeads();
+  refreshStats();
 
   // ============ TOAST ============
   function showToast(msg) {
@@ -4770,6 +5311,195 @@
       });
     }
   }
+
+  // ============ MÓDULO DOCUMENTOS ============
+  const DOCS_BUCKET = 'finco-docs';
+
+  function docIconClass(mime) {
+    if (!mime) return 'other';
+    if (mime.includes('pdf')) return 'pdf';
+    if (mime.includes('word') || mime.includes('document')) return 'doc';
+    if (mime.includes('image')) return 'img';
+    if (mime.includes('sheet') || mime.includes('excel')) return 'doc';
+    return 'other';
+  }
+  function docIconLabel(mime) {
+    if (!mime) return '·';
+    if (mime.includes('pdf')) return 'PDF';
+    if (mime.includes('word') || mime.includes('document')) return 'DOC';
+    if (mime.includes('image')) return 'IMG';
+    if (mime.includes('sheet') || mime.includes('excel')) return 'XLS';
+    return '·';
+  }
+  function formatBytes(bytes) {
+    if (!bytes) return '—';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+  function formatDocDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  async function loadDocs() {
+    const { data, error } = await sb.from('documents')
+      .select('*').order('created_at', { ascending: false });
+    if (error) { console.error('loadDocs error', error); return []; }
+    return data || [];
+  }
+
+  function renderDocsList(docs) {
+    const wrap = document.getElementById('docsListWrap');
+    const badge = document.getElementById('navBadgeDocs');
+    if (badge) badge.textContent = docs.length || '—';
+    const sub = document.getElementById('docsSub');
+    if (sub) sub.textContent = `${docs.length} ${docs.length === 1 ? 'documento' : 'documentos'} · almacenados en Supabase Storage`;
+
+    if (!docs.length) {
+      wrap.innerHTML = `<div class="docs-empty"><div class="docs-empty-icon">◫</div><div>No hay documentos todavía. Arrastrá uno o hacé clic en la zona de subida.</div></div>`;
+      return;
+    }
+    const rows = docs.map(doc => {
+      const iconClass = docIconClass(doc.mime_type);
+      const iconLabel = docIconLabel(doc.mime_type);
+      const tags = (doc.tags || []).map(t => `<span class="doc-tag">${escapeHtml(t)}</span>`).join('');
+      return `
+        <tr>
+          <td style="width:44px">
+            <div class="doc-icon ${iconClass}">${iconLabel}</div>
+          </td>
+          <td>
+            <div class="doc-name">${escapeHtml(doc.name)}</div>
+            <div class="doc-meta">${formatDocDate(doc.created_at)} · ${formatBytes(doc.file_size)}${doc.description ? ' · ' + escapeHtml(doc.description) : ''}</div>
+            <div style="margin-top:4px">${tags}</div>
+          </td>
+          <td style="width:130px">
+            <div class="doc-actions">
+              <button class="doc-btn" onclick="downloadDoc('${doc.id}','${escapeHtml(doc.storage_path)}','${escapeHtml(doc.name)}')">↓ Descargar</button>
+              <button class="doc-btn danger" onclick="deleteDoc('${doc.id}','${escapeHtml(doc.storage_path)}')">×</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `
+      <table class="docs-table">
+        <thead><tr>
+          <th></th><th>Archivo</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  async function refreshDocs() {
+    const docs = await loadDocs();
+    renderDocsList(docs);
+  }
+
+  async function uploadDoc(file) {
+    const progress = document.getElementById('docsUploadProgress');
+    const label    = document.getElementById('docsUploadLabel');
+    const desc     = document.getElementById('docsMetaDesc').value.trim();
+    const tagsRaw  = document.getElementById('docsMetaTags').value.trim();
+    const tags     = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+    const ext      = file.name.split('.').pop();
+    const path     = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    progress.classList.add('show');
+    label.textContent = `Subiendo "${file.name}"…`;
+
+    try {
+      // 1. Upload a Storage
+      const { error: upErr } = await sb.storage.from(DOCS_BUCKET).upload(path, file, {
+        contentType: file.type, upsert: false
+      });
+      if (upErr) throw upErr;
+
+      // 2. Insertar metadata en tabla documents
+      const { error: dbErr } = await sb.from('documents').insert({
+        name: file.name,
+        description: desc || null,
+        storage_path: path,
+        file_size: file.size,
+        mime_type: file.type || null,
+        tags: tags.length ? tags : null
+      });
+      if (dbErr) throw dbErr;
+
+      // Limpiar campos metadata
+      document.getElementById('docsMetaDesc').value = '';
+      document.getElementById('docsMetaTags').value = '';
+
+      showToast(`"${file.name}" subido correctamente`);
+      await refreshDocs();
+    } catch(err) {
+      console.error('upload error', err);
+      showToast('Error al subir el archivo — ' + (err.message || 'revisá la conexión'));
+    } finally {
+      progress.classList.remove('show');
+    }
+  }
+
+  async function downloadDoc(id, storagePath, name) {
+    try {
+      const { data, error } = await sb.storage.from(DOCS_BUCKET).download(storagePath);
+      if (error) throw error;
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url; a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch(err) {
+      showToast('Error descargando el archivo');
+      console.error(err);
+    }
+  }
+
+  async function deleteDoc(id, storagePath) {
+    if (!confirm('¿Eliminar este documento? No se puede deshacer.')) return;
+    try {
+      await sb.storage.from(DOCS_BUCKET).remove([storagePath]);
+      await sb.from('documents').delete().eq('id', id);
+      showToast('Documento eliminado');
+      await refreshDocs();
+    } catch(err) {
+      showToast('Error eliminando el documento');
+      console.error(err);
+    }
+  }
+
+  // Wiring del drop zone y file input
+  function initDocsModule() {
+    const dropZone  = document.getElementById('docsDropZone');
+    const fileInput = document.getElementById('docsFileInput');
+
+    fileInput.addEventListener('change', e => {
+      const file = e.target.files[0];
+      if (file) uploadDoc(file);
+      fileInput.value = '';
+    });
+
+    dropZone.addEventListener('dragover', e => {
+      e.preventDefault(); dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) uploadDoc(file);
+    });
+  }
+
+  // Cargar docs cuando se navega a la página
+  const _origGoToPage = goToPage;
+  function goToPage(page, fromNav) {
+    _origGoToPage(page, fromNav);
+    if (page === 'documentos') refreshDocs();
+  }
+
+  initDocsModule();
 
   // init on load
   setTimeout(initCharts, 100);
