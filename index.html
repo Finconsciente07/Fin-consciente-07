@@ -2172,7 +2172,7 @@
         </div>
         <div style="display:flex; gap:10px;">
           <button class="btn btn-ghost">Exportar P&L</button>
-          <button class="btn">+ Registrar movimiento</button>
+          <button class="btn" onclick="openNewTransaction()">+ Registrar movimiento</button>
         </div>
       </div>
 
@@ -2180,18 +2180,18 @@
       <div class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-label">Ingresos Mes</div>
-          <div class="kpi-value gold">$5.720</div>
-          <div class="kpi-trend">↑ 12% vs. abril</div>
+          <div class="kpi-value gold" id="finKpiIngUSD">—</div>
+          <div class="kpi-trend" id="finKpiIngARS"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Egresos Mes</div>
-          <div class="kpi-value">$1.840</div>
-          <div class="kpi-trend down">↑ 8% vs. abril</div>
+          <div class="kpi-value" id="finKpiEgrUSD">—</div>
+          <div class="kpi-trend down" id="finKpiEgrARS"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Resultado Neto</div>
-          <div class="kpi-value gold">$3.880</div>
-          <div class="kpi-trend">↑ 14% vs. abril</div>
+          <div class="kpi-value gold" id="finKpiNetoUSD">—</div>
+          <div class="kpi-trend" id="finKpiNetoTrend"></div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Por Cobrar</div>
@@ -2249,84 +2249,13 @@
               <div class="card-sub">Ingresos y egresos del mes</div>
             </div>
             <div class="tabs" style="border:none; margin:0;">
-              <span class="tab active">Todos</span>
-              <span class="tab">Ingresos</span>
-              <span class="tab">Egresos</span>
+              <span class="tab active" onclick="filterTransactions('all', this)">Todos</span>
+              <span class="tab" onclick="filterTransactions('in', this)">Ingresos</span>
+              <span class="tab" onclick="filterTransactions('out', this)">Egresos</span>
             </div>
           </div>
-          <div class="card-body compact">
-            <div class="flow-row">
-              <div class="flow-icon in">↑</div>
-              <div>
-                <div class="flow-desc">Estudio Veridia · Fee Growth Mayo</div>
-                <div class="flow-meta">P02 · Transferencia bancaria</div>
-              </div>
-              <div class="flow-amount in">+$420</div>
-              <div class="flow-date">5 May</div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon in">↑</div>
-              <div>
-                <div class="flow-desc">Granja Santa Lucía · P01 mes 4</div>
-                <div class="flow-meta">P01 · MercadoPago</div>
-              </div>
-              <div class="flow-amount in">+$100</div>
-              <div class="flow-date">5 May</div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon out">↓</div>
-              <div>
-                <div class="flow-desc">Hosting + dominios</div>
-                <div class="flow-meta">Infraestructura mensual</div>
-              </div>
-              <div class="flow-amount out">−$84</div>
-              <div class="flow-date">4 May</div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon in">↑</div>
-              <div>
-                <div class="flow-desc">Hernán Pereyra · Fee Growth Mayo</div>
-                <div class="flow-meta">P02 · Transferencia</div>
-              </div>
-              <div class="flow-amount in">+$380</div>
-              <div class="flow-date">3 May</div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon out">↓</div>
-              <div>
-                <div class="flow-desc">Notion + Linear + herramientas</div>
-                <div class="flow-meta">Software del equipo</div>
-              </div>
-              <div class="flow-amount out">−$140</div>
-              <div class="flow-date">2 May</div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon in">↑</div>
-              <div>
-                <div class="flow-desc">Joaquín Galván · Fee + bonus growth</div>
-                <div class="flow-meta">P02 · Transferencia</div>
-              </div>
-              <div class="flow-amount in">+$540</div>
-              <div class="flow-date">2 May</div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon out">↓</div>
-              <div>
-                <div class="flow-desc">Honorarios diseño asistido</div>
-                <div class="flow-meta">Colaborador externo · Marina C.</div>
-              </div>
-              <div class="flow-amount out">−$320</div>
-              <div class="flow-date">1 May</div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon in">↑</div>
-              <div>
-                <div class="flow-desc">Vera López · P01 mes 1</div>
-                <div class="flow-meta">P01 · Transferencia</div>
-              </div>
-              <div class="flow-amount in">+$100</div>
-              <div class="flow-date">1 May</div>
-            </div>
+          <div class="card-body compact" id="finMovimientosList">
+            <!-- renderizado por renderTransactionsList() -->
           </div>
         </div>
 
@@ -3850,6 +3779,79 @@
   </div>
 </div>
 
+<!-- ============ MODAL: NUEVO MOVIMIENTO ============ -->
+<div class="modal-overlay" id="newTransactionModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewTransaction()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow">Finanzas · Nuevo Movimiento</div>
+      <h2>Registrar <em>movimiento</em></h2>
+      <p class="modal-form-sub">Ingresá los datos del ingreso o egreso. Los KPIs se actualizan al instante.</p>
+    </div>
+    <form class="modal-form" onsubmit="submitNewTransaction(event); return false;">
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Tipo<span class="req">*</span></label>
+          <select name="type" class="form-select" onchange="updateTxCategories(this.value)" required>
+            <option value="in">Ingreso ↑</option>
+            <option value="out">Egreso ↓</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Moneda<span class="req">*</span></label>
+          <select name="currency" class="form-select" required>
+            <option value="USD">USD</option>
+            <option value="ARS">ARS</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Descripción<span class="req">*</span></label>
+        <input type="text" name="description" class="form-input" placeholder="Ej: Estudio Veridia · Fee Growth Mayo" required>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Categoría</label>
+          <select name="category" class="form-select" id="txCategorySelect">
+            <option value="Fee P02">Fee P02</option>
+            <option value="Fee P01">Fee P01</option>
+            <option value="Ingreso extra">Ingreso extra</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Método de pago</label>
+          <select name="method" class="form-select">
+            <option>Transferencia</option>
+            <option>MercadoPago</option>
+            <option>Efectivo</option>
+            <option>Tarjeta</option>
+            <option>Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Monto<span class="req">*</span></label>
+          <input type="number" name="amount" class="form-input" placeholder="0" min="0" step="0.01" required>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Fecha<span class="req">*</span></label>
+          <input type="date" name="date" class="form-input" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Notas</label>
+        <textarea name="notes" class="form-textarea" placeholder="Detalles adicionales…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeNewTransaction()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="txSubmitBtn">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
   // ===================================================
   // ============ SUPABASE CONFIG ======================
@@ -3875,6 +3877,14 @@
       notes: row.notes, createdAt: row.created_at,
       processes: [], meetings: { upcoming: [], past: [] },
       notesList: [], docs: []
+    };
+  }
+  function mapTransaction(row) {
+    return {
+      id: row.id, type: row.type, description: row.description,
+      category: row.category, amount: row.amount, currency: row.currency,
+      method: row.method, date: row.date, clientId: row.client_id,
+      notes: row.notes, createdAt: row.created_at
     };
   }
 
@@ -3967,89 +3977,197 @@
     /* Demos extras eliminados: mc, lm, pe, sl, jg, vl, mf, so, fr, dv */
   ];
 
+  const FINCO_DEMO_TRANSACTIONS = [
+    { id:'dt1', type:'in',  description:'Estudio Veridia · Fee Growth Mayo',  category:'Fee P02', amount:420, currency:'USD', method:'Transferencia',  date:'2026-05-05', createdAt:'2026-05-05' },
+    { id:'dt2', type:'in',  description:'Granja Santa Lucía · P01 mes 4',     category:'Fee P01', amount:100, currency:'USD', method:'MercadoPago',    date:'2026-05-05', createdAt:'2026-05-05' },
+    { id:'dt3', type:'out', description:'Hosting + dominios',                  category:'Infraestructura / Hosting', amount:84, currency:'USD', method:'Tarjeta', date:'2026-05-04', createdAt:'2026-05-04' },
+    { id:'dt4', type:'in',  description:'Hernán Pereyra · Fee Growth Mayo',   category:'Fee P02', amount:380, currency:'USD', method:'Transferencia',  date:'2026-05-03', createdAt:'2026-05-03' },
+    { id:'dt5', type:'out', description:'Notion + Linear + herramientas',      category:'Software / Herramientas', amount:140, currency:'USD', method:'Tarjeta', date:'2026-05-02', createdAt:'2026-05-02' },
+    { id:'dt6', type:'in',  description:'Joaquín Galván · Fee + bonus growth',category:'Fee P02', amount:540, currency:'USD', method:'Transferencia',  date:'2026-05-02', createdAt:'2026-05-02' },
+    { id:'dt7', type:'out', description:'Honorarios diseño asistido',           category:'Colaboradores externos', amount:320, currency:'USD', method:'Transferencia', date:'2026-05-01', createdAt:'2026-05-01' },
+    { id:'dt8', type:'in',  description:'Vera López · P01 mes 1',             category:'Fee P01', amount:100, currency:'USD', method:'Transferencia',  date:'2026-05-01', createdAt:'2026-05-01' },
+  ];
+  let currentTxFilter = 'all';
+
+  // ── Helpers: persistencia local (localStorage) ─────────────
+  const FINCO_LS_KEY = 'finco_v3';
+  function _saveLocal() {
+    try {
+      localStorage.setItem(FINCO_LS_KEY, JSON.stringify({
+        leads: FINCO.leads, clients: FINCO.clients,
+        clientOverrides: FINCO.clientOverrides, deletedDemoIds: FINCO.deletedDemoIds,
+        transactions: FINCO.transactions, deletedDemoTxIds: FINCO.deletedDemoTxIds
+      }));
+    } catch(e) {}
+  }
+  function _loadLocal() {
+    try {
+      const raw = localStorage.getItem(FINCO_LS_KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      FINCO.leads            = d.leads            || [];
+      FINCO.clients          = d.clients          || [];
+      FINCO.clientOverrides  = d.clientOverrides  || {};
+      FINCO.deletedDemoIds   = d.deletedDemoIds   || [];
+      FINCO.transactions     = d.transactions     || [];
+      FINCO.deletedDemoTxIds = d.deletedDemoTxIds || [];
+      return true;
+    } catch(e) { return false; }
+  }
+  function _genId() {
+    return 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  }
+
   const FINCO = {
     leads: [],
-    clients: [],          // clientes reales en Supabase
-    clientOverrides: {},  // ediciones locales a clientes demo
-    deletedDemoIds: [],   // demos ocultados localmente
+    clients: [],
+    clientOverrides: {},
+    deletedDemoIds: [],
+    transactions: [],
+    deletedDemoTxIds: [],
 
     async load() {
+      // 1. Cargar desde localStorage inmediatamente — la app funciona sin conexión
+      if (_loadLocal()) {
+        refreshStats(); renderSavedLeads(); renderClientsTable();
+        renderTransactionsList(currentTxFilter); refreshFinanzas();
+      }
+      // 2. Sincronizar con Supabase en background
       try {
-        showToast('Conectando con Supabase…', 2000);
         const [leadsRes, clientsRes] = await Promise.all([
           sb.from('leads').select('*').order('created_at', { ascending: false }),
           sb.from('clients').select('*').order('created_at', { ascending: false })
         ]);
-        if (leadsRes.error) throw leadsRes.error;
-        if (clientsRes.error) throw clientsRes.error;
+        const err = leadsRes.error || clientsRes.error;
+        if (err) {
+          if (err.code === '42P01') showToast('⚠ Tablas no encontradas — corré finco-schema.sql en Supabase');
+          else console.warn('Supabase load:', err.message);
+          return;
+        }
         this.leads   = (leadsRes.data   || []).map(mapLead);
         this.clients = (clientsRes.data || []).map(mapClient);
-        refreshStats();
-        renderSavedLeads();
-        renderClientsTable();
-      } catch (e) {
-        console.warn('FINCO load error', e);
-        showToast('⚠ Sin conexión a Supabase — modo offline', 4000);
-      }
+        _saveLocal();
+        // Limpiar cards de pipeline antes de re-renderizar para evitar duplicados
+        document.querySelectorAll('#page-crm .pipeline-body').forEach(b => {
+          b.querySelectorAll('.lead-card:not([data-demo])').forEach(c => c.remove());
+        });
+        refreshStats(); renderSavedLeads(); renderClientsTable();
+      } catch(e) { console.warn('Supabase sync error:', e.message); }
+      // 3. Sincronizar transactions por separado (tabla puede no existir aún)
+      try {
+        const { data, error } = await sb.from('transactions').select('*').order('date', { ascending: false });
+        if (!error) {
+          this.transactions = (data || []).map(mapTransaction);
+          _saveLocal();
+          renderTransactionsList(currentTxFilter); refreshFinanzas();
+        }
+      } catch(e) { console.warn('Supabase transactions sync:', e.message); }
     },
 
     async addLead(lead) {
-      const { data, error } = await sb.from('leads').insert({
-        name: lead.name, company: lead.company, industry: lead.industry,
-        value: lead.value || 0, stage_idx: lead.stageIdx || 0,
-        source: lead.source, email: lead.email, notes: lead.notes
-      }).select().single();
-      if (error) throw error;
-      const mapped = mapLead(data);
-      this.leads.unshift(mapped);
-      return mapped;
+      // Guardar localmente de inmediato (funciona aunque Supabase falle)
+      const local = { id: _genId(), name: lead.name, company: lead.company,
+        industry: lead.industry, value: lead.value || 0, stageIdx: lead.stageIdx || 0,
+        source: lead.source, email: lead.email, notes: lead.notes,
+        createdAt: new Date().toISOString() };
+      this.leads.unshift(local);
+      _saveLocal();
+      // Intentar sync a Supabase
+      try {
+        const { data, error } = await sb.from('leads').insert({
+          name: lead.name, company: lead.company, industry: lead.industry,
+          value: lead.value || 0, stage_idx: lead.stageIdx || 0,
+          source: lead.source, email: lead.email, notes: lead.notes
+        }).select().single();
+        if (!error && data) {
+          const mapped = mapLead(data);
+          const idx = this.leads.findIndex(l => l.id === local.id);
+          if (idx >= 0) {
+            this.leads[idx] = mapped;
+            const card = document.querySelector('.lead-card[data-id="' + local.id + '"]');
+            if (card) card.dataset.id = mapped.id;
+          }
+          _saveLocal();
+          return mapped;
+        }
+      } catch(e) { console.warn('Supabase addLead (guardado local):', e.message); }
+      return local;
     },
 
     async addClient(client) {
-      const { data, error } = await sb.from('clients').insert({
-        name: client.name, company: client.company, industry: client.industry,
-        service: client.service, status: client.status || 'active',
-        fee: client.fee || 0, start_date: client.startDate,
-        email: client.email, notes: client.notes
-      }).select().single();
-      if (error) throw error;
-      const mapped = mapClient(data);
-      this.clients.unshift(mapped);
-      return mapped;
+      // Guardar localmente de inmediato (funciona aunque Supabase falle)
+      const local = { id: _genId(), name: client.name, company: client.company,
+        industry: client.industry, service: client.service, status: client.status || 'active',
+        fee: client.fee || 0, startDate: client.startDate, email: client.email,
+        notes: client.notes, createdAt: new Date().toISOString(),
+        processes: [], meetings: { upcoming: [], past: [] }, notesList: [], docs: [] };
+      this.clients.unshift(local);
+      _saveLocal();
+      // Intentar sync a Supabase
+      try {
+        const { data, error } = await sb.from('clients').insert({
+          name: client.name, company: client.company, industry: client.industry,
+          service: client.service, status: client.status || 'active',
+          fee: client.fee || 0, start_date: client.startDate,
+          email: client.email, notes: client.notes
+        }).select().single();
+        if (!error && data) {
+          const mapped = mapClient(data);
+          const idx = this.clients.findIndex(c => c.id === local.id);
+          if (idx >= 0) this.clients[idx] = mapped;
+          _saveLocal();
+          return mapped;
+        }
+      } catch(e) { console.warn('Supabase addClient (guardado local):', e.message); }
+      return local;
     },
 
-    async updateClient(id, changes) {
+    updateClient(id, changes) {
       const isDemo = FINCO_DEMO_CLIENTS.some(c => c.id === id);
       if (isDemo) {
         this.clientOverrides[id] = Object.assign({}, this.clientOverrides[id] || {}, changes);
       } else {
-        await sb.from('clients').update({
-          name: changes.name, company: changes.company, industry: changes.industry,
-          service: changes.service, status: changes.status,
-          fee: changes.fee, start_date: changes.startDate,
-          email: changes.email, notes: changes.notes
-        }).eq('id', id);
         const idx = this.clients.findIndex(c => c.id === id);
         if (idx >= 0) Object.assign(this.clients[idx], changes);
+        // Sync Supabase en background
+        if (!id.startsWith('local_')) {
+          sb.from('clients').update({
+            name: changes.name, company: changes.company, industry: changes.industry,
+            service: changes.service, status: changes.status, fee: changes.fee,
+            start_date: changes.startDate, email: changes.email, notes: changes.notes
+          }).eq('id', id).then(({ error }) => {
+            if (error) console.warn('Supabase updateClient:', error.message);
+          });
+        }
       }
+      _saveLocal();
     },
 
-    async removeLead(id) {
-      await sb.from('leads').delete().eq('id', id);
-      this.leads = this.leads.filter(l => l.id !== id);
-    },
-
-    async removeClient(id) {
+    removeClient(id) {
       const isDemo = FINCO_DEMO_CLIENTS.some(c => c.id === id);
       if (isDemo) {
         if (!this.deletedDemoIds.includes(id)) this.deletedDemoIds.push(id);
       } else {
-        await sb.from('clients').delete().eq('id', id);
         this.clients = this.clients.filter(c => c.id !== id);
+        if (!id.startsWith('local_')) {
+          sb.from('clients').delete().eq('id', id).then(({ error }) => {
+            if (error) console.warn('Supabase removeClient:', error.message);
+          });
+        }
+      }
+      _saveLocal();
+    },
+
+    removeLead(id) {
+      this.leads = this.leads.filter(l => l.id !== id);
+      _saveLocal();
+      if (!id.startsWith('local_')) {
+        sb.from('leads').delete().eq('id', id).then(({ error }) => {
+          if (error) console.warn('Supabase removeLead:', error.message);
+        });
       }
     },
 
-    // Devuelve todos los clientes visibles: demo (con overrides) + reales
     allClients() {
       const demos = FINCO_DEMO_CLIENTS
         .filter(c => !this.deletedDemoIds.includes(c.id))
@@ -4057,6 +4175,47 @@
       return demos.concat(this.clients);
     },
     getClient(id) { return this.allClients().find(c => c.id === id); },
+    allTransactions() {
+      const demos = FINCO_DEMO_TRANSACTIONS.filter(t => !this.deletedDemoTxIds.includes(t.id));
+      return demos.concat(this.transactions);
+    },
+    async addTransaction(tx) {
+      const local = { id: _genId(), type: tx.type, description: tx.description,
+        category: tx.category, amount: tx.amount, currency: tx.currency,
+        method: tx.method, date: tx.date, clientId: tx.clientId || null,
+        notes: tx.notes, createdAt: new Date().toISOString() };
+      this.transactions.unshift(local);
+      _saveLocal();
+      try {
+        const { data, error } = await sb.from('transactions').insert({
+          type: tx.type, description: tx.description, category: tx.category,
+          amount: tx.amount, currency: tx.currency, method: tx.method,
+          date: tx.date, client_id: tx.clientId || null, notes: tx.notes || null
+        }).select().single();
+        if (!error && data) {
+          const mapped = mapTransaction(data);
+          const idx = this.transactions.findIndex(t => t.id === local.id);
+          if (idx >= 0) this.transactions[idx] = mapped;
+          _saveLocal();
+          return mapped;
+        }
+      } catch(e) { console.warn('Supabase addTransaction (guardado local):', e.message); }
+      return local;
+    },
+    removeTransaction(id) {
+      const isDemo = FINCO_DEMO_TRANSACTIONS.some(t => t.id === id);
+      if (isDemo) {
+        if (!this.deletedDemoTxIds.includes(id)) this.deletedDemoTxIds.push(id);
+      } else {
+        this.transactions = this.transactions.filter(t => t.id !== id);
+        if (!id.startsWith('local_')) {
+          sb.from('transactions').delete().eq('id', id).then(({ error }) => {
+            if (error) console.warn('Supabase removeTransaction:', error.message);
+          });
+        }
+      }
+      _saveLocal();
+    },
     getClientByName(name) {
       if (!name) return null;
       const lower = String(name).toLowerCase();
@@ -4068,27 +4227,26 @@
         (c.company && c.company.toLowerCase().includes(lower))
       );
     },
-
     reset() {
-      if (!confirm('¿Borrar todos los datos reales en Supabase? Esta acción no se puede deshacer.')) return;
+      if (!confirm('¿Borrar todos los datos? Se eliminará el almacenamiento local y los datos en Supabase.')) return;
+      localStorage.removeItem(FINCO_LS_KEY);
       Promise.all([
         sb.from('leads').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
         sb.from('clients').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
         sb.from('documents').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
-      ]).then(() => location.reload());
+        sb.from('transactions').delete().neq('id', '00000000-0000-0000-0000-000000000000'),
+      ]).catch(() => {}).finally(() => location.reload());
     },
-
     exportJSON() {
       const blob = new Blob([JSON.stringify({ leads: this.leads, clients: this.clients }, null, 2)],
         { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `finco-data-${new Date().toISOString().split('T')[0]}.json`;
+      const a = document.createElement('a'); a.href = url;
+      a.download = 'finco-data-' + new Date().toISOString().split('T')[0] + '.json';
       a.click(); URL.revokeObjectURL(url);
     }
   };
 
-  // Iniciar: carga datos desde Supabase
   window.FINCO = FINCO;
   FINCO.load();
 
@@ -4238,17 +4396,17 @@
     refreshStats();
   }
 
-  async function deleteLead(id) {
+  function deleteLead(id) {
     if (!confirm('¿Eliminar este lead?')) return;
-    const card = document.querySelector(`.lead-card[data-id="${id}"]`);
+    const card = document.querySelector('.lead-card[data-id="' + id + '"]');
     if (card) card.remove();
-    await FINCO.removeLead(id);
+    FINCO.removeLead(id);
     refreshStats();
     showToast('Lead eliminado');
   }
-  async function deleteClient(id) {
+  function deleteClient(id) {
     if (!confirm('¿Eliminar este cliente?')) return;
-    await FINCO.removeClient(id);
+    FINCO.removeClient(id);
     renderClientsTable();
     showToast('Cliente eliminado');
   }
@@ -4684,6 +4842,122 @@
     return (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
   }
 
+  // ============ FINANZAS — TRANSACTIONS ============
+  function renderTransactionsList(filter) {
+    currentTxFilter = filter || 'all';
+    const wrap = document.getElementById('finMovimientosList');
+    if (!wrap) return;
+    let txs = FINCO.allTransactions();
+    if (filter === 'in')  txs = txs.filter(t => t.type === 'in');
+    if (filter === 'out') txs = txs.filter(t => t.type === 'out');
+    if (!txs.length) {
+      wrap.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin movimientos registrados. Usá "+ Registrar movimiento" para empezar.</div>`;
+      return;
+    }
+    wrap.innerHTML = txs.map(tx => {
+      const amt    = parseFloat(tx.amount) || 0;
+      const amtFmt = amt.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      const sign   = tx.type === 'in' ? '+' : '−';
+      const cls    = tx.type === 'in' ? 'in' : 'out';
+      const symbol = tx.currency === 'ARS' ? 'AR$' : '$';
+      const dateLabel = tx.date
+        ? new Date(tx.date + 'T12:00:00').toLocaleDateString('es-AR', { day:'2-digit', month:'short' })
+        : '';
+      return `
+        <div class="flow-row" data-tx-id="${escapeHtml(String(tx.id))}">
+          <div class="flow-icon ${cls}">${tx.type === 'in' ? '↑' : '↓'}</div>
+          <div>
+            <div class="flow-desc">${escapeHtml(tx.description)}</div>
+            <div class="flow-meta">${escapeHtml(tx.category || '')}${tx.method ? ' · ' + escapeHtml(tx.method) : ''}${tx.currency === 'ARS' ? ' · ARS' : ''}</div>
+          </div>
+          <div class="flow-amount ${cls}">${sign}${symbol}${amtFmt}</div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <span class="flow-date">${dateLabel}</span>
+            <button class="row-delete" onclick="deleteTransaction('${escapeHtml(String(tx.id))}')" title="Eliminar">×</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function refreshFinanzas() {
+    const txs    = FINCO.allTransactions();
+    const ingUSD = txs.filter(t => t.type === 'in'  && t.currency !== 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+    const egrUSD = txs.filter(t => t.type === 'out' && t.currency !== 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+    const ingARS = txs.filter(t => t.type === 'in'  && t.currency === 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+    const egrARS = txs.filter(t => t.type === 'out' && t.currency === 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+    const netoUSD = ingUSD - egrUSD;
+    const fmt    = v => '$' + Math.abs(v).toLocaleString('es-AR', { minimumFractionDigits:0, maximumFractionDigits:0 });
+    const fmtARS = v => 'AR$' + Math.abs(v).toLocaleString('es-AR', { minimumFractionDigits:0, maximumFractionDigits:0 });
+    setText('finKpiIngUSD', fmt(ingUSD));
+    setText('finKpiIngARS', ingARS > 0 ? '+ ' + fmtARS(ingARS) + ' ARS' : '');
+    setText('finKpiEgrUSD', fmt(egrUSD));
+    setText('finKpiEgrARS', egrARS > 0 ? '+ ' + fmtARS(egrARS) + ' ARS' : '');
+    setText('finKpiNetoUSD', (netoUSD < 0 ? '−' : '') + fmt(netoUSD));
+    const netoEl = document.getElementById('finKpiNetoUSD');
+    if (netoEl) netoEl.className = 'kpi-value ' + (netoUSD >= 0 ? 'gold' : '');
+    setText('finKpiNetoTrend', netoUSD >= 0 ? 'Resultado positivo' : 'Resultado negativo');
+  }
+
+  function filterTransactions(type, tab) {
+    document.querySelectorAll('#page-finanzas .tabs .tab').forEach(t => t.classList.remove('active'));
+    if (tab) tab.classList.add('active');
+    renderTransactionsList(type);
+  }
+
+  function deleteTransaction(id) {
+    if (!confirm('¿Eliminar este movimiento?')) return;
+    FINCO.removeTransaction(id);
+    renderTransactionsList(currentTxFilter);
+    refreshFinanzas();
+    showToast('Movimiento eliminado');
+  }
+
+  function openNewTransaction() {
+    const m = document.getElementById('newTransactionModal');
+    m.querySelector('form').reset();
+    m.querySelector('input[name="date"]').value = new Date().toISOString().split('T')[0];
+    updateTxCategories('in');
+    m.classList.add('show');
+  }
+  function closeNewTransaction() {
+    document.getElementById('newTransactionModal').classList.remove('show');
+  }
+  function updateTxCategories(type) {
+    const sel = document.getElementById('txCategorySelect');
+    if (!sel) return;
+    const cats = type === 'out'
+      ? ['Infraestructura / Hosting', 'Software / Herramientas', 'Colaboradores externos', 'Otro']
+      : ['Fee P02', 'Fee P01', 'Ingreso extra', 'Otro'];
+    sel.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+  async function submitNewTransaction(e) {
+    e.preventDefault();
+    const f   = e.target;
+    const btn = document.getElementById('txSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      const tx = await FINCO.addTransaction({
+        type:        f.type.value,
+        description: f.description.value.trim(),
+        category:    f.category.value,
+        amount:      parseFloat(f.amount.value) || 0,
+        currency:    f.currency.value,
+        method:      f.method.value,
+        date:        f.date.value,
+        notes:       f.notes.value.trim()
+      });
+      renderTransactionsList(currentTxFilter);
+      refreshFinanzas();
+      closeNewTransaction();
+      showToast(`"${tx.description}" registrado`);
+    } catch(err) {
+      showToast('Error guardando el movimiento');
+      console.error(err);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Registrar';
+    }
+  }
+
   // Legacy alias
   function openLead(name) { openClient(name); }
 
@@ -4720,10 +4994,11 @@
     if (!currentClientId) return;
     const c = FINCO.getClient(currentClientId);
     if (!c) return;
-    if (!confirm(`¿Eliminar a "${c.name}"? Esta acción se puede revertir con FINCO.reset()`)) return;
+    if (!confirm('¿Eliminar a "' + (c.name||'') + '"?')) return;
     FINCO.removeClient(currentClientId);
+    currentClientId = null;
     renderClientsTable();
-    showToast(`Cliente "${c.name}" eliminado`);
+    showToast('"' + (c.name||'') + '" eliminado');
     goToPage('clientes');
   }
 
@@ -4856,8 +5131,6 @@
   }
 
   function persistClientChange(c) {
-    // Los cambios de ficha (notas, procesos) son locales en sesión.
-    // Para cambios de datos del cliente usar el form de Alta/Editar.
     const isDemo = FINCO_DEMO_CLIENTS.some(d => d.id === c.id);
     if (isDemo) {
       FINCO.clientOverrides[c.id] = Object.assign({}, FINCO.clientOverrides[c.id] || {}, {
@@ -4867,8 +5140,7 @@
       const idx = FINCO.clients.findIndex(x => x.id === c.id);
       if (idx >= 0) FINCO.clients[idx] = c;
     }
-    // Nota: los cambios de ficha se persisten en sesión.
-    // Los campos de datos del cliente se sincronizan via updateClient().
+    _saveLocal();
   }
 
   function activateDetailTab(name) {
@@ -5000,19 +5272,19 @@
     };
     try {
       if (editMode) {
-        await FINCO.updateClient(editMode, data);
+        FINCO.updateClient(editMode, data);
         renderClientsTable();
         if (currentClientId === editMode) {
           const updated = FINCO.getClient(editMode);
           if (updated) renderClientDetail(updated);
         }
         closeNewClient();
-        showToast(`Cliente "${data.name}" actualizado`);
+        showToast('Cliente "' + data.name + '" actualizado');
       } else {
         const client = await FINCO.addClient(data);
         renderClientsTable();
         closeNewClient();
-        showToast(`Cliente "${client.name}" agregado a la cartera`);
+        showToast('Cliente "' + client.name + '" agregado a la cartera');
       }
     } catch(err) {
       showToast('Error guardando el cliente — revisá la conexión');
@@ -5023,11 +5295,13 @@
     }
   }
 
-  // Render inicial: clientes desde data + leads guardados + wire de demos + stats
+  // Render inicial: clientes desde data + leads guardados + wire de demos + stats + finanzas
   renderClientsTable();
   wireDemoLeadCards();
   renderSavedLeads();
   refreshStats();
+  renderTransactionsList('all');
+  refreshFinanzas();
 
   // ============ TOAST ============
   function showToast(msg) {
@@ -5049,7 +5323,7 @@
   }
 
   // Click outside to close form modals
-  ['newLeadModal', 'newClientModal'].forEach(id => {
+  ['newLeadModal', 'newClientModal', 'newTransactionModal'].forEach(id => {
     const m = document.getElementById(id);
     if (m) m.addEventListener('click', e => {
       if (e.target === m) m.classList.remove('show');
@@ -5131,19 +5405,18 @@
 
     let html = '';
     // Celdas vacías al inicio
-    for (let i = 0; i < offset; i++) html += '<div class="cal-day cal-day-empty"></div>';
+    for (let i = 0; i < offset; i++) html += '<div class="cal-cell other-month"></div>';
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
       const events = calEvents[dateStr] || [];
       // También buscar en FINCO.leads y clientes futuros (por ahora demo)
       const isToday = dateStr === todayStr;
-      const isPast = dateStr < todayStr;
       let evHtml = events.map(ev => {
-        const cls = ev.type === 'p02' ? 'gold' : ev.type === 'lead' ? 'muted' : ev.type === 'interno' ? 'blue' : 'dim';
+        const cls = ev.type === 'p02' ? 'p02' : ev.type === 'lead' ? 'lead' : ev.type === 'interno' ? 'intern' : 'p01';
         return `<div class="cal-event ${cls}" title="${ev.n}">${ev.t} ${ev.n}</div>`;
       }).join('');
-      html += `<div class="cal-day${isToday ? ' today' : ''}${isPast ? ' past' : ''}" data-date="${dateStr}">
-        <span class="cal-day-num">${d}</span>
+      html += `<div class="cal-cell${isToday ? ' today' : ''}" data-date="${dateStr}">
+        <div class="cal-day">${d}</div>
         <div class="cal-events">${evHtml}</div>
       </div>`;
     }
