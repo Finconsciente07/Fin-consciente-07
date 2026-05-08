@@ -5778,23 +5778,24 @@
     const grid = document.getElementById('fincoObjetivosGrid');
     if (!grid) return;
 
-    if (!_fincoObjetivos.length) {
-      grid.innerHTML = `
-        <div style="text-align:center;padding:80px 32px;">
-          <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-style:italic;color:var(--text-muted);margin-bottom:12px;">Sin objetivos definidos</div>
-          <div style="font-size:13px;color:var(--text-muted);margin-bottom:28px;">Definí las metas de negocio de FINCO y seguí el progreso automáticamente.</div>
-          <button class="btn" onclick="openNewFincoObjetivo()">+ Definir primer objetivo</button>
-        </div>`;
-      return;
-    }
-
+    const active   = _fincoObjetivos.filter(o => !o.archived);
+    const archived = _fincoObjetivos.filter(o =>  o.archived);
     const now = new Date();
-    grid.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;">` +
-      _fincoObjetivos.map(obj => {
-        const current = _getObjetivoCurrentValue(obj);
-        const target  = parseFloat(obj.target) || 1;
-        const pct     = Math.min(100, Math.round((current / target) * 100));
-        const done    = pct >= 100;
+
+    // ── Active objectives grid ──────────────────────────
+    let activeHtml = '';
+    if (!active.length) {
+      activeHtml = `<div style="text-align:center;padding:80px 32px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-style:italic;color:var(--text-muted);margin-bottom:12px;">Sin objetivos vigentes</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:28px;">Definí las metas de negocio de FINCO y seguí el progreso automáticamente.</div>
+        <button class="btn" onclick="openNewFincoObjetivo()">+ Definir primer objetivo</button>
+      </div>`;
+    } else {
+      const cardsHtml = active.map(obj => {
+        const current  = _getObjetivoCurrentValue(obj);
+        const target   = parseFloat(obj.target) || 1;
+        const pct      = Math.min(100, Math.round((current / target) * 100));
+        const done     = pct >= 100;
         const catLabel = _objCatLabel[obj.category] || 'Personalizado';
         const barColor = done ? 'var(--success)' : pct >= 70 ? 'var(--gold)' : pct >= 40 ? 'var(--warning)' : 'var(--danger)';
 
@@ -5807,13 +5808,15 @@
             : `${daysLeft} día${daysLeft!==1?'s':''} restante${daysLeft!==1?'s':''}`;
         }
 
-        return `<div class="kpi-detail obj-card" style="position:relative;padding:22px 24px 20px;" data-id="${escapeHtml(String(obj.id))}">
-          <div class="obj-actions" style="position:absolute;top:12px;right:12px;display:flex;gap:4px;opacity:0;transition:opacity 0.2s;">
-            <button onclick="editFincoObjetivo('${escapeHtml(String(obj.id))}')" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:0.3px;">Editar</button>
+        return `<div class="kpi-detail obj-card" draggable="true" style="position:relative;padding:22px 24px 20px;cursor:grab;user-select:none;" data-id="${escapeHtml(String(obj.id))}">
+          <div class="obj-actions" style="position:absolute;top:12px;right:12px;display:flex;gap:4px;align-items:center;opacity:0;transition:opacity 0.2s;">
+            <button onclick="editFincoObjetivo('${escapeHtml(String(obj.id))}')" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:10px;padding:2px 7px;border-radius:2px;cursor:pointer;">Editar</button>
+            <button onclick="archiveFincoObjetivo('${escapeHtml(String(obj.id))}',true)" title="Marcar como cumplido" style="background:none;border:1px solid rgba(127,176,105,0.35);color:var(--success);font-size:11px;padding:2px 6px;border-radius:2px;cursor:pointer;">✓</button>
+            <button onclick="archiveFincoObjetivo('${escapeHtml(String(obj.id))}',false)" title="No logrado — archivar" style="background:none;border:1px solid rgba(217,119,87,0.35);color:var(--danger);font-size:11px;padding:2px 6px;border-radius:2px;cursor:pointer;">✗</button>
             <button onclick="deleteFincoObjetivo('${escapeHtml(String(obj.id))}')" style="background:none;border:none;color:var(--text-muted);font-size:16px;line-height:1;cursor:pointer;padding:0 3px;" title="Eliminar">×</button>
           </div>
           <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">${catLabel}</div>
-          <div style="font-size:15px;font-weight:500;color:var(--cream);margin-bottom:16px;padding-right:60px;">${escapeHtml(obj.title)}</div>
+          <div style="font-size:15px;font-weight:500;color:var(--cream);margin-bottom:16px;padding-right:96px;">${escapeHtml(obj.title)}</div>
           <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;">
             <div>
               <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:${barColor};line-height:1;">${_formatObjetivoValue(current, obj.unit)}</div>
@@ -5828,13 +5831,91 @@
           ${obj.notes ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5;border-top:1px solid rgba(201,168,76,0.06);padding-top:8px;">${escapeHtml(obj.notes)}</div>` : ''}
           ${done ? `<div style="position:absolute;top:12px;left:16px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--success);border:1px solid var(--success);padding:2px 6px;border-radius:2px;opacity:0.7;">✓ Completado</div>` : ''}
         </div>`;
-      }).join('') + `</div>`;
+      }).join('');
 
+      activeHtml = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;letter-spacing:0.3px;">Arrastrá las tarjetas para ordenarlas.</div>
+        <div id="objDragGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;">${cardsHtml}</div>`;
+    }
+
+    // ── Histórico section ───────────────────────────────
+    let historicoHtml = '';
+    if (archived.length) {
+      const rows = archived.slice().reverse().map(obj => {
+        const achieved    = obj.achieved;
+        const archivedDate = obj.archivedAt
+          ? new Date(obj.archivedAt).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' })
+          : '—';
+        const catLabel  = _objCatLabel[obj.category] || 'Personalizado';
+        const targetFmt = _formatObjetivoValue(parseFloat(obj.target)||0, obj.unit);
+        return `<div style="display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line);">
+          <div style="width:84px;flex-shrink:0;text-align:center;">
+            <span style="font-size:9px;letter-spacing:0.8px;text-transform:uppercase;padding:3px 7px;border-radius:2px;${achieved ? 'color:var(--success);border:1px solid rgba(127,176,105,0.4);background:rgba(127,176,105,0.07);' : 'color:var(--text-muted);border:1px solid var(--line-bright);background:rgba(0,0,0,0.1);'}">${achieved ? '✓ Cumplido' : '✗ No logrado'}</span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;color:var(--text-strong);font-weight:500;">${escapeHtml(obj.title)}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${catLabel} · Meta: ${targetFmt}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:11px;color:var(--text-muted);">${archivedDate}</div>
+            <button onclick="restoreFincoObjetivo('${escapeHtml(String(obj.id))}')" style="margin-top:5px;background:none;border:none;color:var(--text-muted);font-size:10px;cursor:pointer;text-decoration:underline;padding:0;" title="Restaurar a activos">Restaurar</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      historicoHtml = `<div class="section" style="margin-top:40px;">
+        <div class="section-head">
+          <span class="section-num">Histórico</span>
+          <div class="section-line"></div>
+          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;padding-left:12px;">${archived.length} objetivo${archived.length!==1?'s':''}</span>
+        </div>
+        <div class="card"><div class="card-body" style="padding:0 24px;">${rows}</div></div>
+      </div>`;
+    }
+
+    grid.innerHTML = activeHtml + historicoHtml;
+
+    // Hover reveal for actions
     grid.querySelectorAll('.obj-card').forEach(card => {
       const actions = card.querySelector('.obj-actions');
       if (!actions) return;
       card.addEventListener('mouseenter', () => actions.style.opacity = '1');
       card.addEventListener('mouseleave', () => actions.style.opacity = '0');
+    });
+
+    // Drag-and-drop reorder (active only)
+    let _dragId = null, _dragOverId = null;
+    grid.querySelectorAll('.obj-card[draggable]').forEach(card => {
+      card.addEventListener('dragstart', e => {
+        _dragId = card.dataset.id;
+        e.dataTransfer.effectAllowed = 'move';
+        setTimeout(() => { card.style.opacity = '0.4'; card.style.cursor = 'grabbing'; }, 0);
+      });
+      card.addEventListener('dragend', () => {
+        card.style.opacity = '';
+        card.style.cursor  = 'grab';
+        grid.querySelectorAll('.obj-card').forEach(c => c.style.outline = '');
+      });
+      card.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        grid.querySelectorAll('.obj-card').forEach(c => c.style.outline = '');
+        card.style.outline = '1px solid var(--gold-dim)';
+        _dragOverId = card.dataset.id;
+      });
+      card.addEventListener('drop', e => {
+        e.preventDefault();
+        if (!_dragId || _dragId === _dragOverId) return;
+        const act = _fincoObjetivos.filter(o => !o.archived);
+        const arc = _fincoObjetivos.filter(o =>  o.archived);
+        const fromIdx = act.findIndex(o => String(o.id) === String(_dragId));
+        const toIdx   = act.findIndex(o => String(o.id) === String(_dragOverId));
+        if (fromIdx === -1 || toIdx === -1) return;
+        const [moved] = act.splice(fromIdx, 1);
+        act.splice(toIdx, 0, moved);
+        _fincoObjetivos = [...act, ...arc];
+        _saveLocal();
+        renderObjetivosFinco();
+      });
     });
   }
 
@@ -5928,8 +6009,32 @@
     m.classList.add('show');
   }
 
+  function archiveFincoObjetivo(id, achieved) {
+    const obj = _fincoObjetivos.find(o => o.id === id);
+    if (!obj) return;
+    const verb = achieved ? 'cumplido' : 'no logrado';
+    if (!confirm(`¿Marcar "${obj.title}" como ${verb} y moverlo al histórico?`)) return;
+    obj.archived   = true;
+    obj.achieved   = achieved;
+    obj.archivedAt = new Date().toISOString();
+    _saveLocal();
+    renderObjetivosFinco();
+    showToast(achieved ? '¡Objetivo cumplido! Movido al histórico.' : 'Objetivo archivado como no logrado.');
+  }
+
+  function restoreFincoObjetivo(id) {
+    const obj = _fincoObjetivos.find(o => o.id === id);
+    if (!obj) return;
+    obj.archived   = false;
+    obj.achieved   = null;
+    obj.archivedAt = null;
+    _saveLocal();
+    renderObjetivosFinco();
+    showToast('Objetivo restaurado a activos');
+  }
+
   function deleteFincoObjetivo(id) {
-    if (!confirm('¿Eliminar este objetivo?')) return;
+    if (!confirm('¿Eliminar este objetivo permanentemente?')) return;
     _fincoObjetivos = _fincoObjetivos.filter(o => o.id !== id);
     _saveLocal();
     renderObjetivosFinco();
