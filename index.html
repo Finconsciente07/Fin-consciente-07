@@ -1745,6 +1745,11 @@
         <span class="nav-icon">✦</span>
         <span>Finanzas</span>
       </div>
+      <div class="nav-item" data-page="cobranzas">
+        <span class="nav-icon">◈</span>
+        <span>Cobranzas</span>
+        <span class="nav-badge" id="navBadgeCobranzas">—</span>
+      </div>
       <div class="nav-item" data-page="servicios">
         <span class="nav-icon">◆</span>
         <span>Servicios</span>
@@ -2324,6 +2329,56 @@
         </div>
         <div class="kpi-detail-grid" id="finReportesGrid"><!-- dinámico --></div>
       </div>
+    </div>
+
+    <!-- ===================== COBRANZAS ===================== -->
+    <div class="page" id="page-cobranzas">
+      <div class="page-header-row" style="margin-bottom:36px;">
+        <div>
+          <div class="page-eyebrow" id="cobEyebrow">Cobranzas · Mayo 2026</div>
+          <h1 class="page-title">Cobros <em>al día</em>.</h1>
+          <p class="page-sub">Estado de facturación mensual por cliente. Marcá cada cobro cuando ingresa.</p>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost" onclick="renderCobranzas()">Actualizar</button>
+          <button class="btn" onclick="_generateCobranzasManual()">+ Generar período</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grid" id="cobKpiGrid" style="margin-bottom:32px;">
+        <div class="kpi-card">
+          <div class="kpi-label">MRR esperado</div>
+          <div class="kpi-value gold" id="cobKpiMRR">—</div>
+          <div class="kpi-trend" id="cobKpiMRRSub">clientes activos</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Cobrado este mes</div>
+          <div class="kpi-value" id="cobKpiCobrado">—</div>
+          <div class="kpi-trend" id="cobKpiCobradoSub">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Pendiente</div>
+          <div class="kpi-value" id="cobKpiPendiente">—</div>
+          <div class="kpi-trend down" id="cobKpiPendienteSub">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Vencido</div>
+          <div class="kpi-value" id="cobKpiVencido">—</div>
+          <div class="kpi-trend down" id="cobKpiVencidoSub">meses anteriores</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" id="cobTabs" style="margin-bottom:28px;">
+        <span class="tab active" onclick="switchCobTab('pendiente',this)">Pendientes</span>
+        <span class="tab" onclick="switchCobTab('overdue',this)">Vencidas</span>
+        <span class="tab" onclick="switchCobTab('paid',this)">Cobradas</span>
+        <span class="tab" onclick="switchCobTab('all',this)">Todas</span>
+      </div>
+
+      <!-- Lista de cobros -->
+      <div id="cobList"><!-- dinámico --></div>
     </div>
 
     <!-- ===================== SERVICIOS ===================== -->
@@ -3904,6 +3959,42 @@
   </div>
 </div>
 
+<!-- ============ MODAL: MARCAR COBRADO ============ -->
+<div class="modal-overlay" id="cobMarkModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeCobMark()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow" id="cobMarkEyebrow">Cobranzas · Registrar cobro</div>
+      <h2>Marcar <em>cobrado</em></h2>
+      <p class="modal-form-sub" id="cobMarkSub">Registrá el ingreso de este período.</p>
+    </div>
+    <form class="modal-form" onsubmit="submitCobMark(event); return false;">
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Monto cobrado (USD)<span class="req">*</span></label>
+          <input type="number" name="amountPaid" id="cobMarkAmount" class="form-input" min="0" step="any" required>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Fecha de cobro<span class="req">*</span></label>
+          <input type="date" name="paidAt" id="cobMarkDate" class="form-input" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">N° de referencia / factura</label>
+        <input type="text" name="invoiceRef" class="form-input" placeholder="Ej: FAC-0042">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Notas</label>
+        <textarea name="notes" class="form-textarea" placeholder="Transferencia, método de pago, etc."></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeCobMark()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Confirmar cobro</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ============ MODAL: NUEVO MOVIMIENTO ============ -->
 <div class="modal-overlay" id="newEventModal">
   <div class="modal">
@@ -4238,7 +4329,8 @@
         events: FINCO.events, deletedDemoEventIds: FINCO.deletedDemoEventIds,
         teamMembers: _teamMembers, rolePerms: _rolePerms,
         fincoObjetivos: _fincoObjetivos,
-        svcCatalog: _svcCatalog
+        svcCatalog: _svcCatalog,
+        cobranzas: _cobranzas
       }));
     } catch(e) {}
   }
@@ -5149,6 +5241,7 @@
     if (page === 'equipo')     renderTeamGrid();
     if (page === 'servicios')  renderServiciosGrid();
     if (page === 'finanzas')   { refreshFinanzas(); setTimeout(initCharts, 80); }
+    if (page === 'cobranzas')  renderCobranzas();
     if (page === 'resultados') { renderResultados(); setTimeout(initCharts, 80); }
     if (page === 'configuracion') { initRolePerms(); renderConsultorAccess(); }
     // Update back button label
@@ -5656,31 +5749,60 @@
   }
 
   function renderFacturacion() {
-    const now = new Date();
-    const today = now.getDate();
+    const now     = new Date();
+    const thisMo  = now.toISOString().slice(0, 7);
+    const todayStr = now.toISOString().slice(0, 10);
     const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    const shortMo = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const shortMo    = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    // Ensure cobranzas are up to date before reading
+    if (typeof _generateCobranzas === 'function') _generateCobranzas();
+
     const emiLabel = document.getElementById('finBillEmitidasLabel');
-    if (emiLabel) emiLabel.textContent = 'EMITIDAS '+monthNames[now.getMonth()].toUpperCase();
-    const billable = FINCO.allClients().filter(c=>(c.status==='active'||c.status==='onboarding')&&(parseFloat(c.fee)||0)>0);
-    const emitidas   = billable.length;
-    const cobradas   = billable.filter(c=>{ const d=c.startDate?new Date(c.startDate+'T12:00:00').getDate():1; return d<=today; }).length;
-    const pendientes = billable.filter(c=>{ const d=c.startDate?new Date(c.startDate+'T12:00:00').getDate():1; return d>today; }).length;
-    const vencidas   = billable.filter(c=>{ const d=c.startDate?new Date(c.startDate+'T12:00:00').getDate():1; return (d+5)<today; }).length;
-    setText('finBillEmitidas',  emitidas);
-    setText('finBillCobradas',  cobradas);
-    setText('finBillPendientes',pendientes);
-    setText('finBillVencidas',  vencidas);
+    if (emiLabel) emiLabel.textContent = 'EMITIDAS ' + monthNames[now.getMonth()].toUpperCase();
+
+    const thisMoCobs = _cobranzas.filter(c => c.period === thisMo);
+    const emitidas   = thisMoCobs.length;
+    const cobradas   = thisMoCobs.filter(c => c.status === 'paid' || c.status === 'partial').length;
+    const pendientes = thisMoCobs.filter(c => c.status === 'pending').length;
+    const vencidas   = thisMoCobs.filter(c => c.status === 'overdue').length;
+
+    setText('finBillEmitidas',  emitidas  || '—');
+    setText('finBillCobradas',  cobradas  || '—');
+    setText('finBillPendientes',pendientes || '—');
+    setText('finBillVencidas',  vencidas  || '—');
+
+    // Por Cobrar KPI — real data from cobranzas
+    const porCobrar = _cobranzas
+      .filter(c => c.status === 'pending' || c.status === 'overdue')
+      .reduce((s, c) => s + (c.amount || 0), 0);
+    const vencCount = _cobranzas.filter(c => c.status === 'overdue').length;
+    const fmtK = v => '$' + Math.round(v).toLocaleString('es-AR');
+    setText('finKpiPorCobrar',      fmtK(porCobrar));
+    setText('finKpiPorCobrarTrend', vencCount > 0 ? vencCount + ' vencida' + (vencCount !== 1 ? 's' : '') : 'Al día');
+
+    // Próximos vencimientos — pending entries with future due date
     const list = document.getElementById('finBillProximos');
     if (!list) return;
-    const upcoming = billable
-      .map(c=>({c, day: c.startDate?new Date(c.startDate+'T12:00:00').getDate():1}))
-      .filter(x=>x.day>=today).sort((a,b)=>a.day-b.day).slice(0,5);
-    if (!upcoming.length) { list.innerHTML=`<div style="font-size:12px;color:var(--text-muted);font-style:italic;">Sin vencimientos próximos.</div>`; return; }
-    list.innerHTML = upcoming.map(({c,day})=>{
-      const label=day+' '+shortMo[now.getMonth()];
-      const fee=(parseFloat(c.fee)||0).toLocaleString('es-AR');
-      return `<div style="font-size:12px;color:var(--cream);margin-bottom:6px;">${label} — ${escapeHtml(c.name)}<span style="color:var(--text-muted);float:right;">$${fee}</span></div>`;
+    const clientMap = {};
+    FINCO.allClients().forEach(c => { clientMap[c.id] = c; });
+    const upcoming = _cobranzas
+      .filter(c => (c.status === 'pending' || c.status === 'overdue') && c.period >= thisMo)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate))
+      .slice(0, 5);
+    if (!upcoming.length) {
+      list.innerHTML = `<div style="font-size:12px;color:var(--text-muted);font-style:italic;">Sin vencimientos próximos.</div>`;
+      return;
+    }
+    list.innerHTML = upcoming.map(cob => {
+      const cl  = clientMap[cob.clientId];
+      const name = cl ? escapeHtml(cl.name) : '—';
+      const d   = new Date(cob.dueDate + 'T12:00:00');
+      const lbl = d.getDate() + ' ' + shortMo[d.getMonth()];
+      const isOverdue = cob.status === 'overdue';
+      return `<div style="font-size:12px;color:${isOverdue?'var(--danger)':'var(--cream)'};margin-bottom:6px;">
+        ${lbl} — ${name}<span style="color:var(--text-muted);float:right;">${_cobFmt(cob.amount)}</span>
+      </div>`;
     }).join('');
   }
 
@@ -6478,6 +6600,271 @@
     openNewProcess();
   }
 
+  // ── Cobranzas ────────────────────────────────────────────────
+  let _cobranzas = [];
+  try {
+    const _cobRaw = localStorage.getItem('finco_v4');
+    if (_cobRaw) {
+      const _cobData = JSON.parse(_cobRaw);
+      if (Array.isArray(_cobData.cobranzas)) _cobranzas = _cobData.cobranzas;
+    }
+  } catch(e) {}
+
+  let _cobFilter = 'pendiente';
+  let _cobMarkId = null;
+
+  function _generateCobranzas() {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const now      = new Date();
+    const live = FINCO.allClients().filter(c =>
+      (c.status === 'active' || c.status === 'onboarding') && (parseFloat(c.fee) || 0) > 0
+    );
+
+    live.forEach(client => {
+      const fee = parseFloat(client.fee) || 0;
+      const rawStart = client.startDate || (client.createdAt || todayStr).slice(0, 10);
+      const start = new Date(rawStart + 'T12:00:00');
+      const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+      // Generate up to current month (not future)
+      const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+      while (cursor < endMonth) {
+        const period = cursor.toISOString().slice(0, 7);
+        const existing = _cobranzas.find(c => c.clientId === client.id && c.period === period);
+        const lastDay  = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0);
+        const dueDate  = lastDay.toISOString().slice(0, 10);
+
+        if (!existing) {
+          const status = dueDate < todayStr ? 'overdue' : 'pending';
+          _cobranzas.push({
+            id: _genId(), clientId: client.id, period,
+            amount: fee, amountPaid: null,
+            status, dueDate, paidAt: null, notes: '', invoiceRef: ''
+          });
+        } else {
+          // Escalate pending → overdue if past due
+          if (existing.status === 'pending' && existing.dueDate < todayStr) {
+            existing.status = 'overdue';
+          }
+          // Sync fee if not yet paid
+          if (existing.status !== 'paid' && existing.status !== 'waived') {
+            existing.amount = fee;
+          }
+        }
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+    });
+    _saveLocal();
+  }
+
+  function _generateCobranzasManual() {
+    _generateCobranzas();
+    renderCobranzas();
+    showToast('Períodos actualizados');
+  }
+
+  function _cobFmt(v) {
+    return '$' + (v || 0).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function _updateCobNavBadge() {
+    const pending = _cobranzas.filter(c => c.status === 'pending' || c.status === 'overdue').length;
+    const el = document.getElementById('navBadgeCobranzas');
+    if (el) el.textContent = pending || '—';
+  }
+
+  function renderCobranzas() {
+    _generateCobranzas();
+    const now     = new Date();
+    const thisMo  = now.toISOString().slice(0, 7);
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    // Update eyebrow
+    const eyebrow = document.getElementById('cobEyebrow');
+    if (eyebrow) eyebrow.textContent = `Cobranzas · ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+    // ── KPIs ──────────────────────────────────────────
+    const thisMoCobs   = _cobranzas.filter(c => c.period === thisMo);
+    const mrrEsperado  = thisMoCobs.reduce((s, c) => s + (c.amount || 0), 0);
+    const cobradoMes   = thisMoCobs.filter(c => c.status === 'paid' || c.status === 'partial')
+                                    .reduce((s, c) => s + (c.amountPaid || 0), 0);
+    const pendienteMes = thisMoCobs.filter(c => c.status === 'pending' || c.status === 'overdue')
+                                    .reduce((s, c) => s + (c.amount || 0), 0);
+    const vencidoTotal = _cobranzas.filter(c => c.status === 'overdue')
+                                    .reduce((s, c) => s + (c.amount || 0), 0);
+    const pendCount    = _cobranzas.filter(c => c.status === 'pending' || c.status === 'overdue').length;
+    const cobPct       = mrrEsperado > 0 ? Math.round((cobradoMes / mrrEsperado) * 100) : 0;
+
+    const st = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    st('cobKpiMRR',          _cobFmt(mrrEsperado));
+    st('cobKpiMRRSub',       thisMoCobs.length + ' cliente' + (thisMoCobs.length !== 1 ? 's' : ''));
+    st('cobKpiCobrado',      _cobFmt(cobradoMes));
+    st('cobKpiCobradoSub',   cobPct + '% del MRR esperado');
+    st('cobKpiPendiente',    _cobFmt(pendienteMes));
+    st('cobKpiPendienteSub', pendCount + ' cobro' + (pendCount !== 1 ? 's' : '') + ' pendiente' + (pendCount !== 1 ? 's' : ''));
+    st('cobKpiVencido',      _cobFmt(vencidoTotal));
+
+    // ── Filter ────────────────────────────────────────
+    let items = [..._cobranzas];
+    if (_cobFilter === 'pendiente') items = items.filter(c => c.status === 'pending' || c.status === 'overdue');
+    else if (_cobFilter === 'overdue') items = items.filter(c => c.status === 'overdue');
+    else if (_cobFilter === 'paid')    items = items.filter(c => c.status === 'paid' || c.status === 'partial' || c.status === 'waived');
+
+    // Sort: most recent period first, then client name
+    items.sort((a, b) => b.period.localeCompare(a.period) || (a._clientName || '').localeCompare(b._clientName || ''));
+
+    // Attach client data
+    const clientMap = {};
+    FINCO.allClients().forEach(c => { clientMap[c.id] = c; });
+    items = items.map(cob => ({ ...cob, _client: clientMap[cob.clientId] || null }))
+                 .filter(cob => cob._client); // skip if client was deleted
+
+    const list = document.getElementById('cobList');
+    if (!list) return;
+
+    if (!items.length) {
+      list.innerHTML = `<div style="text-align:center;padding:64px 32px;color:var(--text-muted);font-size:13px;font-style:italic;">
+        Sin cobros en esta categoría.
+      </div>`;
+      _updateCobNavBadge();
+      return;
+    }
+
+    // Group by period
+    const byPeriod = {};
+    items.forEach(cob => {
+      if (!byPeriod[cob.period]) byPeriod[cob.period] = [];
+      byPeriod[cob.period].push(cob);
+    });
+
+    const periods = Object.keys(byPeriod).sort((a, b) => b.localeCompare(a));
+
+    const statusBadge = (status) => {
+      const map = {
+        pending: `<span style="font-size:9px;letter-spacing:.8px;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid rgba(232,176,75,0.4);color:var(--warning);">Pendiente</span>`,
+        overdue: `<span style="font-size:9px;letter-spacing:.8px;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid rgba(217,119,87,0.5);color:var(--danger);">Vencida</span>`,
+        paid:    `<span style="font-size:9px;letter-spacing:.8px;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid rgba(127,176,105,0.4);color:var(--success);">Cobrada</span>`,
+        partial: `<span style="font-size:9px;letter-spacing:.8px;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid rgba(201,168,76,0.4);color:var(--gold);">Parcial</span>`,
+        waived:  `<span style="font-size:9px;letter-spacing:.8px;text-transform:uppercase;padding:3px 7px;border-radius:2px;border:1px solid var(--line-bright);color:var(--text-muted);">Eximida</span>`,
+      };
+      return map[status] || '';
+    };
+
+    list.innerHTML = periods.map(period => {
+      const [yr, mo] = period.split('-');
+      const moName = monthNames[parseInt(mo) - 1];
+      const group  = byPeriod[period];
+      const total  = group.reduce((s, c) => s + (c.amount || 0), 0);
+      const cobrado = group.filter(c => c.status === 'paid' || c.status === 'partial').reduce((s, c) => s + (c.amountPaid || 0), 0);
+
+      const rows = group.map(cob => {
+        const c      = cob._client;
+        const init   = (c.name || '?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+        const svcBadge = c.service === 'P02'
+          ? `<span style="font-size:9px;padding:1px 5px;border-radius:2px;border:1px solid var(--line-bright);color:var(--gold);margin-left:6px;">P02</span>`
+          : `<span style="font-size:9px;padding:1px 5px;border-radius:2px;border:1px solid var(--line);color:var(--text-muted);margin-left:6px;">P01</span>`;
+        const isPaid = cob.status === 'paid' || cob.status === 'partial' || cob.status === 'waived';
+        const paidInfo = isPaid && cob.paidAt
+          ? `<div style="font-size:10px;color:var(--text-muted);margin-top:3px;">${cob.status === 'waived' ? 'Eximida' : 'Cobrado'} el ${new Date(cob.paidAt + 'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short'})}${cob.invoiceRef ? ' · ' + escapeHtml(cob.invoiceRef) : ''}</div>` : '';
+        const amountDisplay = cob.status === 'partial'
+          ? `<div style="text-align:right;"><div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:var(--gold);">${_cobFmt(cob.amountPaid)}</div><div style="font-size:10px;color:var(--text-muted);">de ${_cobFmt(cob.amount)}</div></div>`
+          : `<div style="font-family:'Cormorant Garamond',serif;font-size:16px;color:${isPaid?'var(--success)':'var(--cream)'};">${_cobFmt(cob.amount)}</div>`;
+
+        const actionBtn = isPaid
+          ? `<button onclick="resetCobranza('${cob.id}')" title="Deshacer" style="background:none;border:1px solid var(--line);color:var(--text-muted);font-size:10px;padding:3px 8px;border-radius:2px;cursor:pointer;white-space:nowrap;">Deshacer</button>`
+          : `<button onclick="openCobMark('${cob.id}')" style="background:rgba(201,168,76,0.1);border:1px solid var(--line-bright);color:var(--gold);font-size:10px;padding:4px 12px;border-radius:2px;cursor:pointer;white-space:nowrap;">✓ Cobrado</button>`;
+
+        return `<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid rgba(201,168,76,0.05);">
+          <div class="client-avatar" style="flex-shrink:0;width:34px;height:34px;font-size:11px;">${escapeHtml(init)}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;color:var(--text-strong);font-weight:500;">${escapeHtml(c.name)}${svcBadge}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:1px;">${escapeHtml(c.company || '')}${c.company && cob.dueDate ? ' · ' : ''}${cob.dueDate ? 'Vence ' + new Date(cob.dueDate + 'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : ''}</div>
+            ${paidInfo}
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+            ${statusBadge(cob.status)}
+            ${amountDisplay}
+            ${actionBtn}
+          </div>
+        </div>`;
+      }).join('');
+
+      return `<div class="section" style="margin-bottom:32px;">
+        <div class="section-head">
+          <span class="section-num">${moName} ${yr}</span>
+          <div class="section-line"></div>
+          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;padding-left:12px;">${_cobFmt(cobrado)} / ${_cobFmt(total)}</span>
+        </div>
+        <div class="card"><div class="card-body" style="padding:0 24px;">${rows}</div></div>
+      </div>`;
+    }).join('');
+
+    _updateCobNavBadge();
+  }
+
+  function switchCobTab(filter, el) {
+    _cobFilter = filter;
+    document.querySelectorAll('#cobTabs .tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    renderCobranzas();
+  }
+
+  function openCobMark(id) {
+    const cob = _cobranzas.find(c => c.id === id);
+    if (!cob) return;
+    _cobMarkId = id;
+    const client = FINCO.allClients().find(c => c.id === cob.clientId);
+    const m = document.getElementById('cobMarkModal');
+    if (!m) return;
+    m.querySelector('form').reset();
+    document.getElementById('cobMarkEyebrow').textContent = 'Cobranzas · Registrar cobro';
+    const [yr, mo] = cob.period.split('-');
+    const moNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    document.getElementById('cobMarkSub').textContent = `${client ? client.name : ''} · ${moNames[parseInt(mo)-1]} ${yr} · ${_cobFmt(cob.amount)} esperado`;
+    document.getElementById('cobMarkAmount').value = cob.amount || '';
+    document.getElementById('cobMarkDate').value   = new Date().toISOString().slice(0, 10);
+    m.classList.add('show');
+  }
+
+  function closeCobMark() {
+    document.getElementById('cobMarkModal').classList.remove('show');
+    _cobMarkId = null;
+  }
+
+  function submitCobMark(e) {
+    e.preventDefault();
+    const cob = _cobranzas.find(c => c.id === _cobMarkId);
+    if (!cob) return;
+    const fd = new FormData(e.target);
+    const paid    = parseFloat(fd.get('amountPaid')) || 0;
+    const paidAt  = fd.get('paidAt') || new Date().toISOString().slice(0, 10);
+    cob.amountPaid  = paid;
+    cob.paidAt      = paidAt;
+    cob.invoiceRef  = fd.get('invoiceRef') || '';
+    cob.notes       = fd.get('notes') || '';
+    cob.status      = paid >= cob.amount ? 'paid' : paid > 0 ? 'partial' : cob.status;
+    _saveLocal();
+    closeCobMark();
+    renderCobranzas();
+    refreshFinanzas();
+    showToast(paid >= cob.amount ? '✓ Cobro registrado' : 'Cobro parcial registrado');
+  }
+
+  function resetCobranza(id) {
+    const cob = _cobranzas.find(c => c.id === id);
+    if (!cob) return;
+    if (!confirm('¿Revertir este cobro a pendiente?')) return;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    cob.status     = cob.dueDate < todayStr ? 'overdue' : 'pending';
+    cob.amountPaid = null;
+    cob.paidAt     = null;
+    cob.invoiceRef = '';
+    _saveLocal();
+    renderCobranzas();
+    refreshFinanzas();
+    showToast('Cobro revertido a pendiente');
+  }
+
   // ── Catálogo de servicios ────────────────────────────────────
   const _CATALOG_SEED = [
     { id:'cat_p01', code:'P01', name:'Sistema de Gestión',
@@ -7177,7 +7564,7 @@
   }
 
   // Click outside to close form modals
-  ['newLeadModal', 'newClientModal', 'newTransactionModal', 'newEventModal', 'newMemberModal'].forEach(id => {
+  ['newLeadModal', 'newClientModal', 'newTransactionModal', 'newEventModal', 'newMemberModal', 'cobMarkModal'].forEach(id => {
     const m = document.getElementById(id);
     if (m) m.addEventListener('click', e => {
       if (e.target === m) m.classList.remove('show');
