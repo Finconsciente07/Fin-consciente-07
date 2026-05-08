@@ -1446,21 +1446,26 @@
     .objective-metric-row { grid-template-columns: repeat(2, 1fr); }
   }
 
-  /* Delete buttons en timeline / notas */
+  /* Delete / edit buttons en timeline / notas */
   .timeline-item { position: relative; }
-  .timeline-item .item-delete,
-  .note-card .item-delete {
+  .timeline-item-actions {
     position: absolute; top: 4px; right: 0;
+    display: flex; gap: 2px; opacity: 0; transition: opacity 0.2s;
+  }
+  .timeline-item:hover .timeline-item-actions { opacity: 1; }
+  .item-delete, .item-edit {
     background: transparent; border: none; cursor: pointer;
-    color: var(--text-muted); font-size: 16px;
+    color: var(--text-muted); font-size: 14px;
     width: 24px; height: 24px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 3px; opacity: 0;
-    transition: all 0.2s;
+    border-radius: 3px; transition: all 0.2s;
   }
-  .timeline-item:hover .item-delete,
+  .note-card .item-delete {
+    position: absolute; top: 4px; right: 0; opacity: 0; transition: opacity 0.2s;
+  }
   .note-card:hover .item-delete { opacity: 1; }
   .item-delete:hover { color: var(--danger); background: rgba(217,119,87,0.1); }
+  .item-edit:hover  { color: var(--gold);   background: rgba(201,168,76,0.1); }
   .note-card { position: relative; }
 
   /* Card / Row delete buttons */
@@ -1945,34 +1950,8 @@
               <div class="card-sub">Por vencer</div>
             </div>
           </div>
-          <div class="card-body compact">
-            <div class="flow-row">
-              <div class="flow-icon in">◯</div>
-              <div>
-                <div class="flow-desc">Marina Costas</div>
-                <div class="flow-meta">Vence 8 may · P01 mes 2</div>
-              </div>
-              <div class="flow-amount in">$100</div>
-              <div></div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon in">◯</div>
-              <div>
-                <div class="flow-desc">Refugio Café</div>
-                <div class="flow-meta">Vence 12 may · P01 mes 4</div>
-              </div>
-              <div class="flow-amount in">$100</div>
-              <div></div>
-            </div>
-            <div class="flow-row">
-              <div class="flow-icon out">!</div>
-              <div>
-                <div class="flow-desc">Aurora Salud</div>
-                <div class="flow-meta">Vencido hace 3 días</div>
-              </div>
-              <div class="flow-amount out">$320</div>
-              <div></div>
-            </div>
+          <div class="card-body compact" id="cobrosPendientesList">
+            <!-- renderizado dinámicamente por renderCobrosPendientes() -->
           </div>
         </div>
       </div>
@@ -2018,10 +1997,10 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <span class="tab active" id="tabClientesActivos">Activos · —</span>
-        <span class="tab" id="tabClientesOnboarding">Onboarding · —</span>
-        <span class="tab" id="tabClientesPausados">Pausados · —</span>
-        <span class="tab" id="tabClientesHistorico">Histórico · —</span>
+        <span class="tab active" id="tabClientesActivos" onclick="filterClients('active')">Activos · —</span>
+        <span class="tab" id="tabClientesOnboarding" onclick="filterClients('onboarding')">Onboarding · —</span>
+        <span class="tab" id="tabClientesPausados" onclick="filterClients('paused')">Pausados · —</span>
+        <span class="tab" id="tabClientesHistorico" onclick="filterClients('churned')">Histórico · —</span>
       </div>
 
       <!-- Tabla de clientes activos -->
@@ -4890,10 +4869,12 @@
     setText('kpiTicket', `$${ticket.toLocaleString('es-AR')}`);
 
     // Clientes — tabs
+    const churned = clients.filter(c => c.status === 'churned');
     setText('tabClientesActivos', `Activos · ${active.length}`);
     setText('tabClientesOnboarding', `Onboarding · ${onboarding.length}`);
     setText('tabClientesPausados', `Pausados · ${paused.length}`);
-    setText('tabClientesHistorico', `Histórico · ${(FINCO.deletedDemoIds || []).length}`);
+    setText('tabClientesHistorico', `Histórico · ${churned.length}`);
+    renderCobrosPendientes();
 
     // Dashboard
     setText('dashKpiClientes', total);
@@ -4954,12 +4935,81 @@
     });
   }
 
+  // ── Cobros pendientes (Dashboard) ────────────────────────────
+  function renderCobrosPendientes() {
+    const el = document.getElementById('cobrosPendientesList');
+    if (!el) return;
+    const today = new Date();
+    const todayDay = today.getDate();
+    const billable = FINCO.allClients().filter(c =>
+      (c.status === 'active' || c.status === 'onboarding') && (parseFloat(c.fee) || 0) > 0
+    );
+    if (!billable.length) {
+      el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin clientes con fee configurado.</div>`;
+      return;
+    }
+    // Sort: overdue first
+    billable.sort((a, b) => {
+      const da = a.startDate ? new Date(a.startDate + 'T12:00:00').getDate() : 1;
+      const db = b.startDate ? new Date(b.startDate + 'T12:00:00').getDate() : 1;
+      return (da - todayDay) - (db - todayDay);
+    });
+    el.innerHTML = billable.map(c => {
+      const billingDay = c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1;
+      const diff = billingDay - todayDay;
+      const isOverdue = diff < 0;
+      const isDueToday = diff === 0;
+      const fee = parseFloat(c.fee) || 0;
+      let meta;
+      if (isOverdue)      meta = `Vencido hace ${Math.abs(diff)} día${Math.abs(diff) !== 1 ? 's' : ''}`;
+      else if (isDueToday) meta = 'Vence hoy';
+      else                 meta = `Vence en ${diff} día${diff !== 1 ? 's' : ''} (día ${billingDay})`;
+      const cls = isOverdue ? 'out' : 'in';
+      return `
+        <div class="flow-row">
+          <div class="flow-icon ${cls}">${isOverdue ? '!' : '◯'}</div>
+          <div>
+            <div class="flow-desc">${escapeHtml(c.name)}${c.company ? ' · ' + escapeHtml(c.company) : ''}</div>
+            <div class="flow-meta">${meta} · ${c.service || 'P01'}</div>
+          </div>
+          <div class="flow-amount ${cls}">$${fee.toLocaleString('es-AR')}</div>
+          <div></div>
+        </div>`;
+    }).join('');
+    // Update card-sub
+    const overdue = billable.filter(c => {
+      const d = c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1;
+      return d < todayDay;
+    }).length;
+    const sub = el.closest('.card')?.querySelector('.card-sub');
+    if (sub) sub.textContent = overdue > 0 ? `${overdue} vencido${overdue !== 1 ? 's' : ''}` : 'Por vencer este mes';
+  }
+
+  let currentClientFilter = 'active';
+
+  function filterClients(status) {
+    currentClientFilter = status;
+    document.querySelectorAll('#page-clientes .tabs .tab').forEach(t => t.classList.remove('active'));
+    const tabMap = { active: 'tabClientesActivos', onboarding: 'tabClientesOnboarding', paused: 'tabClientesPausados', churned: 'tabClientesHistorico' };
+    const tab = document.getElementById(tabMap[status]);
+    if (tab) tab.classList.add('active');
+    renderClientsTable();
+  }
+
   // Renderiza la tabla completa de clientes desde FINCO.allClients()
   function renderClientsTable() {
     const tbody = document.getElementById('clientsTbody');
     if (!tbody) return;
     tbody.innerHTML = '';
-    FINCO.allClients().forEach(client => {
+    let allClients = FINCO.allClients();
+    if (currentClientFilter !== 'all') {
+      allClients = allClients.filter(c => c.status === currentClientFilter);
+    }
+    if (!allClients.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;font-style:italic;">Sin clientes en esta categoría.</td></tr>`;
+      refreshStats(); return;
+    }
+    allClients.forEach(client => {
       const initials = client.initials || getInitials(client.name);
       const dateLabel = client.startDate
         ? new Date(client.startDate).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -5304,7 +5354,10 @@
               <div class="timeline">
                 ${procs.map((p, idx) => `
                   <div class="timeline-item ${p.status || 'done'}">
-                    <button class="item-delete" onclick="deleteProcess(${idx})" title="Eliminar">×</button>
+                    <div class="timeline-item-actions">
+                      <button class="item-edit" onclick="openEditProcess(${idx})" title="Editar">✎</button>
+                      <button class="item-delete" onclick="deleteProcess(${idx})" title="Eliminar">×</button>
+                    </div>
                     <div class="timeline-date">${escapeHtml(p.date || '')}</div>
                     <div class="timeline-title">${escapeHtml(p.title || '')}</div>
                     <div class="timeline-desc">${escapeHtml(p.desc || '')}</div>
@@ -5728,14 +5781,38 @@
     return c;
   }
 
+  let editProcessIdx = null;
+
   function openNewProcess() {
     if (!ensureCurrentClient()) return;
+    editProcessIdx = null;
     const m = document.getElementById('newProcessModal');
     m.querySelector('form').reset();
+    m.querySelector('.modal-form-head h2').innerHTML = 'Agregar <em>proceso</em>';
+    m.querySelector('button[type="submit"]').textContent = 'Guardar proceso';
     const di = m.querySelector('input[name="date"]');
     if (di) di.value = new Date().toISOString().split('T')[0];
     m.classList.add('show');
   }
+
+  function openEditProcess(idx) {
+    if (!ensureCurrentClient()) return;
+    const c = FINCO.getClient(currentClientId);
+    if (!c || !c.processes || c.processes[idx] === undefined) return;
+    const p = c.processes[idx];
+    editProcessIdx = idx;
+    const m = document.getElementById('newProcessModal');
+    const f = m.querySelector('form');
+    f.title.value = p.title || '';
+    f.desc.value = p.desc || '';
+    f.status.value = p.status || 'active';
+    f.date.value = p.rawDate || '';
+    f.tags.value = (p.tags || []).join(', ');
+    m.querySelector('.modal-form-head h2').innerHTML = 'Editar <em>proceso</em>';
+    m.querySelector('button[type="submit"]').textContent = 'Guardar cambios';
+    m.classList.add('show');
+  }
+
   function closeNewProcess() { document.getElementById('newProcessModal').classList.remove('show'); }
   function submitNewProcess(e) {
     e.preventDefault();
@@ -5746,20 +5823,27 @@
       ? new Date(f.date.value).toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' })
       : new Date().toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
     const statusLabel = f.status.value === 'active' ? 'En curso' : 'Completado';
-    const newProcess = {
+    const proc = {
       date: `${dateStr} · ${statusLabel}`,
+      rawDate: f.date.value || null,
       status: f.status.value,
       title: f.title.value.trim(),
       desc: f.desc.value.trim(),
       tags: f.tags.value.split(',').map(t => t.trim()).filter(Boolean)
     };
     if (!c.processes) c.processes = [];
-    c.processes.unshift(newProcess);
+    if (editProcessIdx !== null) {
+      c.processes[editProcessIdx] = proc;
+      showToast('Proceso actualizado');
+    } else {
+      c.processes.unshift(proc);
+      showToast('Proceso agregado');
+    }
+    editProcessIdx = null;
     persistClientChange(c);
     renderClientDetail(c);
     activateDetailTab('procesos');
     closeNewProcess();
-    showToast('Proceso agregado');
   }
 
   function openNewNote() {
@@ -6396,28 +6480,39 @@
     Object.values(chartInstances).forEach(ch => { try { ch.destroy(); } catch(e) {} });
     chartInstances = {};
 
-    // ── Cashflow (Dashboard) — ingresos reales por mes ────────
+    // ── Cashflow (Dashboard) — ingresos vs egresos reales ────
     const cashflowEl = document.getElementById('cashflowChart');
     if (cashflowEl && cashflowEl.offsetParent !== null) {
-      const real = sumTxByMonth(allTxs, months7, 'in');
-      const data = real.some(v => v > 0) ? real
-        : [0.72,0.78,0.83,0.88,0.93,0.97,1].map(f => Math.round(base * f));
+      const ingData = sumTxByMonth(allTxs, months7, 'in');
+      const egrData = sumTxByMonth(allTxs, months7, 'out');
       chartInstances.cashflow = new Chart(cashflowEl, {
         type: 'line',
         data: {
           labels: mlabels,
-          datasets: [{
-            data,
-            borderColor: '#c9a84c', borderWidth: 2,
-            backgroundColor: 'rgba(201,168,76,0.06)',
-            tension: 0.4, fill: true,
-            pointBackgroundColor: '#c9a84c',
-            pointBorderColor: '#071a0e', pointBorderWidth: 2, pointRadius: 4
-          }]
+          datasets: [
+            {
+              label: 'Ingresos',
+              data: ingData,
+              borderColor: '#7fb069', borderWidth: 2,
+              backgroundColor: 'rgba(127,176,105,0.07)',
+              tension: 0.4, fill: true,
+              pointBackgroundColor: '#7fb069',
+              pointBorderColor: '#071a0e', pointBorderWidth: 2, pointRadius: 4
+            },
+            {
+              label: 'Egresos',
+              data: egrData,
+              borderColor: '#d97757', borderWidth: 2,
+              backgroundColor: 'rgba(217,119,87,0.06)',
+              tension: 0.4, fill: true,
+              pointBackgroundColor: '#d97757',
+              pointBorderColor: '#071a0e', pointBorderWidth: 2, pointRadius: 4
+            }
+          ]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: { legend: { labels: { color: 'rgba(245,240,232,0.55)', font: { size: 11 }, boxWidth: 12 } } },
           scales: {
             y: { grid: { color: 'rgba(201,168,76,0.06)' }, ticks: { color: 'rgba(245,240,232,0.45)', callback: v => '$' + v.toLocaleString() } },
             x: { grid: { display: false }, ticks: { color: 'rgba(245,240,232,0.45)' } }
