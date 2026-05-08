@@ -3779,24 +3779,35 @@
                 </tr>
                 <tr>
                   <td><span class="badge dot warning">Consultor</span></td>
-                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
-                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
-                  <td><label class="perm-toggle"><input type="checkbox" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
-                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
-                  <td><label class="perm-toggle"><input type="checkbox" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="consultor" data-perm="dashboard" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="consultor" data-perm="clientes"  onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="consultor" data-perm="finanzas"  onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="consultor" data-perm="crm"       onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="consultor" data-perm="configuracion" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
                 </tr>
                 <tr>
                   <td><span class="badge">Solo lectura</span></td>
-                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
-                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
-                  <td><label class="perm-toggle"><input type="checkbox" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
-                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
-                  <td><label class="perm-toggle"><input type="checkbox" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="readonly" data-perm="dashboard" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="readonly" data-perm="clientes"  onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="readonly" data-perm="finanzas"  onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="readonly" data-perm="crm"       onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" data-role="readonly" data-perm="configuracion" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
+      </div>
+
+      <!-- Acceso por consultor -->
+      <div class="card" style="max-width:800px; margin-top:16px; margin-bottom:32px;">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Acceso por consultor</div>
+            <div class="card-sub">Asigná qué clientes puede ver cada miembro con rol Consultor.</div>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0;" id="consultorAccessBody"><!-- dinámico --></div>
       </div>
 
       <!-- Sección: Sistema -->
@@ -3885,6 +3896,7 @@
           <select name="area" class="form-select">
             <option>Growth</option>
             <option>Sistemas</option>
+            <option>Marketing y Publicidad</option>
             <option>Operaciones</option>
             <option>Administración</option>
             <option>Otro</option>
@@ -3905,7 +3917,7 @@
       </div>
       <div class="form-actions">
         <button type="button" class="btn btn-ghost" onclick="closeNewMember()">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Agregar miembro</button>
+        <button type="submit" class="btn btn-primary" id="memberSubmitBtn">Agregar miembro</button>
       </div>
     </form>
   </div>
@@ -4507,7 +4519,8 @@
         clientOverrides: FINCO.clientOverrides, deletedDemoIds: FINCO.deletedDemoIds,
         deletedDemoLeadNames: FINCO.deletedDemoLeadNames,
         transactions: FINCO.transactions, deletedDemoTxIds: FINCO.deletedDemoTxIds,
-        events: FINCO.events, deletedDemoEventIds: FINCO.deletedDemoEventIds
+        events: FINCO.events, deletedDemoEventIds: FINCO.deletedDemoEventIds,
+        teamMembers: _teamMembers, rolePerms: _rolePerms
       }));
     } catch(e) {}
   }
@@ -5265,6 +5278,7 @@
     if (page === 'calendario') renderCalendar(calYear, calMonth);
     if (page === 'servicios') renderServiciosGrid();
     if (page === 'finanzas') { refreshFinanzas(); setTimeout(initCharts, 80); }
+    if (page === 'configuracion') { initRolePerms(); renderConsultorAccess(); }
     // Update back button label
     const backBtn = document.getElementById('detailBackBtn');
     if (backBtn) {
@@ -5779,15 +5793,77 @@
   const _teamMembers = [
     { name:'Juan Cruz', initials:'JC', role:'Founder · Director General', area:'Growth', email:'juanalonso.6a@gmail.com', access:'admin' }
   ];
+  // Restore team members from localStorage (can't be done in _loadLocal — _teamMembers not yet defined at that point)
+  try {
+    const _lsRaw = localStorage.getItem('finco_v4');
+    if (_lsRaw) {
+      const _lsData = JSON.parse(_lsRaw);
+      if (_lsData.teamMembers && _lsData.teamMembers.length > 0) {
+        _teamMembers.splice(0, _teamMembers.length, ..._lsData.teamMembers);
+      }
+    }
+  } catch(e) {}
+
+  // ── Roles y permisos ─────────────────────────────────────────
+  const _rolePerms = {
+    consultor: { dashboard: true, clientes: true, finanzas: false, crm: true, configuracion: false },
+    readonly:  { dashboard: true, clientes: true, finanzas: false, crm: false, configuracion: false }
+  };
+  try {
+    const _lsRaw2 = localStorage.getItem('finco_v4');
+    if (_lsRaw2) {
+      const _lsData2 = JSON.parse(_lsRaw2);
+      if (_lsData2.rolePerms) Object.assign(_rolePerms, _lsData2.rolePerms);
+    }
+  } catch(e) {}
+
+  let memberEditIdx = null;
+  let _expandedConsultorIdx = null;
+
   function openNewMember() {
+    memberEditIdx = null;
     const m = document.getElementById('newMemberModal');
     if (!m) return;
     m.querySelector('form').reset();
+    m.querySelector('.modal-form-head h2').innerHTML = 'Agregar <em>miembro</em>';
+    m.querySelector('.modal-form-head .page-eyebrow').textContent = 'Equipo · Nuevo Miembro';
+    document.getElementById('memberSubmitBtn').textContent = 'Agregar miembro';
     m.classList.add('show');
   }
+
+  function openEditMember(idx) {
+    const member = _teamMembers[idx];
+    if (!member) return;
+    memberEditIdx = idx;
+    const m = document.getElementById('newMemberModal');
+    if (!m) return;
+    const f = m.querySelector('form');
+    f.reset();
+    f.name.value     = member.name || '';
+    f.initials.value = member.initials || '';
+    f.role.value     = member.role || '';
+    f.area.value     = member.area || 'Growth';
+    f.email.value    = member.email || '';
+    f.access.value   = member.access || 'consultor';
+    m.querySelector('.modal-form-head h2').innerHTML = 'Editar <em>miembro</em>';
+    m.querySelector('.modal-form-head .page-eyebrow').textContent = 'Equipo · Editar Miembro';
+    document.getElementById('memberSubmitBtn').textContent = 'Guardar cambios';
+    m.classList.add('show');
+  }
+
   function closeNewMember() {
     document.getElementById('newMemberModal').classList.remove('show');
+    memberEditIdx = null;
   }
+
+  function deleteMember(idx) {
+    if (!confirm('¿Eliminar este miembro del equipo?')) return;
+    _teamMembers.splice(idx, 1);
+    _saveLocal();
+    renderTeamGrid();
+    showToast('Miembro eliminado');
+  }
+
   function submitNewMember(e) {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -5799,18 +5875,29 @@
       email:    fd.get('email') || '',
       access:   fd.get('access')
     };
-    _teamMembers.push(member);
+    if (memberEditIdx !== null) {
+      _teamMembers[memberEditIdx] = member;
+      showToast('Miembro actualizado');
+    } else {
+      _teamMembers.push(member);
+      showToast('Miembro agregado');
+    }
+    _saveLocal();
     renderTeamGrid();
     closeNewMember();
-    showToast('Miembro agregado');
   }
+
   function renderTeamGrid() {
     const grid = document.querySelector('#page-equipo .dashboard-grid');
     if (!grid) return;
     const accessLabels = { admin:'Admin total', consultor:'Consultor', readonly:'Solo lectura' };
     const accessColors = { admin:'var(--gold)', consultor:'var(--warning)', readonly:'var(--text-soft)' };
-    grid.innerHTML = _teamMembers.map(m => `
-      <div class="card">
+    grid.innerHTML = _teamMembers.map((m, idx) => `
+      <div class="card" style="position:relative;">
+        <div style="position:absolute;top:14px;right:14px;display:flex;gap:4px;opacity:0;transition:opacity 0.2s;" class="member-actions">
+          <button onclick="openEditMember(${idx})" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:2px;cursor:pointer;letter-spacing:0.3px;">Editar</button>
+          ${idx > 0 ? `<button onclick="deleteMember(${idx})" style="background:none;border:none;color:var(--text-muted);font-size:16px;width:22px;height:22px;cursor:pointer;border-radius:3px;display:flex;align-items:center;justify-content:center;" title="Eliminar">×</button>` : ''}
+        </div>
         <div class="card-head" style="flex-direction:column; align-items:flex-start; gap:14px;">
           <div style="display:flex; align-items:center; gap:16px;">
             <div class="detail-avatar" style="width:56px;height:56px;font-size:22px;flex-shrink:0;">${escapeHtml(m.initials)}</div>
@@ -5840,11 +5927,109 @@
         <div style="font-size:28px;color:var(--gold-dim);">+</div>
         <div style="font-size:13px;color:var(--text-muted);">Agregar miembro</div>
       </div>`;
+    // Show actions on hover
+    grid.querySelectorAll('.card').forEach(card => {
+      const actions = card.querySelector('.member-actions');
+      if (!actions) return;
+      card.addEventListener('mouseenter', () => actions.style.opacity = '1');
+      card.addEventListener('mouseleave', () => actions.style.opacity = '0');
+    });
   }
 
   // ── Configuración: roles ─────────────────────────────────────
   function saveRolePerm(checkbox) {
-    showToast('Permiso actualizado');
+    const role = checkbox.dataset.role;
+    const perm = checkbox.dataset.perm;
+    if (!role || !perm) return;
+    if (!_rolePerms[role]) _rolePerms[role] = {};
+    _rolePerms[role][perm] = checkbox.checked;
+    _saveLocal();
+    showToast('Permiso guardado');
+  }
+
+  function initRolePerms() {
+    document.querySelectorAll('#rolesTableBody input[data-role]').forEach(cb => {
+      const role = cb.dataset.role;
+      const perm = cb.dataset.perm;
+      if (role && perm && _rolePerms[role] !== undefined && _rolePerms[role][perm] !== undefined) {
+        cb.checked = _rolePerms[role][perm];
+      }
+    });
+  }
+
+  function renderConsultorAccess() {
+    const body = document.getElementById('consultorAccessBody');
+    if (!body) return;
+    const consultores = _teamMembers
+      .map((m, idx) => ({ m, idx }))
+      .filter(({ m }) => m.access === 'consultor');
+    if (!consultores.length) {
+      body.innerHTML = `<div style="padding:24px 28px;color:var(--text-muted);font-size:13px;font-style:italic;">No hay consultores en el equipo. Agregá un miembro con rol Consultor desde la pestaña Equipo.</div>`;
+      return;
+    }
+    const allClients = FINCO.allClients();
+    body.innerHTML = consultores.map(({ m, idx }) => {
+      const assigned = Array.isArray(m.clientAccess) ? m.clientAccess : [];
+      const assignedNames = assigned.length
+        ? allClients.filter(c => assigned.includes(c.id)).map(c => escapeHtml(c.name)).join(', ')
+        : '<span style="font-style:italic;">Sin clientes asignados</span>';
+      const isExpanded = _expandedConsultorIdx === idx;
+      const clientList = isExpanded
+        ? `<div style="padding:16px 28px 20px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;">
+            ${allClients.length
+              ? allClients.map(c => `
+                  <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;color:var(--text-soft);padding:4px 0;">
+                    <input type="checkbox" ${assigned.includes(c.id) ? 'checked' : ''}
+                      onchange="toggleClientAccess(${idx},'${c.id}')"
+                      style="accent-color:var(--gold);width:14px;height:14px;flex-shrink:0;">
+                    <span>${escapeHtml(c.name)}${c.company ? '<span style="color:var(--text-muted);"> · ' + escapeHtml(c.company) + '</span>' : ''}</span>
+                  </label>`).join('')
+              : '<span style="color:var(--text-muted);font-size:12px;font-style:italic;">No hay clientes cargados aún.</span>'}
+          </div>`
+        : '';
+      return `<div>
+        <div class="flow-row" style="padding:14px 24px;${isExpanded ? 'border-bottom:none;' : ''}">
+          <div class="flow-icon" style="background:rgba(232,176,75,0.1);color:var(--warning);border:1px solid rgba(232,176,75,0.2);font-size:11px;font-weight:600;">${escapeHtml(m.initials)}</div>
+          <div>
+            <div class="flow-desc">${escapeHtml(m.name)}</div>
+            <div class="flow-meta">${assignedNames}</div>
+          </div>
+          <div></div>
+          <button onclick="toggleConsultorExpand(${idx})" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:11px;padding:4px 14px;border-radius:2px;cursor:pointer;letter-spacing:0.3px;white-space:nowrap;">${isExpanded ? '✕ Cerrar' : '+ Asignar clientes'}</button>
+        </div>
+        ${clientList}
+      </div>`;
+    }).join('<div style="border-top:1px solid var(--line);"></div>');
+  }
+
+  function toggleConsultorExpand(idx) {
+    _expandedConsultorIdx = (_expandedConsultorIdx === idx) ? null : idx;
+    renderConsultorAccess();
+  }
+
+  function toggleClientAccess(memberIdx, clientId) {
+    const member = _teamMembers[memberIdx];
+    if (!member) return;
+    if (!Array.isArray(member.clientAccess)) member.clientAccess = [];
+    const pos = member.clientAccess.indexOf(clientId);
+    if (pos >= 0) member.clientAccess.splice(pos, 1);
+    else member.clientAccess.push(clientId);
+    _saveLocal();
+    showToast('Acceso actualizado');
+    // Update the summary text without collapsing the panel
+    const body = document.getElementById('consultorAccessBody');
+    if (body) {
+      const metaEls = body.querySelectorAll('.flow-meta');
+      const consultores = _teamMembers.map((m, i) => ({ m, i })).filter(({ m }) => m.access === 'consultor');
+      const myOrder = consultores.findIndex(({ i }) => i === memberIdx);
+      if (metaEls[myOrder]) {
+        const assigned = member.clientAccess;
+        const allClients = FINCO.allClients();
+        metaEls[myOrder].innerHTML = assigned.length
+          ? allClients.filter(c => assigned.includes(c.id)).map(c => escapeHtml(c.name)).join(', ')
+          : '<span style="font-style:italic;">Sin clientes asignados</span>';
+      }
+    }
   }
 
   let _svcFilter = 'all';
