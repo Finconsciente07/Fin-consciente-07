@@ -4585,8 +4585,13 @@
           else console.warn('Supabase load:', err.message);
           return;
         }
-        this.leads   = (leadsRes.data   || []).map(mapLead);
-        this.clients = (clientsRes.data || []).map(mapClient);
+        // Merge: keep any local_* items not yet synced (Supabase insert may have failed)
+        const sbLeads   = (leadsRes.data   || []).map(mapLead);
+        const sbClients = (clientsRes.data || []).map(mapClient);
+        const localOnlyLeads   = this.leads.filter(l => l.id.startsWith('local_'));
+        const localOnlyClients = this.clients.filter(c => c.id.startsWith('local_'));
+        this.leads   = [...sbLeads,   ...localOnlyLeads];
+        this.clients = [...sbClients, ...localOnlyClients];
         _saveLocal();
         // Limpiar cards de pipeline antes de re-renderizar para evitar duplicados
         document.querySelectorAll('#page-crm .pipeline-body').forEach(b => {
@@ -4598,7 +4603,9 @@
       try {
         const { data, error } = await sb.from('transactions').select('*').order('date', { ascending: false });
         if (!error) {
-          this.transactions = (data || []).map(mapTransaction);
+          const sbTxs = (data || []).map(mapTransaction);
+          const localOnlyTxs = this.transactions.filter(t => t.id.startsWith('local_'));
+          this.transactions = [...sbTxs, ...localOnlyTxs];
           _saveLocal();
           renderTransactionsList(currentTxFilter); refreshFinanzas();
         }
@@ -4607,7 +4614,9 @@
       try {
         const { data, error } = await sb.from('events').select('*').order('date', { ascending: true });
         if (!error) {
-          this.events = (data || []).map(mapEvent);
+          const sbEvents = (data || []).map(mapEvent);
+          const localOnlyEvents = this.events.filter(e => e.id.startsWith('local_'));
+          this.events = [...sbEvents, ...localOnlyEvents];
           _saveLocal();
           renderCalendar(calYear, calMonth);
         }
