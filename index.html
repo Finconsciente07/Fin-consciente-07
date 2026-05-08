@@ -803,6 +803,15 @@
   .flow-amount.in { color: var(--success); }
   .flow-amount.out { color: var(--danger); }
   .flow-date { font-size: 11px; color: var(--text-muted); }
+  .row-edit {
+    background: transparent; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 13px;
+    width: 22px; height: 22px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 3px; opacity: 0; transition: all 0.2s;
+  }
+  .flow-row:hover .row-edit { opacity: 1; }
+  .row-edit:hover { color: var(--gold); background: rgba(201,168,76,0.1); }
 
   /* Avatar circle for client list */
   .client-avatar {
@@ -2328,29 +2337,26 @@
           </div>
           <div class="card-body" style="padding: 18px 28px;">
             <div style="display:flex; justify-content:space-between; padding: 10px 0;">
-              <span style="font-size:12px; color:var(--text-muted); letter-spacing:1px;">EMITIDAS MAYO</span>
-              <span style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--cream); font-weight:600;">14</span>
+              <span style="font-size:12px; color:var(--text-muted); letter-spacing:1px;" id="finBillEmitidasLabel">EMITIDAS MES</span>
+              <span style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--cream); font-weight:600;" id="finBillEmitidas">—</span>
             </div>
             <div style="display:flex; justify-content:space-between; padding: 10px 0;">
               <span style="font-size:12px; color:var(--text-muted); letter-spacing:1px;">COBRADAS</span>
-              <span style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--success); font-weight:600;">11</span>
+              <span style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--success); font-weight:600;" id="finBillCobradas">—</span>
             </div>
             <div style="display:flex; justify-content:space-between; padding: 10px 0;">
               <span style="font-size:12px; color:var(--text-muted); letter-spacing:1px;">PENDIENTES</span>
-              <span style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--warning); font-weight:600;">2</span>
+              <span style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--warning); font-weight:600;" id="finBillPendientes">—</span>
             </div>
             <div style="display:flex; justify-content:space-between; padding: 10px 0;">
               <span style="font-size:12px; color:var(--text-muted); letter-spacing:1px;">VENCIDAS</span>
-              <span style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--danger); font-weight:600;">1</span>
+              <span style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--danger); font-weight:600;" id="finBillVencidas">—</span>
             </div>
             <div class="gold-divider"></div>
             <div style="margin-top: 14px;">
               <div style="font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text-muted); margin-bottom: 12px;">Próximos vencimientos</div>
-              <div style="font-size:12px; color:var(--cream); margin-bottom: 6px;">8 may — Marina Costas <span style="color:var(--text-muted);float:right;">$100</span></div>
-              <div style="font-size:12px; color:var(--cream); margin-bottom: 6px;">12 may — Refugio Café <span style="color:var(--text-muted);float:right;">$100</span></div>
-              <div style="font-size:12px; color:var(--cream); margin-bottom: 6px;">15 may — Granja Sta. Lucía <span style="color:var(--text-muted);float:right;">$100</span></div>
+              <div id="finBillProximos"><!-- dinámico --></div>
             </div>
-            <button class="btn btn-ghost" style="margin-top: 18px; width: 100%; justify-content:center;">Ver todas →</button>
           </div>
         </div>
       </div>
@@ -4254,6 +4260,22 @@
       </div>
       <div class="form-row-2">
         <div class="form-row">
+          <label class="form-label">Cliente</label>
+          <select name="clientId" class="form-select" id="txClientSelect">
+            <option value="">— Sin cliente —</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Servicio</label>
+          <select name="service" class="form-select">
+            <option value="">— Sin servicio —</option>
+            <option value="P01">P01 · Sistema</option>
+            <option value="P02">P02 · Growth</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
           <label class="form-label">Categoría</label>
           <select name="category" class="form-select" id="txCategorySelect">
             <option value="Fee P02">Fee P02</option>
@@ -4562,7 +4584,7 @@
           const localOnlyTxs = this.transactions.filter(t => t.id.startsWith('local_'));
           this.transactions = [...sbTxs, ...localOnlyTxs];
           _saveLocal();
-          renderTransactionsList(currentTxFilter); refreshFinanzas();
+          renderTransactionsList(currentTxFilter); refreshFinanzas(); initCharts();
         }
       } catch(e) { console.warn('Supabase transactions sync:', e.message); }
       // 4. Sincronizar events
@@ -4721,6 +4743,22 @@
       } catch(e) { console.warn('Supabase addTransaction (guardado local):', e.message); }
       return local;
     },
+    updateTransaction(id, changes) {
+      const idx = this.transactions.findIndex(t => t.id === id);
+      if (idx < 0) return;
+      Object.assign(this.transactions[idx], changes);
+      _saveLocal();
+      if (!id.startsWith('local_')) {
+        sb.from('transactions').update({
+          type: changes.type, description: changes.description, category: changes.category,
+          amount: changes.amount, currency: changes.currency, method: changes.method,
+          date: changes.date, client_id: changes.clientId || null, notes: changes.notes || null
+        }).eq('id', id).then(({ error }) => {
+          if (error) console.warn('Supabase updateTransaction:', error.message);
+        });
+      }
+    },
+
     removeTransaction(id) {
       const isDemo = FINCO_DEMO_TRANSACTIONS.some(t => t.id === id);
       if (isDemo) {
@@ -5226,6 +5264,7 @@
     setTimeout(initCharts, 50);
     if (page === 'calendario') renderCalendar(calYear, calMonth);
     if (page === 'servicios') renderServiciosGrid();
+    if (page === 'finanzas') { refreshFinanzas(); setTimeout(initCharts, 80); }
     // Update back button label
     const backBtn = document.getElementById('detailBackBtn');
     if (backBtn) {
@@ -5656,14 +5695,23 @@
           <div class="flow-amount ${cls}">${sign}${symbol}${amtFmt}</div>
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
             <span class="flow-date">${dateLabel}</span>
-            <button class="row-delete" onclick="deleteTransaction('${escapeHtml(String(tx.id))}')" title="Eliminar">×</button>
+            <div style="display:flex;gap:2px;">
+              <button class="row-edit" onclick="openEditTransaction('${escapeHtml(String(tx.id))}')" title="Editar">✎</button>
+              <button class="row-delete" onclick="deleteTransaction('${escapeHtml(String(tx.id))}')" title="Eliminar">×</button>
+            </div>
           </div>
         </div>`;
     }).join('');
   }
 
   function refreshFinanzas() {
-    const txs    = FINCO.allTransactions();
+    const now  = new Date();
+    const allTxs = FINCO.allTransactions();
+    // Filter to current month for KPIs
+    const txs = allTxs.filter(t => {
+      const d = new Date((t.date || t.createdAt || '').slice(0,10) + 'T12:00:00');
+      return !isNaN(d) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    });
     const ingUSD = txs.filter(t => t.type === 'in'  && t.currency !== 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
     const egrUSD = txs.filter(t => t.type === 'out' && t.currency !== 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
     const ingARS = txs.filter(t => t.type === 'in'  && t.currency === 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
@@ -5678,7 +5726,53 @@
     setText('finKpiNetoUSD', (netoUSD < 0 ? '−' : '') + fmt(netoUSD));
     const netoEl = document.getElementById('finKpiNetoUSD');
     if (netoEl) netoEl.className = 'kpi-value ' + (netoUSD >= 0 ? 'gold' : '');
-    setText('finKpiNetoTrend', netoUSD >= 0 ? 'Resultado positivo' : 'Resultado negativo');
+    setText('finKpiNetoTrend', netoUSD >= 0 ? 'Resultado positivo mes' : 'Resultado negativo mes');
+    renderFacturacion();
+  }
+
+  function renderFacturacion() {
+    const now = new Date();
+    const today = now.getDate();
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const shortMo = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const emiLabel = document.getElementById('finBillEmitidasLabel');
+    if (emiLabel) emiLabel.textContent = 'EMITIDAS ' + monthNames[now.getMonth()].toUpperCase();
+    const billable = FINCO.allClients().filter(c =>
+      (c.status === 'active' || c.status === 'onboarding') && (parseFloat(c.fee) || 0) > 0
+    );
+    const emitidas  = billable.length;
+    const cobradas  = billable.filter(c => {
+      const d = c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1;
+      return d <= today;
+    }).length;
+    const pendientes = billable.filter(c => {
+      const d = c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1;
+      return d > today;
+    }).length;
+    const vencidas = billable.filter(c => {
+      const d = c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1;
+      return (d + 5) < today;
+    }).length;
+    setText('finBillEmitidas',  emitidas);
+    setText('finBillCobradas',  cobradas);
+    setText('finBillPendientes', pendientes);
+    setText('finBillVencidas',  vencidas);
+    const list = document.getElementById('finBillProximos');
+    if (!list) return;
+    const upcoming = billable
+      .map(c => ({ c, day: c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1 }))
+      .filter(x => x.day >= today)
+      .sort((a, b) => a.day - b.day)
+      .slice(0, 5);
+    if (!upcoming.length) {
+      list.innerHTML = `<div style="font-size:12px;color:var(--text-muted);font-style:italic;">Sin vencimientos próximos este mes.</div>`;
+      return;
+    }
+    list.innerHTML = upcoming.map(({ c, day }) => {
+      const label = day + ' ' + shortMo[now.getMonth()];
+      const fee   = (parseFloat(c.fee) || 0).toLocaleString('es-AR');
+      return `<div style="font-size:12px;color:var(--cream);margin-bottom:6px;">${label} — ${escapeHtml(c.name)}<span style="color:var(--text-muted);float:right;">$${fee}</span></div>`;
+    }).join('');
   }
 
   // ── Equipo ──────────────────────────────────────────────────
@@ -5897,15 +5991,57 @@
     showToast('Movimiento eliminado');
   }
 
+  let txEditId = null;
+
+  function _populateTxClients(selectedId) {
+    const sel = document.getElementById('txClientSelect');
+    if (!sel) return;
+    const clients = FINCO.allClients().filter(c => c.status !== 'churned');
+    sel.innerHTML = '<option value="">— Sin cliente —</option>' +
+      clients.map(c => `<option value="${c.id}"${c.id === selectedId ? ' selected' : ''}>${escapeHtml(c.name)}${c.company ? ' · ' + escapeHtml(c.company) : ''}</option>`).join('');
+  }
+
   function openNewTransaction() {
+    txEditId = null;
     const m = document.getElementById('newTransactionModal');
     m.querySelector('form').reset();
     m.querySelector('input[name="date"]').value = new Date().toISOString().split('T')[0];
+    m.querySelector('.modal-form-head h2').innerHTML = 'Registrar <em>movimiento</em>';
+    document.getElementById('txSubmitBtn').textContent = 'Registrar';
     updateTxCategories('in');
+    _populateTxClients(null);
     m.classList.add('show');
   }
+
+  function openEditTransaction(id) {
+    const tx = FINCO.allTransactions().find(t => String(t.id) === String(id));
+    if (!tx) return;
+    txEditId = id;
+    const m = document.getElementById('newTransactionModal');
+    const f = m.querySelector('form');
+    f.reset();
+    f.type.value        = tx.type || 'in';
+    f.currency.value    = tx.currency || 'USD';
+    f.description.value = tx.description || '';
+    f.amount.value      = tx.amount || '';
+    f.date.value        = (tx.date || '').slice(0,10);
+    f.method.value      = tx.method || 'Transferencia';
+    f.notes.value       = tx.notes || '';
+    updateTxCategories(tx.type || 'in');
+    // Set category after populating
+    setTimeout(() => {
+      if (f.category) f.category.value = tx.category || '';
+    }, 10);
+    _populateTxClients(tx.clientId || null);
+    if (f.service) f.service.value = tx.service || '';
+    m.querySelector('.modal-form-head h2').innerHTML = 'Editar <em>movimiento</em>';
+    document.getElementById('txSubmitBtn').textContent = 'Guardar cambios';
+    m.classList.add('show');
+  }
+
   function closeNewTransaction() {
     document.getElementById('newTransactionModal').classList.remove('show');
+    txEditId = null;
   }
   function updateTxCategories(type) {
     const sel = document.getElementById('txCategorySelect');
@@ -5920,26 +6056,38 @@
     const f   = e.target;
     const btn = document.getElementById('txSubmitBtn');
     btn.disabled = true; btn.textContent = 'Guardando…';
+    const data = {
+      type:        f.type.value,
+      description: f.description.value.trim(),
+      category:    f.category.value,
+      amount:      parseFloat(f.amount.value) || 0,
+      currency:    f.currency.value,
+      method:      f.method.value,
+      date:        f.date.value,
+      clientId:    f.clientId ? f.clientId.value || null : null,
+      service:     f.service ? f.service.value || null : null,
+      notes:       f.notes.value.trim()
+    };
     try {
-      const tx = await FINCO.addTransaction({
-        type:        f.type.value,
-        description: f.description.value.trim(),
-        category:    f.category.value,
-        amount:      parseFloat(f.amount.value) || 0,
-        currency:    f.currency.value,
-        method:      f.method.value,
-        date:        f.date.value,
-        notes:       f.notes.value.trim()
-      });
-      renderTransactionsList(currentTxFilter);
-      refreshFinanzas();
-      closeNewTransaction();
-      showToast(`"${tx.description}" registrado`);
+      if (txEditId) {
+        FINCO.updateTransaction(txEditId, data);
+        renderTransactionsList(currentTxFilter);
+        refreshFinanzas();
+        closeNewTransaction();
+        showToast('Movimiento actualizado');
+      } else {
+        const tx = await FINCO.addTransaction(data);
+        renderTransactionsList(currentTxFilter);
+        refreshFinanzas();
+        closeNewTransaction();
+        showToast(`"${tx.description}" registrado`);
+      }
     } catch(err) {
       showToast('Error guardando el movimiento');
       console.error(err);
     } finally {
-      btn.disabled = false; btn.textContent = 'Registrar';
+      btn.disabled = false;
+      btn.textContent = txEditId ? 'Guardar cambios' : 'Registrar';
     }
   }
 
@@ -6773,11 +6921,8 @@
     // ── P&L (Finanzas) — ingresos vs egresos reales ──────────
     const pnlEl = document.getElementById('pnlChart');
     if (pnlEl && pnlEl.offsetParent !== null) {
-      const ingReal = sumTxByMonth(allTxs, months7, 'in');
-      const egrReal = sumTxByMonth(allTxs, months7, 'out');
-      const hasData = ingReal.some(v => v > 0) || egrReal.some(v => v > 0);
-      const ingFinal = hasData ? ingReal : [0.83,0.88,0.93,0.97,1,1.03,1.06].map(f => Math.round(base * f));
-      const egrFinal = hasData ? egrReal : ingFinal.map(v => Math.round(v * 0.58));
+      const ingFinal = sumTxByMonth(allTxs, months7, 'in');
+      const egrFinal = sumTxByMonth(allTxs, months7, 'out');
       chartInstances.pnl = new Chart(pnlEl, {
         type: 'bar',
         data: {
@@ -6801,8 +6946,8 @@
     // ── Mix de servicios (Finanzas) — fees reales por tipo ───
     const mixEl = document.getElementById('mixChart');
     if (mixEl && mixEl.offsetParent !== null) {
-      const p01fee   = live.filter(c => c.service==='P01').reduce((s,c) => s+(parseFloat(c.fee)||0), 0) || Math.round(mrr*0.3);
-      const p02fee   = live.filter(c => c.service==='P02').reduce((s,c) => s+(parseFloat(c.fee)||0), 0) || Math.round(mrr*0.7);
+      const p01fee   = live.filter(c => c.service==='P01').reduce((s,c) => s+(parseFloat(c.fee)||0), 0);
+      const p02fee   = live.filter(c => c.service==='P02').reduce((s,c) => s+(parseFloat(c.fee)||0), 0);
       const otrosFee = allTxs.filter(t => t.type==='in' && t.category !== 'Fee P01' && t.category !== 'Fee P02').reduce((s,t) => s+(parseFloat(t.amount)||0), 0);
       const totalMix = p01fee + p02fee + otrosFee || 1;
       const pct = v => Math.round(v / totalMix * 100);
