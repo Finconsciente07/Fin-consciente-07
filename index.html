@@ -3852,16 +3852,20 @@
         <label class="form-label">Título<span class="req">*</span></label>
         <input type="text" name="title" class="form-input" placeholder="Ej: MRR a $10.000 USD" required>
       </div>
+      <div class="form-row">
+        <label class="form-label">Categoría<span class="req">*</span></label>
+        <select name="category" class="form-select" required>
+          <option value="mrr">MRR mensual</option>
+          <option value="ingresos">Ingresos mensuales</option>
+          <option value="clientes">Clientes activos</option>
+          <option value="growth_partners">Growth Partners (P02)</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </div>
       <div class="form-row-2">
         <div class="form-row">
-          <label class="form-label">Categoría<span class="req">*</span></label>
-          <select name="category" class="form-select" required>
-            <option value="mrr">MRR mensual</option>
-            <option value="ingresos">Ingresos mensuales</option>
-            <option value="clientes">Clientes activos</option>
-            <option value="growth_partners">Growth Partners (P02)</option>
-            <option value="custom">Personalizado</option>
-          </select>
+          <label class="form-label">Fecha de inicio</label>
+          <input type="date" name="startDate" class="form-input">
         </div>
         <div class="form-row">
           <label class="form-label">Fecha límite</label>
@@ -5808,6 +5812,34 @@
             : `${daysLeft} día${daysLeft!==1?'s':''} restante${daysLeft!==1?'s':''}`;
         }
 
+        // Timeline bar: elapsed from startDate to deadline
+        let timelineHtml = '';
+        if (obj.startDate) {
+          const sd = new Date(obj.startDate + 'T12:00:00');
+          const daysElapsed = Math.max(0, Math.ceil((now - sd) / 86400000));
+          const startLabel  = sd.toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+          if (obj.deadline) {
+            const dl = new Date(obj.deadline + 'T12:00:00');
+            const totalDays   = Math.max(1, Math.ceil((dl - sd) / 86400000));
+            const timePct     = Math.min(100, Math.round((daysElapsed / totalDays) * 100));
+            const dlLabel     = dl.toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' });
+            timelineHtml = `<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(201,168,76,0.06);">
+              <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:5px;">
+                <span>${startLabel}</span>
+                <span>${dlLabel}</span>
+              </div>
+              <div style="height:3px;background:rgba(201,168,76,0.08);border-radius:2px;overflow:hidden;">
+                <div style="height:100%;width:${timePct}%;background:rgba(201,168,76,0.35);border-radius:2px;transition:width 0.4s;"></div>
+              </div>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${daysElapsed} día${daysElapsed!==1?'s':''} transcurrido${daysElapsed!==1?'s':''} · ${timePct}% del plazo</div>
+            </div>`;
+          } else {
+            timelineHtml = `<div style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(201,168,76,0.06);font-size:10px;color:var(--text-muted);">
+              Desde ${startLabel} · ${daysElapsed} día${daysElapsed!==1?'s':''} transcurrido${daysElapsed!==1?'s':''}
+            </div>`;
+          }
+        }
+
         return `<div class="kpi-detail obj-card" draggable="true" style="position:relative;padding:22px 24px 20px;cursor:grab;user-select:none;" data-id="${escapeHtml(String(obj.id))}">
           <div class="obj-actions" style="position:absolute;top:12px;right:12px;display:flex;gap:4px;align-items:center;opacity:0;transition:opacity 0.2s;">
             <button onclick="editFincoObjetivo('${escapeHtml(String(obj.id))}')" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:10px;padding:2px 7px;border-radius:2px;cursor:pointer;">Editar</button>
@@ -5828,7 +5860,8 @@
             <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.4s;"></div>
           </div>
           ${deadlineStr ? `<div style="font-size:11px;color:${daysLeft<0?'var(--danger)':daysLeft<=7?'var(--warning)':'var(--text-muted)'};">${deadlineStr}</div>` : ''}
-          ${obj.notes ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5;border-top:1px solid rgba(201,168,76,0.06);padding-top:8px;">${escapeHtml(obj.notes)}</div>` : ''}
+          ${obj.notes ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5;border-top:1px solid rgba(201,168,06,0.06);padding-top:8px;">${escapeHtml(obj.notes)}</div>` : ''}
+          ${timelineHtml}
           ${done ? `<div style="position:absolute;top:12px;left:16px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--success);border:1px solid var(--success);padding:2px 6px;border-radius:2px;opacity:0.7;">✓ Completado</div>` : ''}
         </div>`;
       }).join('');
@@ -5965,6 +5998,7 @@
       category:      fd.get('category'),
       target:        parseFloat(fd.get('target')) || 0,
       unit:          fd.get('unit'),
+      startDate:     fd.get('startDate') || null,
       deadline:      fd.get('deadline') || null,
       notes:         fd.get('notes') || '',
       manualCurrent: manualVal !== '' && manualVal !== null ? parseFloat(manualVal) : null,
@@ -5996,8 +6030,9 @@
     f.category.value = obj.category || 'mrr';
     f.target.value   = obj.target || '';
     f.unit.value     = obj.unit || 'USD';
-    f.deadline.value = obj.deadline || '';
-    f.notes.value    = obj.notes || '';
+    f.startDate.value = obj.startDate || '';
+    f.deadline.value  = obj.deadline || '';
+    f.notes.value     = obj.notes || '';
     if (obj.manualCurrent !== null && obj.manualCurrent !== undefined) {
       f.manualCurrent.value = obj.manualCurrent;
     }
