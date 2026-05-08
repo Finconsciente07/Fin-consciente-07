@@ -2622,77 +2622,10 @@
 
       <!-- Catálogo section -->
       <div id="serviciosCatalogoSection" style="display:none;">
-        <div class="catalog-grid">
-
-          <!-- P01 · Sistema -->
-          <div class="catalog-card">
-            <div class="catalog-card-head">
-              <div class="catalog-badge">P01</div>
-              <div class="catalog-title">Sistema de Gestión</div>
-              <div class="catalog-subtitle">Diseño e implementación de un sistema digital a medida para ordenar y automatizar las operaciones del negocio.</div>
-            </div>
-            <div class="catalog-body">
-              <ul class="catalog-feature-list">
-                <li>CRM y pipeline de ventas personalizado</li>
-                <li>Panel de control con KPIs clave del negocio</li>
-                <li>Módulo de cobranzas y seguimiento de pagos</li>
-                <li>Biblioteca de documentos y contratos</li>
-                <li>Integración con herramientas ya en uso</li>
-                <li>6 meses de soporte y ajustes incluidos</li>
-              </ul>
-              <div class="catalog-price-row">
-                <div class="catalog-price-label">Inversión</div>
-                <div class="catalog-price-value">A medida / consultar</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- P02 · Growth Partner -->
-          <div class="catalog-card">
-            <div class="catalog-card-head">
-              <div class="catalog-badge">P02</div>
-              <div class="catalog-title">Growth Partner</div>
-              <div class="catalog-subtitle">Sistema completo + acompañamiento mensual activo para hacer crecer el negocio con estrategia y resultados medibles.</div>
-            </div>
-            <div class="catalog-body">
-              <ul class="catalog-feature-list">
-                <li>Todo lo incluido en P01 · Sistema</li>
-                <li>Estrategia comercial y de crecimiento mensual</li>
-                <li>Revisión de métricas y decisiones de negocio</li>
-                <li>Optimización continua del pipeline y conversión</li>
-                <li>Comunicación directa y reuniones mensuales</li>
-                <li>Sin plazo fijo — continuidad mientras genera valor</li>
-              </ul>
-              <div class="catalog-price-row">
-                <div class="catalog-price-label">Inversión mensual</div>
-                <div class="catalog-price-value">A medida / consultar</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Sistemas de venta genéricos -->
-          <div class="catalog-card">
-            <div class="catalog-card-head">
-              <div class="catalog-badge muted">Sistemas de venta</div>
-              <div class="catalog-title">Sistemas de Venta Genéricos</div>
-              <div class="catalog-subtitle">Soluciones de venta y captación de clientes para negocios que necesitan resultados rápidos sin un sistema a medida.</div>
-            </div>
-            <div class="catalog-body">
-              <ul class="catalog-feature-list">
-                <li>Landing pages y embudos de conversión</li>
-                <li>Secuencias de seguimiento automatizadas</li>
-                <li>Scripts de venta y propuestas tipo</li>
-                <li>Configuración de herramientas de pago y agenda</li>
-                <li>Entrega rápida · sin contratos largos</li>
-              </ul>
-              <div class="catalog-price-row">
-                <div class="catalog-price-label">Inversión</div>
-                <div class="catalog-price-value">A medida / consultar</div>
-              </div>
-            </div>
-          </div>
-
+        <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+          <button class="btn" onclick="openNewCatalogService()">+ Nuevo servicio</button>
         </div>
+        <div class="catalog-grid" id="catalogGrid"><!-- dinámico por renderCatalogGrid() --></div>
       </div><!-- /serviciosCatalogoSection -->
 
     </div>
@@ -2707,9 +2640,19 @@
         </div>
         <div style="display:flex; gap:10px;">
           <button class="btn btn-ghost">Comparar período</button>
-          <button class="btn">Generar reporte</button>
+          <button class="btn" id="resNewObjetivoBtn" style="display:none;" onclick="openNewFincoObjetivo()">+ Nuevo objetivo</button>
+          <button class="btn" id="resGenerarBtn">Generar reporte</button>
         </div>
       </div>
+
+      <!-- Tabs -->
+      <div class="tabs" style="margin-bottom:32px;">
+        <span class="tab active" id="resTabMetricasBtn" onclick="switchResultadosTab('metricas',this)">Métricas</span>
+        <span class="tab" id="resTabObjetivosBtn" onclick="switchResultadosTab('objetivos',this)">Objetivos</span>
+      </div>
+
+      <!-- ── Tab: Métricas ───────────────────────────── -->
+      <div id="resSecMetricas">
 
       <!-- KPIs FINCO -->
       <div class="section">
@@ -2804,6 +2747,14 @@
 
         <div id="growthImpactSection"><!-- dinámico --></div>
       </div>
+
+      </div><!-- /resSecMetricas -->
+
+      <!-- ── Tab: Objetivos ─────────────────────────── -->
+      <div id="resSecObjetivos" style="display:none;">
+        <div id="fincoObjetivosGrid"><!-- dinámico --></div>
+      </div>
+
     </div>
     <!-- ===================== CALENDARIO ===================== -->
     <div class="page" id="page-calendario">
@@ -3843,6 +3794,112 @@
   </div>
 </div>
 
+<!-- ============ MODAL: NUEVO SERVICIO CATÁLOGO ============ -->
+<div class="modal-overlay" id="newCatalogServiceModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewCatalogService()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow" id="catSvcEyebrow">Servicios · Nuevo Servicio</div>
+      <h2 id="catSvcTitle">Agregar <em>servicio</em></h2>
+      <p class="modal-form-sub">Definí un nuevo servicio o producto para el catálogo de FINCO.</p>
+    </div>
+    <form class="modal-form" onsubmit="submitNewCatalogService(event); return false;">
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Código / Etiqueta<span class="req">*</span></label>
+          <input type="text" name="code" class="form-input" placeholder="Ej: P03, Consultoría, Ads…" required maxlength="20">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Precio / Inversión</label>
+          <input type="text" name="price" class="form-input" placeholder="Ej: $300 / mes · A medida">
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Nombre del servicio<span class="req">*</span></label>
+        <input type="text" name="name" class="form-input" placeholder="Ej: Consultoría estratégica" required>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Descripción corta</label>
+        <textarea name="subtitle" class="form-textarea" rows="2" placeholder="En qué consiste este servicio, para quién es…"></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Qué incluye <span style="color:var(--text-muted);font-size:11px;">(una línea por item)</span></label>
+        <textarea name="features" class="form-textarea" rows="5" placeholder="Reunión mensual de estrategia&#10;Revisión de métricas y KPIs&#10;Soporte por WhatsApp&#10;Informe mensual de resultados"></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Etiqueta de precio</label>
+        <input type="text" name="priceLabel" class="form-input" placeholder="Ej: Inversión mensual, Fee único…" value="Inversión">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeNewCatalogService()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="catSvcSubmitBtn">Agregar servicio</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ MODAL: OBJETIVO FINCO ============ -->
+<div class="modal-overlay" id="newFincoObjetivoModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewFincoObjetivo()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow" id="fincoObjEyebrow">Resultados · Nuevo Objetivo</div>
+      <h2 id="fincoObjTitle">Definir <em>objetivo</em></h2>
+      <p class="modal-form-sub">Los objetivos de negocio de FINCO. El progreso se actualiza automáticamente.</p>
+    </div>
+    <form class="modal-form" onsubmit="submitNewFincoObjetivo(event); return false;">
+      <div class="form-row">
+        <label class="form-label">Título<span class="req">*</span></label>
+        <input type="text" name="title" class="form-input" placeholder="Ej: MRR a $10.000 USD" required>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Categoría<span class="req">*</span></label>
+          <select name="category" class="form-select" required>
+            <option value="mrr">MRR mensual</option>
+            <option value="ingresos">Ingresos mensuales</option>
+            <option value="clientes">Clientes activos</option>
+            <option value="growth_partners">Growth Partners (P02)</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Fecha límite</label>
+          <input type="date" name="deadline" class="form-input">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Meta (valor objetivo)<span class="req">*</span></label>
+          <input type="number" name="target" class="form-input" placeholder="10000" min="0" step="any" required>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Unidad</label>
+          <select name="unit" class="form-select">
+            <option value="USD">USD</option>
+            <option value="clientes">clientes</option>
+            <option value="%">%</option>
+            <option value="ARS">ARS</option>
+            <option value="">sin unidad</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" id="fincoObjManualRow" style="display:none;">
+        <label class="form-label">Valor actual (manual)</label>
+        <input type="number" name="manualCurrent" class="form-input" placeholder="Déjalo vacío para auto-calcular" min="0" step="any">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Notas</label>
+        <textarea name="notes" class="form-textarea" placeholder="Contexto, por qué este objetivo, cómo medirlo…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeNewFincoObjetivo()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="fincoObjSubmitBtn">Guardar objetivo</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ============ MODAL: NUEVO MOVIMIENTO ============ -->
 <div class="modal-overlay" id="newEventModal">
   <div class="modal">
@@ -4175,7 +4232,9 @@
         deletedDemoLeadNames: FINCO.deletedDemoLeadNames,
         transactions: FINCO.transactions, deletedDemoTxIds: FINCO.deletedDemoTxIds,
         events: FINCO.events, deletedDemoEventIds: FINCO.deletedDemoEventIds,
-        teamMembers: _teamMembers, rolePerms: _rolePerms
+        teamMembers: _teamMembers, rolePerms: _rolePerms,
+        fincoObjetivos: _fincoObjetivos,
+        svcCatalog: _svcCatalog
       }));
     } catch(e) {}
   }
@@ -5675,6 +5734,208 @@
       </div>`).join('');
   }
 
+  // ── Objetivos FINCO ──────────────────────────────────────────
+  let _fincoObjetivos = [];
+  try {
+    const _lsObjRaw = localStorage.getItem('finco_v4');
+    if (_lsObjRaw) {
+      const _lsObjData = JSON.parse(_lsObjRaw);
+      if (Array.isArray(_lsObjData.fincoObjetivos)) _fincoObjetivos = _lsObjData.fincoObjetivos;
+    }
+  } catch(e) {}
+
+  let _editObjetivoId = null;
+
+  function _getObjetivoCurrentValue(obj) {
+    const now = new Date();
+    const allC = FINCO.allClients();
+    const live  = allC.filter(c => c.status === 'active' || c.status === 'onboarding');
+    switch (obj.category) {
+      case 'mrr':
+        return live.filter(c => (parseFloat(c.fee)||0) > 0).reduce((s,c) => s+(parseFloat(c.fee)||0), 0);
+      case 'ingresos':
+        return FINCO.allTransactions()
+          .filter(t => { const d=new Date((t.date||'').slice(0,10)+'T12:00:00'); return t.type==='in' && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth(); })
+          .reduce((s,t) => s+(parseFloat(t.amount)||0), 0);
+      case 'clientes':
+        return live.length;
+      case 'growth_partners':
+        return live.filter(c => c.service === 'P02').length;
+      default:
+        return obj.manualCurrent !== null && obj.manualCurrent !== undefined ? parseFloat(obj.manualCurrent)||0 : 0;
+    }
+  }
+
+  function _formatObjetivoValue(val, unit) {
+    if (unit === 'USD' || unit === 'ARS') return '$' + val.toLocaleString('es-AR');
+    if (unit === '%') return val + '%';
+    return val.toLocaleString('es-AR') + (unit ? ' ' + unit : '');
+  }
+
+  const _objCatLabel = { mrr:'MRR mensual', ingresos:'Ingresos mensuales', clientes:'Clientes activos', growth_partners:'Growth Partners', custom:'Personalizado' };
+
+  function renderObjetivosFinco() {
+    const grid = document.getElementById('fincoObjetivosGrid');
+    if (!grid) return;
+
+    if (!_fincoObjetivos.length) {
+      grid.innerHTML = `
+        <div style="text-align:center;padding:80px 32px;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-style:italic;color:var(--text-muted);margin-bottom:12px;">Sin objetivos definidos</div>
+          <div style="font-size:13px;color:var(--text-muted);margin-bottom:28px;">Definí las metas de negocio de FINCO y seguí el progreso automáticamente.</div>
+          <button class="btn" onclick="openNewFincoObjetivo()">+ Definir primer objetivo</button>
+        </div>`;
+      return;
+    }
+
+    const now = new Date();
+    grid.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;">` +
+      _fincoObjetivos.map(obj => {
+        const current = _getObjetivoCurrentValue(obj);
+        const target  = parseFloat(obj.target) || 1;
+        const pct     = Math.min(100, Math.round((current / target) * 100));
+        const done    = pct >= 100;
+        const catLabel = _objCatLabel[obj.category] || 'Personalizado';
+        const barColor = done ? 'var(--success)' : pct >= 70 ? 'var(--gold)' : pct >= 40 ? 'var(--warning)' : 'var(--danger)';
+
+        let deadlineStr = '', daysLeft = null;
+        if (obj.deadline) {
+          const dl = new Date(obj.deadline + 'T12:00:00');
+          daysLeft = Math.ceil((dl - now) / 86400000);
+          deadlineStr = daysLeft < 0 ? `Vencido hace ${Math.abs(daysLeft)} días`
+            : daysLeft === 0 ? 'Vence hoy'
+            : `${daysLeft} día${daysLeft!==1?'s':''} restante${daysLeft!==1?'s':''}`;
+        }
+
+        return `<div class="kpi-detail obj-card" style="position:relative;padding:22px 24px 20px;" data-id="${escapeHtml(String(obj.id))}">
+          <div class="obj-actions" style="position:absolute;top:12px;right:12px;display:flex;gap:4px;opacity:0;transition:opacity 0.2s;">
+            <button onclick="editFincoObjetivo('${escapeHtml(String(obj.id))}')" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:2px;cursor:pointer;letter-spacing:0.3px;">Editar</button>
+            <button onclick="deleteFincoObjetivo('${escapeHtml(String(obj.id))}')" style="background:none;border:none;color:var(--text-muted);font-size:16px;line-height:1;cursor:pointer;padding:0 3px;" title="Eliminar">×</button>
+          </div>
+          <div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">${catLabel}</div>
+          <div style="font-size:15px;font-weight:500;color:var(--cream);margin-bottom:16px;padding-right:60px;">${escapeHtml(obj.title)}</div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;">
+            <div>
+              <div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:${barColor};line-height:1;">${_formatObjetivoValue(current, obj.unit)}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:3px;">de ${_formatObjetivoValue(target, obj.unit)}</div>
+            </div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:${barColor};">${pct}%</div>
+          </div>
+          <div style="height:6px;background:rgba(201,168,76,0.08);border-radius:3px;overflow:hidden;margin-bottom:${deadlineStr||obj.notes?'10px':'0'};">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:3px;transition:width 0.4s;"></div>
+          </div>
+          ${deadlineStr ? `<div style="font-size:11px;color:${daysLeft<0?'var(--danger)':daysLeft<=7?'var(--warning)':'var(--text-muted)'};">${deadlineStr}</div>` : ''}
+          ${obj.notes ? `<div style="font-size:12px;color:var(--text-muted);margin-top:6px;line-height:1.5;border-top:1px solid rgba(201,168,76,0.06);padding-top:8px;">${escapeHtml(obj.notes)}</div>` : ''}
+          ${done ? `<div style="position:absolute;top:12px;left:16px;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--success);border:1px solid var(--success);padding:2px 6px;border-radius:2px;opacity:0.7;">✓ Completado</div>` : ''}
+        </div>`;
+      }).join('') + `</div>`;
+
+    grid.querySelectorAll('.obj-card').forEach(card => {
+      const actions = card.querySelector('.obj-actions');
+      if (!actions) return;
+      card.addEventListener('mouseenter', () => actions.style.opacity = '1');
+      card.addEventListener('mouseleave', () => actions.style.opacity = '0');
+    });
+  }
+
+  function switchResultadosTab(tab, el) {
+    document.querySelectorAll('#page-resultados .tabs .tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    document.getElementById('resSecMetricas').style.display  = tab === 'metricas'  ? '' : 'none';
+    document.getElementById('resSecObjetivos').style.display = tab === 'objetivos' ? '' : 'none';
+    const newBtn = document.getElementById('resNewObjetivoBtn');
+    const genBtn = document.getElementById('resGenerarBtn');
+    if (newBtn) newBtn.style.display = tab === 'objetivos' ? '' : 'none';
+    if (genBtn) genBtn.style.display = tab === 'metricas'  ? '' : 'none';
+    if (tab === 'objetivos') renderObjetivosFinco();
+  }
+
+  function openNewFincoObjetivo() {
+    _editObjetivoId = null;
+    const m = document.getElementById('newFincoObjetivoModal');
+    if (!m) return;
+    m.querySelector('form').reset();
+    document.getElementById('fincoObjEyebrow').textContent = 'Resultados · Nuevo Objetivo';
+    document.getElementById('fincoObjTitle').innerHTML = 'Definir <em>objetivo</em>';
+    document.getElementById('fincoObjSubmitBtn').textContent = 'Guardar objetivo';
+    document.getElementById('fincoObjManualRow').style.display = 'none';
+    m.querySelector('select[name="category"]').onchange = _updateManualRow;
+    m.classList.add('show');
+  }
+
+  function _updateManualRow() {
+    const sel = document.querySelector('#newFincoObjetivoModal select[name="category"]');
+    const row = document.getElementById('fincoObjManualRow');
+    if (row) row.style.display = sel && sel.value === 'custom' ? '' : 'none';
+  }
+
+  function closeNewFincoObjetivo() {
+    document.getElementById('newFincoObjetivoModal').classList.remove('show');
+    _editObjetivoId = null;
+  }
+
+  function submitNewFincoObjetivo(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const manualVal = fd.get('manualCurrent');
+    const obj = {
+      id:            _editObjetivoId || _genId(),
+      title:         fd.get('title'),
+      category:      fd.get('category'),
+      target:        parseFloat(fd.get('target')) || 0,
+      unit:          fd.get('unit'),
+      deadline:      fd.get('deadline') || null,
+      notes:         fd.get('notes') || '',
+      manualCurrent: manualVal !== '' && manualVal !== null ? parseFloat(manualVal) : null,
+      createdAt:     _editObjetivoId
+        ? (_fincoObjetivos.find(o=>o.id===_editObjetivoId)||{}).createdAt || new Date().toISOString()
+        : new Date().toISOString()
+    };
+    if (_editObjetivoId) {
+      const idx = _fincoObjetivos.findIndex(o => o.id === _editObjetivoId);
+      if (idx !== -1) _fincoObjetivos[idx] = obj;
+    } else {
+      _fincoObjetivos.unshift(obj);
+    }
+    _saveLocal();
+    closeNewFincoObjetivo();
+    renderObjetivosFinco();
+    showToast(_editObjetivoId ? 'Objetivo actualizado' : 'Objetivo guardado');
+  }
+
+  function editFincoObjetivo(id) {
+    const obj = _fincoObjetivos.find(o => o.id === id);
+    if (!obj) return;
+    _editObjetivoId = id;
+    const m = document.getElementById('newFincoObjetivoModal');
+    if (!m) return;
+    const f = m.querySelector('form');
+    f.reset();
+    f.title.value    = obj.title || '';
+    f.category.value = obj.category || 'mrr';
+    f.target.value   = obj.target || '';
+    f.unit.value     = obj.unit || 'USD';
+    f.deadline.value = obj.deadline || '';
+    f.notes.value    = obj.notes || '';
+    if (obj.manualCurrent !== null && obj.manualCurrent !== undefined) {
+      f.manualCurrent.value = obj.manualCurrent;
+    }
+    document.getElementById('fincoObjEyebrow').textContent = 'Resultados · Editar Objetivo';
+    document.getElementById('fincoObjTitle').innerHTML = 'Editar <em>objetivo</em>';
+    document.getElementById('fincoObjSubmitBtn').textContent = 'Guardar cambios';
+    document.getElementById('fincoObjManualRow').style.display = obj.category === 'custom' ? '' : 'none';
+    f.querySelector('select[name="category"]').onchange = _updateManualRow;
+    m.classList.add('show');
+  }
+
+  function deleteFincoObjetivo(id) {
+    if (!confirm('¿Eliminar este objetivo?')) return;
+    _fincoObjetivos = _fincoObjetivos.filter(o => o.id !== id);
+    _saveLocal();
+    renderObjetivosFinco();
+    showToast('Objetivo eliminado');
+  }
+
   // ── Equipo ──────────────────────────────────────────────────
   const _teamMembers = [
     { name:'Juan Cruz', initials:'JC', role:'Founder · Director General', area:'Growth', email:'juanalonso.6a@gmail.com', access:'admin' }
@@ -5929,6 +6190,7 @@
     document.getElementById('serviciosProyectosSection').style.display = section === 'proyectos' ? '' : 'none';
     document.getElementById('serviciosCatalogoSection').style.display  = section === 'catalogo'  ? '' : 'none';
     if (section === 'proyectos') { _svcFilter = filter; renderServiciosGrid(); }
+    if (section === 'catalogo')  renderCatalogGrid();
   }
 
   function filterServiciosCompleted() {
@@ -5967,8 +6229,32 @@
         ? (c.service === 'P02' ? 'P02 · En onboarding' : 'P01 · En onboarding')
         : (c.service === 'P02' ? 'P02 · Growth Partner' : 'P01 · Sistema');
 
+      // Next upcoming meeting for this client
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const nextMeeting = FINCO.allEvents()
+        .filter(ev => ev.clientName && ev.clientName.trim().toLowerCase() === c.name.trim().toLowerCase() && (ev.date || '') >= todayStr)
+        .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''))[0] || null;
+      const nextMeetingHtml = nextMeeting
+        ? (() => {
+            const d = new Date(nextMeeting.date + 'T12:00:00');
+            const label = d.toLocaleDateString('es-AR', { weekday:'short', day:'2-digit', month:'short' });
+            const timeStr = nextMeeting.time ? ` · ${nextMeeting.time}` : '';
+            return `<div style="margin-top:14px;padding:10px 12px;border-radius:6px;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div>
+                <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;">Próxima reunión</div>
+                <div style="font-size:12px;color:var(--gold);">${label}${timeStr}</div>
+              </div>
+              <button onclick="event.stopPropagation();_svcAgendar('${escapeHtml(c.name)}','${escapeHtml(c.service||'P01')}')" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:10px;padding:3px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;">+ Reunión</button>
+            </div>`;
+          })()
+        : `<div style="margin-top:14px;padding:10px 12px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div style="font-size:11px;color:var(--text-muted);">Sin reuniones agendadas</div>
+            <button onclick="event.stopPropagation();_svcAgendar('${escapeHtml(c.name)}','${escapeHtml(c.service||'P01')}')" style="background:none;border:1px solid var(--line-bright);color:var(--text-soft);font-size:10px;padding:3px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;">+ Agendar</button>
+          </div>`;
+
       procs.forEach(p => {
         const tags = (p.tags || []).map(t => `<span class="badge">${escapeHtml(t)}</span>`).join('');
+        const descHtml = p.desc ? `<div style="font-size:11px;color:var(--text-muted);line-height:1.5;margin-top:6px;padding-top:6px;border-top:1px solid var(--line);">${escapeHtml(p.desc)}</div>` : '';
         cards.push(`
           <div class="service-card" onclick="openClient('${c.id}')" style="cursor:pointer;">
             <div class="service-head">
@@ -5999,7 +6285,9 @@
               </div>` : `
               <div class="progress-bar"><div class="progress-fill" style="width:50%;opacity:.4;"></div></div>
               <div class="progress-text"><span>${escapeHtml(p.title || '')}</span><span style="color:var(--text-muted);">En curso</span></div>`}
-              ${tags ? `<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;">${tags}</div>` : ''}
+              ${descHtml}
+              ${tags ? `<div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;">${tags}</div>` : ''}
+              ${nextMeetingHtml}
             </div>
           </div>`);
       });
@@ -6048,6 +6336,157 @@
     closeSvcClientPicker();
     currentClientId = clientId;
     openNewProcess();
+  }
+
+  // ── Catálogo de servicios ────────────────────────────────────
+  const _CATALOG_SEED = [
+    { id:'cat_p01', code:'P01', name:'Sistema de Gestión',
+      subtitle:'Diseño e implementación de un sistema digital a medida para ordenar y automatizar las operaciones del negocio.',
+      features:['CRM y pipeline de ventas personalizado','Panel de control con KPIs clave del negocio','Módulo de cobranzas y seguimiento de pagos','Biblioteca de documentos y contratos','Integración con herramientas ya en uso','6 meses de soporte y ajustes incluidos'],
+      priceLabel:'Inversión', price:'A medida / consultar', system:true },
+    { id:'cat_p02', code:'P02', name:'Growth Partner',
+      subtitle:'Sistema completo + acompañamiento mensual activo para hacer crecer el negocio con estrategia y resultados medibles.',
+      features:['Todo lo incluido en P01 · Sistema','Estrategia comercial y de crecimiento mensual','Revisión de métricas y decisiones de negocio','Optimización continua del pipeline y conversión','Comunicación directa y reuniones mensuales','Sin plazo fijo — continuidad mientras genera valor'],
+      priceLabel:'Inversión mensual', price:'A medida / consultar', system:true },
+    { id:'cat_svc', code:'Sistemas de venta', name:'Sistemas de Venta Genéricos',
+      subtitle:'Soluciones de venta y captación de clientes para negocios que necesitan resultados rápidos sin un sistema a medida.',
+      features:['Landing pages y embudos de conversión','Secuencias de seguimiento automatizadas','Scripts de venta y propuestas tipo','Configuración de herramientas de pago y agenda','Entrega rápida · sin contratos largos'],
+      priceLabel:'Inversión', price:'A medida / consultar', system:true }
+  ];
+
+  let _svcCatalog = [];
+  try {
+    const _lsCatRaw = localStorage.getItem('finco_v4');
+    if (_lsCatRaw) {
+      const _lsCatData = JSON.parse(_lsCatRaw);
+      if (Array.isArray(_lsCatData.svcCatalog) && _lsCatData.svcCatalog.length) {
+        _svcCatalog = _lsCatData.svcCatalog;
+      }
+    }
+  } catch(e) {}
+  if (!_svcCatalog.length) _svcCatalog = [..._CATALOG_SEED];
+
+  let _editCatalogId = null;
+
+  function renderCatalogGrid() {
+    const grid = document.getElementById('catalogGrid');
+    if (!grid) return;
+    grid.innerHTML = _svcCatalog.map(svc => {
+      const isSystem = svc.system;
+      const badgeCls = (svc.code === 'P01' || svc.code === 'P02') ? '' : 'muted';
+      const featuresHtml = (svc.features || []).map(f => `<li>${escapeHtml(f)}</li>`).join('');
+      return `<div class="catalog-card" style="position:relative;">
+        ${!isSystem ? `<div class="cat-svc-actions" style="position:absolute;top:14px;right:14px;display:flex;gap:4px;opacity:0;transition:opacity 0.2s;z-index:2;">
+          <button onclick="editCatalogService('${escapeHtml(svc.id)}')" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:2px;cursor:pointer;">Editar</button>
+          <button onclick="deleteCatalogService('${escapeHtml(svc.id)}')" style="background:none;border:none;color:var(--text-muted);font-size:16px;line-height:1;cursor:pointer;padding:0 4px;" title="Eliminar">×</button>
+        </div>` : ''}
+        <div class="catalog-card-head">
+          <div class="catalog-badge ${badgeCls}">${escapeHtml(svc.code)}</div>
+          <div class="catalog-title">${escapeHtml(svc.name)}</div>
+          <div class="catalog-subtitle">${escapeHtml(svc.subtitle||'')}</div>
+        </div>
+        <div class="catalog-body">
+          <ul class="catalog-feature-list">${featuresHtml}</ul>
+          <div class="catalog-price-row">
+            <div class="catalog-price-label">${escapeHtml(svc.priceLabel||'Inversión')}</div>
+            <div class="catalog-price-value">${escapeHtml(svc.price||'A medida / consultar')}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    grid.querySelectorAll('.catalog-card').forEach(card => {
+      const actions = card.querySelector('.cat-svc-actions');
+      if (!actions) return;
+      card.addEventListener('mouseenter', () => actions.style.opacity = '1');
+      card.addEventListener('mouseleave', () => actions.style.opacity = '0');
+    });
+  }
+
+  function openNewCatalogService() {
+    _editCatalogId = null;
+    const m = document.getElementById('newCatalogServiceModal');
+    if (!m) return;
+    m.querySelector('form').reset();
+    m.querySelector('input[name="priceLabel"]').value = 'Inversión';
+    document.getElementById('catSvcEyebrow').textContent = 'Servicios · Nuevo Servicio';
+    document.getElementById('catSvcTitle').innerHTML = 'Agregar <em>servicio</em>';
+    document.getElementById('catSvcSubmitBtn').textContent = 'Agregar servicio';
+    m.classList.add('show');
+  }
+
+  function closeNewCatalogService() {
+    document.getElementById('newCatalogServiceModal').classList.remove('show');
+    _editCatalogId = null;
+  }
+
+  function submitNewCatalogService(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const features = (fd.get('features')||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    const svc = {
+      id:         _editCatalogId || _genId(),
+      code:       fd.get('code'),
+      name:       fd.get('name'),
+      subtitle:   fd.get('subtitle') || '',
+      features,
+      priceLabel: fd.get('priceLabel') || 'Inversión',
+      price:      fd.get('price') || 'A medida / consultar',
+      system:     false
+    };
+    if (_editCatalogId) {
+      const idx = _svcCatalog.findIndex(s => s.id === _editCatalogId);
+      if (idx !== -1) _svcCatalog[idx] = svc;
+    } else {
+      _svcCatalog.push(svc);
+    }
+    _saveLocal();
+    closeNewCatalogService();
+    renderCatalogGrid();
+    showToast(_editCatalogId ? 'Servicio actualizado' : 'Servicio agregado al catálogo');
+  }
+
+  function editCatalogService(id) {
+    const svc = _svcCatalog.find(s => s.id === id);
+    if (!svc || svc.system) return;
+    _editCatalogId = id;
+    const m = document.getElementById('newCatalogServiceModal');
+    if (!m) return;
+    const f = m.querySelector('form');
+    f.reset();
+    f.code.value       = svc.code || '';
+    f.name.value       = svc.name || '';
+    f.subtitle.value   = svc.subtitle || '';
+    f.features.value   = (svc.features || []).join('\n');
+    f.price.value      = svc.price || '';
+    f.priceLabel.value = svc.priceLabel || 'Inversión';
+    document.getElementById('catSvcEyebrow').textContent = 'Servicios · Editar Servicio';
+    document.getElementById('catSvcTitle').innerHTML = 'Editar <em>servicio</em>';
+    document.getElementById('catSvcSubmitBtn').textContent = 'Guardar cambios';
+    m.classList.add('show');
+  }
+
+  function deleteCatalogService(id) {
+    const svc = _svcCatalog.find(s => s.id === id);
+    if (!svc || svc.system) return;
+    if (!confirm(`¿Eliminar "${svc.name}" del catálogo?`)) return;
+    _svcCatalog = _svcCatalog.filter(s => s.id !== id);
+    _saveLocal();
+    renderCatalogGrid();
+    showToast('Servicio eliminado del catálogo');
+  }
+
+  function _svcAgendar(clientName, serviceCode) {
+    // Find the client by name to get their ID for the modal select
+    const client = FINCO.allClients().find(c => c.name === clientName);
+    const clientId = client ? client.id : '';
+    openNewEvent(new Date().toISOString().slice(0, 10), clientId);
+    if (clientId) {
+      const sel = document.getElementById('evClientSelect');
+      if (sel) sel.value = clientId;
+      const typeEl = document.querySelector('#newEventModal select[name="type"]');
+      if (typeEl) typeEl.value = serviceCode === 'P02' ? 'p02' : 'p01';
+    }
   }
 
   function filterTransactions(type, tab) {
