@@ -2409,24 +2409,24 @@
           <p class="page-sub">8 proyectos activos · 5 P01 (Sistema) · 3 P02 (Sistema + Growth)</p>
         </div>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-ghost">Ver completados</button>
-          <button class="btn">+ Nuevo proyecto</button>
+          <button class="btn btn-ghost" onclick="filterServiciosCompleted()">Ver completados</button>
+          <button class="btn" onclick="openNewServiceProject()">+ Nuevo proyecto</button>
         </div>
       </div>
 
-      <!-- Tabs -->
+      <!-- Tabs — contadores actualizados por renderServiciosGrid() -->
       <div class="tabs" id="serviciosTabs">
-        <span class="tab active" onclick="switchServiciosTab('proyectos', this)">Todos (8)</span>
-        <span class="tab" onclick="switchServiciosTab('proyectos', this)">P01 · Sistema (5)</span>
-        <span class="tab" onclick="switchServiciosTab('proyectos', this)">P02 · Growth (3)</span>
-        <span class="tab" onclick="switchServiciosTab('proyectos', this)">Onboarding (1)</span>
-        <span class="tab" onclick="switchServiciosTab('catalogo', this)">Catálogo de servicios</span>
+        <span class="tab active" id="svcTabAll"     onclick="switchServiciosTab('proyectos','all',this)">Todos</span>
+        <span class="tab"        id="svcTabP01"     onclick="switchServiciosTab('proyectos','P01',this)">P01 · Sistema</span>
+        <span class="tab"        id="svcTabP02"     onclick="switchServiciosTab('proyectos','P02',this)">P02 · Growth</span>
+        <span class="tab"        id="svcTabOnboard" onclick="switchServiciosTab('proyectos','onboarding',this)">Onboarding</span>
+        <span class="tab"                           onclick="switchServiciosTab('catalogo','all',this)">Catálogo de servicios</span>
       </div>
 
-      <!-- Proyectos section -->
+      <!-- Proyectos section — render dinámico desde renderServiciosGrid() -->
       <div id="serviciosProyectosSection">
-      <!-- Service grid -->
-      <div class="service-grid">
+      <div class="service-grid" id="serviciosGrid"><!-- render dinámico --></div>
+      <div class="service-grid" style="display:none">
         <div class="service-card">
           <div class="service-head">
             <div class="service-type">P02 · Growth Partner</div>
@@ -4087,6 +4087,18 @@
   </div>
 </div>
 
+<!-- ============ MODAL: ELEGIR CLIENTE (Servicios) ============ -->
+<div class="modal-overlay" id="svcClientPickerModal">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeSvcClientPicker()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow">Servicios · Nuevo Proceso</div>
+      <h2>Elegí un <em>cliente</em></h2>
+    </div>
+    <div id="svcClientPickerList" style="max-height:340px;overflow-y:auto;padding:0 4px 8px;"></div>
+  </div>
+</div>
+
 <!-- ============ MODAL: NUEVO PROCESO ============ -->
 <div class="modal-overlay" id="newProcessModal">
   <div class="modal">
@@ -4351,9 +4363,13 @@
       fee: row.fee, startDate: row.start_date,
       durationMonths: row.duration_months || null,
       email: row.email,
-      notes: row.notes, createdAt: row.created_at,
-      processes: [], meetings: { upcoming: [], past: [] },
-      notesList: [], docs: []
+      formNotes: row.notes || '',   // campo texto del formulario
+      createdAt: row.created_at,
+      processes:  Array.isArray(row.processes)   ? row.processes  : [],
+      notesList:  Array.isArray(row.note_list)   ? row.note_list  : [],
+      objectives: Array.isArray(row.objectives)  ? row.objectives : [],
+      kpis:       Array.isArray(row.kpis)        ? row.kpis       : [],
+      meetings: { upcoming: [], past: [] }, docs: []
     };
   }
   function mapTransaction(row) {
@@ -4640,8 +4656,9 @@
         fee: client.fee || 0, startDate: client.startDate,
         durationMonths: client.durationMonths || null,
         email: client.email,
-        notes: client.notes, createdAt: new Date().toISOString(),
-        processes: [], meetings: { upcoming: [], past: [] }, notesList: [], docs: [] };
+        formNotes: client.formNotes || '', createdAt: new Date().toISOString(),
+        processes: [], notesList: [], objectives: [], kpis: [],
+        meetings: { upcoming: [], past: [] }, docs: [] };
       this.clients.unshift(local);
       _saveLocal();
       // Intentar sync a Supabase
@@ -5134,6 +5151,7 @@
     document.querySelector('.main').scrollTop = 0;
     setTimeout(initCharts, 50);
     if (page === 'calendario') renderCalendar(calYear, calMonth);
+    if (page === 'servicios') renderServiciosGrid();
     // Update back button label
     const backBtn = document.getElementById('detailBackBtn');
     if (backBtn) {
@@ -5408,7 +5426,7 @@
     // NOTAS
     const notesPanel = document.getElementById('tab-notas');
     if (notesPanel) {
-      const notes = c.notes || [];
+      const notes = c.notesList || [];
       const tabN = document.querySelector('[data-detail-tab="notas"]');
       if (tabN) tabN.textContent = `Notas · ${notes.length}`;
       if (notes.length) {
@@ -5661,11 +5679,134 @@
     showToast('Permiso actualizado');
   }
 
-  function switchServiciosTab(section, tab) {
+  let _svcFilter = 'all';
+  let _svcShowCompleted = false;
+
+  function switchServiciosTab(section, filter, tab) {
     document.querySelectorAll('#serviciosTabs .tab').forEach(t => t.classList.remove('active'));
     if (tab) tab.classList.add('active');
     document.getElementById('serviciosProyectosSection').style.display = section === 'proyectos' ? '' : 'none';
-    document.getElementById('serviciosCatalogoSection').style.display = section === 'catalogo' ? '' : 'none';
+    document.getElementById('serviciosCatalogoSection').style.display  = section === 'catalogo'  ? '' : 'none';
+    if (section === 'proyectos') { _svcFilter = filter; renderServiciosGrid(); }
+  }
+
+  function filterServiciosCompleted() {
+    _svcShowCompleted = !_svcShowCompleted;
+    renderServiciosGrid();
+    showToast(_svcShowCompleted ? 'Mostrando procesos completados' : 'Mostrando procesos activos');
+  }
+
+  function renderServiciosGrid() {
+    const grid = document.getElementById('serviciosGrid');
+    if (!grid) return;
+
+    const processStatus = _svcShowCompleted ? 'done' : 'active';
+    let clients = FINCO.allClients().filter(c => c.status !== 'churned');
+    if (_svcFilter === 'P01')        clients = clients.filter(c => c.service === 'P01');
+    else if (_svcFilter === 'P02')   clients = clients.filter(c => c.service === 'P02');
+    else if (_svcFilter === 'onboarding') clients = clients.filter(c => c.status === 'onboarding');
+
+    // Build cards: one per (client, active-process) pair
+    const cards = [];
+    clients.forEach(c => {
+      const procs = (c.processes || []).filter(p => (p.status || 'done') === processStatus);
+      if (!procs.length) return;
+      const months  = c.startDate ? monthsSince(c.startDate) : 0;
+      const curMonth = months + 1;
+      const dur = c.durationMonths || null;
+      const startLabel = c.startDate
+        ? new Date(c.startDate + 'T12:00:00').toLocaleDateString('es-AR', { day:'2-digit', month:'short' })
+        : '—';
+      const progress = dur ? Math.min(100, Math.round((months / dur) * 100)) : null;
+      const isOnboard = c.status === 'onboarding';
+      const typeStyle = isOnboard
+        ? 'style="border-color:rgba(232,176,75,0.3);color:var(--warning);background:rgba(232,176,75,0.06);"'
+        : '';
+      const typeLabel = isOnboard
+        ? (c.service === 'P02' ? 'P02 · En onboarding' : 'P01 · En onboarding')
+        : (c.service === 'P02' ? 'P02 · Growth Partner' : 'P01 · Sistema');
+
+      procs.forEach(p => {
+        const tags = (p.tags || []).map(t => `<span class="badge">${escapeHtml(t)}</span>`).join('');
+        cards.push(`
+          <div class="service-card" onclick="openClient('${c.id}')" style="cursor:pointer;">
+            <div class="service-head">
+              <div class="service-type" ${typeStyle}>${typeLabel}</div>
+              <div class="service-client">${escapeHtml(c.name)}</div>
+              <div class="service-company">${escapeHtml(c.company || '')}${c.industry ? ' · ' + escapeHtml(c.industry) : ''}</div>
+            </div>
+            <div class="service-body">
+              <div class="service-stats">
+                <div class="stat-block">
+                  <div class="stat-label">Inicio</div>
+                  <div class="stat-value">${startLabel}</div>
+                </div>
+                <div class="stat-block">
+                  <div class="stat-label">Fee mensual</div>
+                  <div class="stat-value gold">$${(c.fee || 0).toLocaleString('es-AR')}</div>
+                </div>
+                <div class="stat-block">
+                  <div class="stat-label">Mes</div>
+                  <div class="stat-value">${curMonth} / ${dur || '—'}</div>
+                </div>
+              </div>
+              ${progress !== null ? `
+              <div class="progress-bar"><div class="progress-fill" style="width:${progress}%;"></div></div>
+              <div class="progress-text">
+                <span>${escapeHtml(p.title || '')}</span>
+                <span style="color:var(--gold);">${progress}%</span>
+              </div>` : `
+              <div class="progress-bar"><div class="progress-fill" style="width:50%;opacity:.4;"></div></div>
+              <div class="progress-text"><span>${escapeHtml(p.title || '')}</span><span style="color:var(--text-muted);">En curso</span></div>`}
+              ${tags ? `<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;">${tags}</div>` : ''}
+            </div>
+          </div>`);
+      });
+    });
+
+    if (!cards.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;padding:48px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">
+        Sin procesos ${processStatus === 'active' ? 'activos' : 'completados'} en esta categoría.<br>
+        <span style="font-size:12px;">Agregá procesos desde la ficha de cada cliente.</span>
+      </div>`;
+    } else {
+      grid.innerHTML = cards.join('');
+    }
+
+    // Update tab labels with counts
+    const all  = FINCO.allClients().filter(c => c.status !== 'churned' && (c.processes||[]).some(p=>(p.status||'done')===processStatus));
+    const p01  = all.filter(c => c.service === 'P01').length;
+    const p02  = all.filter(c => c.service === 'P02').length;
+    const onb  = all.filter(c => c.status === 'onboarding').length;
+    const setText2 = (id, txt) => { const el = document.getElementById(id); if(el) el.textContent = txt; };
+    setText2('svcTabAll',     `Todos (${all.length})`);
+    setText2('svcTabP01',     `P01 · Sistema (${p01})`);
+    setText2('svcTabP02',     `P02 · Growth (${p02})`);
+    setText2('svcTabOnboard', `Onboarding (${onb})`);
+  }
+
+  // ── Nuevo proyecto desde Servicios ────────────────────────────
+  function openNewServiceProject() {
+    const clients = FINCO.allClients().filter(c => c.status !== 'churned');
+    if (!clients.length) { showToast('Agregá un cliente primero desde la pestaña Clientes.'); return; }
+    const m = document.getElementById('svcClientPickerModal');
+    const list = document.getElementById('svcClientPickerList');
+    list.innerHTML = clients.map(c => `
+      <div class="flow-row" style="cursor:pointer;border-radius:8px;" onclick="svcPickClient('${c.id}')">
+        <div class="client-avatar" style="flex-shrink:0;">${escapeHtml(c.initials || getInitials(c.name))}</div>
+        <div>
+          <div class="flow-desc">${escapeHtml(c.name)}</div>
+          <div class="flow-meta">${escapeHtml(c.company || '')} · ${c.service || 'P01'} · ${c.status}</div>
+        </div>
+        <div></div><div></div>
+      </div>`).join('');
+    m.classList.add('show');
+  }
+  function closeSvcClientPicker() { document.getElementById('svcClientPickerModal').classList.remove('show'); }
+  function svcPickClient(clientId) {
+    closeSvcClientPicker();
+    currentClientId = clientId;
+    openNewProcess();
   }
 
   function filterTransactions(type, tab) {
@@ -5865,8 +6006,8 @@
       date: now.toLocaleDateString('es-AR', { day:'2-digit', month:'short', year:'numeric' }).toUpperCase() + ' · ' + now.toLocaleTimeString('es-AR', { hour:'2-digit', minute:'2-digit' }),
       text: f.text.value.trim()
     };
-    if (!c.notes) c.notes = [];
-    c.notes.unshift(newNote);
+    if (!c.notesList) c.notesList = [];
+    c.notesList.unshift(newNote);
     persistClientChange(c);
     renderClientDetail(c);
     activateDetailTab('notas');
@@ -5924,9 +6065,9 @@
   }
   function deleteNote(idx) {
     const c = ensureCurrentClient();
-    if (!c || !c.notes) return;
+    if (!c || !c.notesList) return;
     if (!confirm('¿Eliminar esta nota?')) return;
-    c.notes.splice(idx, 1);
+    c.notesList.splice(idx, 1);
     persistClientChange(c);
     renderClientDetail(c);
     showToast('Nota eliminada');
@@ -5936,11 +6077,23 @@
     const isDemo = FINCO_DEMO_CLIENTS.some(d => d.id === c.id);
     if (isDemo) {
       FINCO.clientOverrides[c.id] = Object.assign({}, FINCO.clientOverrides[c.id] || {}, {
-        processes: c.processes, notes: c.notes, docs: c.docs, objectives: c.objectives, kpis: c.kpis
+        processes: c.processes, notesList: c.notesList, docs: c.docs,
+        objectives: c.objectives, kpis: c.kpis
       });
     } else {
       const idx = FINCO.clients.findIndex(x => x.id === c.id);
       if (idx >= 0) FINCO.clients[idx] = c;
+      // Sync JSONB fields to Supabase
+      if (!c.id.startsWith('local_')) {
+        sb.from('clients').update({
+          processes:  c.processes  || [],
+          note_list:  c.notesList  || [],
+          objectives: c.objectives || [],
+          kpis:       c.kpis       || []
+        }).eq('id', c.id).then(({ error }) => {
+          if (error) console.warn('Supabase persistClientChange:', error.message);
+        });
+      }
     }
     _saveLocal();
   }
