@@ -3959,6 +3959,36 @@
   </div>
 </div>
 
+<!-- ============ MODAL: NOTA DE REUNIÓN ============ -->
+<div class="modal-overlay" id="meetingNoteModal">
+  <div class="modal" style="max-width:560px;">
+    <button class="modal-close" onclick="closeMeetingNote()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow" id="mnEyebrow">Reunión</div>
+      <h2>Nota de <em>reunión</em></h2>
+      <p class="modal-form-sub" id="mnSub">Registrá lo que pasó en esta reunión.</p>
+    </div>
+    <form class="modal-form" onsubmit="submitMeetingNote(event); return false;">
+      <div class="form-row">
+        <label class="form-label">¿Qué se habló?</label>
+        <textarea name="discussed" id="mnDiscussed" class="form-textarea" rows="3" placeholder="Temas tratados, decisiones, contexto…"></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">¿Qué quedó pendiente?</label>
+        <textarea name="pending" id="mnPending" class="form-textarea" rows="2" placeholder="Items sin resolver, preguntas abiertas…"></textarea>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Próximos pasos</label>
+        <textarea name="nextSteps" id="mnNextSteps" class="form-textarea" rows="2" placeholder="Acciones concretas, responsables, fechas…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeMeetingNote()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar nota</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ============ MODAL: MARCAR COBRADO ============ -->
 <div class="modal-overlay" id="cobMarkModal">
   <div class="modal">
@@ -4178,6 +4208,9 @@
     };
   }
   function mapEvent(row) {
+    if (row.meeting_notes && typeof _meetingNotes !== 'undefined') {
+      _meetingNotes[String(row.id)] = row.meeting_notes;
+    }
     return {
       id: row.id, title: row.title, date: row.date,
       time: row.time || '', type: row.type || 'interno',
@@ -4330,7 +4363,8 @@
         teamMembers: _teamMembers, rolePerms: _rolePerms,
         fincoObjetivos: _fincoObjetivos,
         svcCatalog: _svcCatalog,
-        cobranzas: _cobranzas
+        cobranzas: _cobranzas,
+        meetingNotes: _meetingNotes
       }));
     } catch(e) {}
   }
@@ -4353,6 +4387,15 @@
   }
   function _genId() {
     return 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+  }
+
+  async function _sbUpsert(table, row) {
+    try { await sb.from(table).upsert(row, { onConflict: 'id' }); }
+    catch(e) { console.warn('Supabase upsert ' + table + ':', e.message); }
+  }
+  async function _sbDelete(table, id) {
+    try { await sb.from(table).delete().eq('id', id); }
+    catch(e) { console.warn('Supabase delete ' + table + ':', e.message); }
   }
 
   const FINCO = {
@@ -4410,7 +4453,7 @@
           renderTransactionsList(currentTxFilter); refreshFinanzas(); initCharts();
         }
       } catch(e) { console.warn('Supabase transactions sync:', e.message); }
-      // 4. Sincronizar events
+      // 4. Sincronizar events (incluye meeting_notes via mapEvent)
       try {
         const { data, error } = await sb.from('events').select('*').order('date', { ascending: true });
         if (!error) {
@@ -4419,8 +4462,86 @@
           this.events = [...sbEvents, ...localOnlyEvents];
           _saveLocal();
           renderCalendar(calYear, calMonth);
+          if (currentClientId) renderClientReuniones();
+          renderCalHistorico && renderCalHistorico();
         }
       } catch(e) { console.warn('Supabase events sync:', e.message); }
+
+      // 5. Cobranzas
+      try {
+        const { data, error } = await sb.from('cobranzas').select('*');
+        if (!error && data) {
+          _cobranzas = data.map(r => ({
+            id: r.id, clientId: r.client_id, period: r.period,
+            amount: parseFloat(r.amount) || 0,
+            amountPaid: r.amount_paid !== null ? parseFloat(r.amount_paid) : null,
+            status: r.status || 'pending', dueDate: r.due_date || '',
+            paidAt: r.paid_at || null, notes: r.notes || '', invoiceRef: r.invoice_ref || ''
+          }));
+          // Generate missing periods and upsert new ones back to Supabase
+          const prevIds = new Set(_cobranzas.map(c => c.id));
+          _generateCobranzas();
+          const newOnes = _cobranzas.filter(c => !prevIds.has(c.id));
+          newOnes.forEach(c => _sbUpsert('cobranzas', {
+            id: c.id, client_id: c.clientId, period: c.period,
+            amount: c.amount, amount_paid: c.amountPaid, status: c.status,
+            due_date: c.dueDate || null, paid_at: c.paidAt || null,
+            notes: c.notes, invoice_ref: c.invoiceRef
+          }));
+          _saveLocal();
+          _updateCobNavBadge && _updateCobNavBadge();
+        }
+      } catch(e) { console.warn('Supabase cobranzas sync:', e.message); }
+
+      // 6. Objetivos FINCO
+      try {
+        const { data, error } = await sb.from('finco_objetivos').select('*').order('sort_order');
+        if (!error && data && data.length) {
+          _fincoObjetivos = data.map(r => ({
+            id: r.id, title: r.title, category: r.category,
+            target: parseFloat(r.target) || 0, unit: r.unit || 'USD',
+            startDate: r.start_date || null, deadline: r.deadline || null,
+            notes: r.notes || '',
+            manualCurrent: r.manual_current !== null ? parseFloat(r.manual_current) : null,
+            archived: r.archived || false, achieved: r.achieved,
+            archivedAt: r.archived_at || null, createdAt: r.created_at
+          }));
+          _saveLocal();
+          if (document.getElementById('resSecObjetivos')?.style.display !== 'none') renderObjetivosFinco();
+        }
+      } catch(e) { console.warn('Supabase objetivos sync:', e.message); }
+
+      // 7. Catálogo de servicios
+      try {
+        const { data, error } = await sb.from('svc_catalog').select('*');
+        if (!error && data && data.length) {
+          _svcCatalog = data.map(r => ({
+            id: r.id, code: r.code, name: r.name, subtitle: r.subtitle || '',
+            features: Array.isArray(r.features) ? r.features : [],
+            price: r.price || '', priceLabel: r.price_label || 'Inversión',
+            system: r.system_entry || false
+          }));
+          // Re-add seed entries missing from DB (system ones may not have been uploaded)
+          _CATALOG_SEED.forEach(seed => {
+            if (!_svcCatalog.find(s => s.id === seed.id)) _svcCatalog.unshift(seed);
+          });
+          _saveLocal();
+        }
+      } catch(e) { console.warn('Supabase svc_catalog sync:', e.message); }
+
+      // 8. Equipo
+      try {
+        const { data, error } = await sb.from('team_members').select('*');
+        if (!error && data && data.length) {
+          _teamMembers = data.map(r => ({
+            id: r.id, name: r.name, initials: r.initials || '',
+            role: r.role || '', area: r.area || '',
+            email: r.email || '', access: r.access || 'viewer'
+          }));
+          _saveLocal();
+          if (document.getElementById('page-equipo')?.style.display !== 'none') renderTeamGrid();
+        }
+      } catch(e) { console.warn('Supabase team_members sync:', e.message); }
     },
 
     async addLead(lead) {
@@ -6135,6 +6256,15 @@
       _fincoObjetivos.unshift(obj);
     }
     _saveLocal();
+    _sbUpsert('finco_objetivos', {
+      id: obj.id, title: obj.title, category: obj.category,
+      target: obj.target, unit: obj.unit,
+      start_date: obj.startDate || null, deadline: obj.deadline || null,
+      notes: obj.notes, manual_current: obj.manualCurrent,
+      archived: false, achieved: null, archived_at: null,
+      created_at: obj.createdAt,
+      sort_order: _fincoObjetivos.findIndex(o => o.id === obj.id)
+    });
     closeNewFincoObjetivo();
     renderObjetivosFinco();
     showToast(_editObjetivoId ? 'Objetivo actualizado' : 'Objetivo guardado');
@@ -6175,6 +6305,15 @@
     obj.achieved   = achieved;
     obj.archivedAt = new Date().toISOString();
     _saveLocal();
+    _sbUpsert('finco_objetivos', {
+      id: obj.id, title: obj.title, category: obj.category,
+      target: obj.target, unit: obj.unit,
+      start_date: obj.startDate || null, deadline: obj.deadline || null,
+      notes: obj.notes, manual_current: obj.manualCurrent,
+      archived: true, achieved: obj.achieved, archived_at: obj.archivedAt,
+      created_at: obj.createdAt,
+      sort_order: _fincoObjetivos.findIndex(o => o.id === id)
+    });
     renderObjetivosFinco();
     showToast(achieved ? '¡Objetivo cumplido! Movido al histórico.' : 'Objetivo archivado como no logrado.');
   }
@@ -6186,6 +6325,15 @@
     obj.achieved   = null;
     obj.archivedAt = null;
     _saveLocal();
+    _sbUpsert('finco_objetivos', {
+      id: obj.id, title: obj.title, category: obj.category,
+      target: obj.target, unit: obj.unit,
+      start_date: obj.startDate || null, deadline: obj.deadline || null,
+      notes: obj.notes, manual_current: obj.manualCurrent,
+      archived: false, achieved: null, archived_at: null,
+      created_at: obj.createdAt,
+      sort_order: _fincoObjetivos.findIndex(o => o.id === id)
+    });
     renderObjetivosFinco();
     showToast('Objetivo restaurado a activos');
   }
@@ -6194,6 +6342,7 @@
     if (!confirm('¿Eliminar este objetivo permanentemente?')) return;
     _fincoObjetivos = _fincoObjetivos.filter(o => o.id !== id);
     _saveLocal();
+    _sbDelete('finco_objetivos', id);
     renderObjetivosFinco();
     showToast('Objetivo eliminado');
   }
@@ -6267,6 +6416,8 @@
 
   function deleteMember(idx) {
     if (!confirm('¿Eliminar este miembro del equipo?')) return;
+    const m = _teamMembers[idx];
+    if (m && m.id) _sbDelete('team_members', m.id);
     _teamMembers.splice(idx, 1);
     _saveLocal();
     renderTeamGrid();
@@ -6285,13 +6436,19 @@
       access:   fd.get('access')
     };
     if (memberEditIdx !== null) {
+      member.id = _teamMembers[memberEditIdx].id || _genId();
       _teamMembers[memberEditIdx] = member;
       showToast('Miembro actualizado');
     } else {
+      member.id = _genId();
       _teamMembers.push(member);
       showToast('Miembro agregado');
     }
     _saveLocal();
+    _sbUpsert('team_members', {
+      id: member.id, name: member.name, initials: member.initials,
+      role: member.role, area: member.area, email: member.email, access: member.access
+    });
     renderTeamGrid();
     closeNewMember();
   }
@@ -6600,6 +6757,73 @@
     openNewProcess();
   }
 
+  // ── Notas de reunión ─────────────────────────────────────────
+  let _meetingNotes = {};
+  try {
+    const _mnRaw = localStorage.getItem('finco_v4');
+    if (_mnRaw) {
+      const _mnData = JSON.parse(_mnRaw);
+      if (_mnData.meetingNotes && typeof _mnData.meetingNotes === 'object') {
+        _meetingNotes = _mnData.meetingNotes;
+      }
+    }
+  } catch(e) {}
+
+  let _mnEventId = null;
+
+  function openMeetingNote(eventId) {
+    _mnEventId = String(eventId);
+    const ev = FINCO.allEvents().find(e => String(e.id) === _mnEventId);
+    if (!ev) return;
+    const note = _meetingNotes[_mnEventId] || {};
+    const m = document.getElementById('meetingNoteModal');
+    if (!m) return;
+    const d = new Date(ev.date + 'T12:00:00');
+    const monthShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    document.getElementById('mnEyebrow').textContent =
+      d.getDate() + ' ' + monthShort[d.getMonth()] + ' ' + d.getFullYear() +
+      (ev.time ? ' · ' + ev.time : '') + (ev.clientName ? ' · ' + ev.clientName : '');
+    document.getElementById('mnSub').textContent = ev.title;
+    document.getElementById('mnDiscussed').value  = note.discussed  || '';
+    document.getElementById('mnPending').value    = note.pending    || '';
+    document.getElementById('mnNextSteps').value  = note.nextSteps  || '';
+    m.classList.add('show');
+  }
+
+  function closeMeetingNote() {
+    document.getElementById('meetingNoteModal').classList.remove('show');
+    _mnEventId = null;
+  }
+
+  function submitMeetingNote(e) {
+    e.preventDefault();
+    if (!_mnEventId) return;
+    const fd = new FormData(e.target);
+    const note = {
+      discussed:  fd.get('discussed')  || '',
+      pending:    fd.get('pending')    || '',
+      nextSteps:  fd.get('nextSteps')  || '',
+      updatedAt:  new Date().toISOString()
+    };
+    _meetingNotes[_mnEventId] = note;
+    _saveLocal();
+    // Sync to Supabase (only real events, not demo-only)
+    if (!String(_mnEventId).startsWith('local_') && !['cm','hp','lf','mr','at','pb','sm','rc','ng','dm','sf','ev'].includes(_mnEventId)) {
+      _sbUpsert('events', { id: _mnEventId, meeting_notes: note });
+    }
+    closeMeetingNote();
+    renderCalHistorico();
+    if (currentClientId) renderClientReuniones();
+    showToast('Nota guardada');
+  }
+
+  function _mnNotePreview(note) {
+    if (!note) return '';
+    const parts = [note.discussed, note.pending, note.nextSteps].filter(Boolean);
+    if (!parts.length) return '';
+    return parts[0].slice(0, 80) + (parts[0].length > 80 ? '…' : '');
+  }
+
   // ── Cobranzas ────────────────────────────────────────────────
   let _cobranzas = [];
   try {
@@ -6655,6 +6879,15 @@
       }
     });
     _saveLocal();
+  }
+
+  function _sbSyncCob(cob) {
+    _sbUpsert('cobranzas', {
+      id: cob.id, client_id: cob.clientId, period: cob.period,
+      amount: cob.amount, amount_paid: cob.amountPaid,
+      status: cob.status, due_date: cob.dueDate || null,
+      paid_at: cob.paidAt || null, notes: cob.notes, invoice_ref: cob.invoiceRef
+    });
   }
 
   function _generateCobranzasManual() {
@@ -6844,6 +7077,7 @@
     cob.notes       = fd.get('notes') || '';
     cob.status      = paid >= cob.amount ? 'paid' : paid > 0 ? 'partial' : cob.status;
     _saveLocal();
+    _sbSyncCob(cob);
     closeCobMark();
     renderCobranzas();
     refreshFinanzas();
@@ -6860,6 +7094,7 @@
     cob.paidAt     = null;
     cob.invoiceRef = '';
     _saveLocal();
+    _sbSyncCob(cob);
     renderCobranzas();
     refreshFinanzas();
     showToast('Cobro revertido a pendiente');
@@ -6968,6 +7203,11 @@
       _svcCatalog.push(svc);
     }
     _saveLocal();
+    _sbUpsert('svc_catalog', {
+      id: svc.id, code: svc.code, name: svc.name, subtitle: svc.subtitle,
+      features: svc.features, price_label: svc.priceLabel, price: svc.price,
+      system: svc.system
+    });
     closeNewCatalogService();
     renderCatalogGrid();
     showToast(_editCatalogId ? 'Servicio actualizado' : 'Servicio agregado al catálogo');
@@ -6999,6 +7239,7 @@
     if (!confirm(`¿Eliminar "${svc.name}" del catálogo?`)) return;
     _svcCatalog = _svcCatalog.filter(s => s.id !== id);
     _saveLocal();
+    _sbDelete('svc_catalog', id);
     renderCatalogGrid();
     showToast('Servicio eliminado del catálogo');
   }
@@ -7564,7 +7805,7 @@
   }
 
   // Click outside to close form modals
-  ['newLeadModal', 'newClientModal', 'newTransactionModal', 'newEventModal', 'newMemberModal', 'cobMarkModal'].forEach(id => {
+  ['newLeadModal', 'newClientModal', 'newTransactionModal', 'newEventModal', 'newMemberModal', 'cobMarkModal', 'meetingNoteModal'].forEach(id => {
     const m = document.getElementById(id);
     if (m) m.addEventListener('click', e => {
       if (e.target === m) m.classList.remove('show');
@@ -7759,16 +8000,50 @@
       const isToday = ev.date === todayStr;
       const dayLabel = isToday ? 'HOY · ' + dayNamesShort[d.getDay()] + ' ' + d.getDate()
         : dayNamesShort[d.getDay()] + ' ' + d.getDate() + ' ' + monthShort[d.getMonth()];
-      return `<div class="meeting-row" style="position:relative;">
-        <div>
-          <div class="meeting-time"${isPast ? ' style="color:var(--text-muted);"' : ''}>${escapeHtml(ev.time || '—')}</div>
-          <div class="meeting-time-day">${dayLabel}</div>
+
+      if (!isPast) {
+        return `<div class="meeting-row" style="position:relative;">
+          <div>
+            <div class="meeting-time">${escapeHtml(ev.time || '—')}</div>
+            <div class="meeting-time-day">${dayLabel}</div>
+          </div>
+          <div class="meeting-info">
+            <div class="meeting-title">${escapeHtml(ev.title)}</div>
+            ${ev.notes ? `<div class="meeting-meta">${escapeHtml(ev.notes)}</div>` : ''}
+          </div>
+          <button onclick="deleteEvent('${escapeHtml(String(ev.id))}')" title="Eliminar" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;opacity:0;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1';this.style.color='var(--danger)'" onmouseleave="this.style.opacity='0'">×</button>
+        </div>`;
+      }
+
+      // Past event — show notes if they exist
+      const note    = _meetingNotes[String(ev.id)];
+      const hasNote = note && (note.discussed || note.pending || note.nextSteps);
+      const noteBtn = hasNote
+        ? `<button onclick="openMeetingNote('${escapeHtml(String(ev.id))}')" style="background:none;border:1px solid rgba(127,176,105,0.35);color:var(--success);font-size:10px;padding:2px 8px;border-radius:2px;cursor:pointer;">✓ Editar nota</button>`
+        : `<button onclick="openMeetingNote('${escapeHtml(String(ev.id))}')" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:10px;padding:2px 8px;border-radius:2px;cursor:pointer;">+ Agregar nota</button>`;
+
+      const noteSection = hasNote ? `
+        <div style="margin-top:10px;padding:12px 14px;background:rgba(255,255,255,0.025);border-radius:6px;border:1px solid var(--line);display:flex;flex-direction:column;gap:10px;">
+          ${note.discussed  ? `<div><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:3px;">Qué se habló</div><div style="font-size:12px;color:var(--text-strong);line-height:1.5;">${escapeHtml(note.discussed)}</div></div>` : ''}
+          ${note.pending    ? `<div><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--warning);margin-bottom:3px;">Pendiente</div><div style="font-size:12px;color:var(--text-strong);line-height:1.5;">${escapeHtml(note.pending)}</div></div>` : ''}
+          ${note.nextSteps  ? `<div><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--gold);margin-bottom:3px;">Próximos pasos</div><div style="font-size:12px;color:var(--text-strong);line-height:1.5;">${escapeHtml(note.nextSteps)}</div></div>` : ''}
+        </div>` : '';
+
+      return `<div style="padding:16px 0;border-bottom:1px solid rgba(201,168,76,0.05);">
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="min-width:52px;">
+            <div class="meeting-time" style="color:var(--text-muted);">${escapeHtml(ev.time || '—')}</div>
+            <div class="meeting-time-day">${dayLabel}</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <div class="meeting-title" style="color:var(--text-soft);">${escapeHtml(ev.title)}</div>
+              ${noteBtn}
+            </div>
+            ${ev.notes ? `<div class="meeting-meta" style="margin-top:2px;">${escapeHtml(ev.notes)}</div>` : ''}
+            ${noteSection}
+          </div>
         </div>
-        <div class="meeting-info">
-          <div class="meeting-title">${escapeHtml(ev.title)}</div>
-          ${ev.notes ? `<div class="meeting-meta">${escapeHtml(ev.notes)}</div>` : ''}
-        </div>
-        <button onclick="deleteEvent('${escapeHtml(String(ev.id))}')" title="Eliminar" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;opacity:0;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1';this.style.color='var(--danger)'" onmouseleave="this.style.opacity='0'">×</button>
       </div>`;
     }
 
@@ -7862,19 +8137,29 @@
     const monthShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     el.innerHTML = past.map(ev => {
       const d = new Date(ev.date + 'T12:00:00');
-      const dayLabel = dayNamesShort[d.getDay()] + ' ' + d.getDate() + ' ' + monthShort[d.getMonth()] + ' ' + d.getFullYear();
+      const dayLabel  = dayNamesShort[d.getDay()] + ' ' + d.getDate() + ' ' + monthShort[d.getMonth()] + ' ' + d.getFullYear();
       const typeLabel = ev.type === 'p02' ? 'P02' : ev.type === 'p01' ? 'P01' : ev.type === 'lead' ? 'Lead' : 'Interno';
       const clientLine = ev.clientName ? escapeHtml(ev.clientName) + ' · ' : '';
-      return `<div class="meeting-row" style="position:relative;">
+      const note    = _meetingNotes[String(ev.id)];
+      const hasNote = note && (note.discussed || note.pending || note.nextSteps);
+      const preview = hasNote ? _mnNotePreview(note) : '';
+      const noteBtn = hasNote
+        ? `<button onclick="openMeetingNote('${escapeHtml(String(ev.id))}')" title="Ver / editar nota" style="background:none;border:1px solid rgba(127,176,105,0.35);color:var(--success);font-size:10px;padding:2px 8px;border-radius:2px;cursor:pointer;white-space:nowrap;flex-shrink:0;">✓ Nota</button>`
+        : `<button onclick="openMeetingNote('${escapeHtml(String(ev.id))}')" title="Agregar nota" style="background:none;border:1px solid var(--line-bright);color:var(--text-muted);font-size:10px;padding:2px 8px;border-radius:2px;cursor:pointer;white-space:nowrap;flex-shrink:0;">+ Nota</button>`;
+      return `<div class="meeting-row" style="position:relative;flex-wrap:wrap;gap:4px;">
         <div>
           <div class="meeting-time" style="color:var(--text-muted);">${escapeHtml(ev.time || '—')}</div>
           <div class="meeting-time-day">${dayLabel}</div>
         </div>
-        <div class="meeting-info">
+        <div class="meeting-info" style="flex:1;min-width:0;">
           <div class="meeting-title">${escapeHtml(ev.title)}</div>
           <div class="meeting-meta">${clientLine}${typeLabel}</div>
+          ${preview ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;line-height:1.4;font-style:italic;">${escapeHtml(preview)}</div>` : ''}
         </div>
-        <button onclick="deleteEvent('${escapeHtml(String(ev.id))}')" title="Eliminar" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1';this.style.color='var(--danger)'" onmouseleave="this.style.opacity='0'">×</button>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;padding-right:32px;">
+          ${noteBtn}
+        </div>
+        <button onclick="deleteEvent('${escapeHtml(String(ev.id))}')" title="Eliminar" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1';this.style.color='var(--danger)'" onmouseleave="this.style.opacity='0'">×</button>
       </div>`;
     }).join('');
   }
