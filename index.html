@@ -2756,57 +2756,57 @@
         <div class="kpi-detail-grid">
           <div class="kpi-detail">
             <div class="kpi-detail-head">
-              <div class="kpi-detail-name">Tasa de cierre</div>
-              <div class="kpi-detail-period">Últimos 90 días</div>
+              <div class="kpi-detail-name">MRR actual</div>
+              <div class="kpi-detail-period" id="resMRRPeriod">—</div>
             </div>
-            <div class="kpi-detail-value">42%</div>
-            <div class="kpi-detail-prev">vs. 31% trimestre anterior · <span class="delta-up">+ 11pp</span></div>
-            <div class="kpi-bar"><div class="kpi-bar-fill" style="width: 42%;"></div></div>
+            <div class="kpi-detail-value" id="resMRR">—</div>
+            <div class="kpi-detail-prev" id="resMRRTrend">—</div>
+            <div class="kpi-bar"><div class="kpi-bar-fill" id="resMRRBar" style="width:0%"></div></div>
+          </div>
+          <div class="kpi-detail">
+            <div class="kpi-detail-head">
+              <div class="kpi-detail-name">Clientes activos</div>
+              <div class="kpi-detail-period">En cartera</div>
+            </div>
+            <div class="kpi-detail-value" id="resClientes">—</div>
+            <div class="kpi-detail-prev" id="resClientesTrend">—</div>
+            <div class="kpi-bar"><div class="kpi-bar-fill" id="resClientesBar" style="width:0%"></div></div>
+          </div>
+          <div class="kpi-detail">
+            <div class="kpi-detail-head">
+              <div class="kpi-detail-name">Growth Partners</div>
+              <div class="kpi-detail-period">Clientes P02 activos</div>
+            </div>
+            <div class="kpi-detail-value" id="resP02">—</div>
+            <div class="kpi-detail-prev" id="resP02Trend">—</div>
+            <div class="kpi-bar"><div class="kpi-bar-fill" id="resP02Bar" style="width:0%"></div></div>
           </div>
           <div class="kpi-detail">
             <div class="kpi-detail-head">
               <div class="kpi-detail-name">Ticket promedio</div>
-              <div class="kpi-detail-period">Mayo 2026</div>
+              <div class="kpi-detail-period">MRR / clientes activos</div>
             </div>
-            <div class="kpi-detail-value">$365</div>
-            <div class="kpi-detail-prev">vs. $290 abril · <span class="delta-up">+ 26%</span></div>
-            <div class="kpi-bar"><div class="kpi-bar-fill" style="width: 73%;"></div></div>
+            <div class="kpi-detail-value" id="resTicket">—</div>
+            <div class="kpi-detail-prev" id="resTicketTrend">—</div>
+            <div class="kpi-bar"><div class="kpi-bar-fill" id="resTicketBar" style="width:0%"></div></div>
+          </div>
+          <div class="kpi-detail">
+            <div class="kpi-detail-head">
+              <div class="kpi-detail-name">Ingresos del mes</div>
+              <div class="kpi-detail-period" id="resIngresosPeriod">—</div>
+            </div>
+            <div class="kpi-detail-value" id="resIngresos">—</div>
+            <div class="kpi-detail-prev" id="resIngresosTrend">—</div>
+            <div class="kpi-bar"><div class="kpi-bar-fill" id="resIngresosBar" style="width:0%"></div></div>
           </div>
           <div class="kpi-detail">
             <div class="kpi-detail-head">
               <div class="kpi-detail-name">Churn mensual</div>
-              <div class="kpi-detail-period">Mayo 2026</div>
+              <div class="kpi-detail-period">Clientes dados de baja</div>
             </div>
-            <div class="kpi-detail-value">0%</div>
-            <div class="kpi-detail-prev">3 meses sin bajas · <span class="delta-up">retención total</span></div>
-            <div class="kpi-bar"><div class="kpi-bar-fill" style="width: 100%;"></div></div>
-          </div>
-          <div class="kpi-detail">
-            <div class="kpi-detail-head">
-              <div class="kpi-detail-name">NPS promedio</div>
-              <div class="kpi-detail-period">Última encuesta</div>
-            </div>
-            <div class="kpi-detail-value">9.2</div>
-            <div class="kpi-detail-prev">8 respuestas · <span class="delta-up">+ 0.4 vs. Q1</span></div>
-            <div class="kpi-bar"><div class="kpi-bar-fill" style="width: 92%;"></div></div>
-          </div>
-          <div class="kpi-detail">
-            <div class="kpi-detail-head">
-              <div class="kpi-detail-name">LTV cliente Growth</div>
-              <div class="kpi-detail-period">Estimado</div>
-            </div>
-            <div class="kpi-detail-value">$4.6k</div>
-            <div class="kpi-detail-prev">12 meses promedio · <span class="delta-up">+ 18%</span></div>
-            <div class="kpi-bar"><div class="kpi-bar-fill" style="width: 80%;"></div></div>
-          </div>
-          <div class="kpi-detail">
-            <div class="kpi-detail-head">
-              <div class="kpi-detail-name">Hours / cliente</div>
-              <div class="kpi-detail-period">Mayo 2026</div>
-            </div>
-            <div class="kpi-detail-value">6.4h</div>
-            <div class="kpi-detail-prev">vs. 8.1h enero · <span class="delta-up">− 21% (eficiencia)</span></div>
-            <div class="kpi-bar"><div class="kpi-bar-fill" style="width: 50%;"></div></div>
+            <div class="kpi-detail-value" id="resChurn">—</div>
+            <div class="kpi-detail-prev" id="resChurnTrend">—</div>
+            <div class="kpi-bar"><div class="kpi-bar-fill" id="resChurnBar" style="width:0%"></div></div>
           </div>
         </div>
       </div>
@@ -2838,145 +2838,7 @@
         </div>
         <p style="color:var(--text-muted); font-size:13px; margin-bottom: 20px;">Cómo se mueve cada cliente Growth desde que arrancamos juntos.</p>
 
-        <div class="client-result">
-          <div class="client-result-head">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div class="client-avatar">CM</div>
-              <div>
-                <div class="client-result-name">Carolina Méndez</div>
-                <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">ESTUDIO VERIDIA · 4 MESES EN P02</div>
-              </div>
-            </div>
-            <span class="badge dot success">+ 32% MRR cliente</span>
-          </div>
-          <div class="client-result-body">
-            <div>
-              <div class="mini-kpi-label">Facturación</div>
-              <div class="mini-kpi-val gold">$8.400</div>
-              <div class="mini-kpi-delta delta-up">+ 32% vs. inicio</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Casos activos</div>
-              <div class="mini-kpi-val">38</div>
-              <div class="mini-kpi-delta delta-up">+ 12 nuevos</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Tiempo cobranza</div>
-              <div class="mini-kpi-val">14 días</div>
-              <div class="mini-kpi-delta delta-up">− 11 días</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Margen neto</div>
-              <div class="mini-kpi-val">42%</div>
-              <div class="mini-kpi-delta delta-up">+ 8pp</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="client-result">
-          <div class="client-result-head">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div class="client-avatar">HP</div>
-              <div>
-                <div class="client-result-name">Hernán Pereyra</div>
-                <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">PEREYRA CONSULTORES · 3 MESES EN P02</div>
-              </div>
-            </div>
-            <span class="badge dot success">+ 18% facturación</span>
-          </div>
-          <div class="client-result-body">
-            <div>
-              <div class="mini-kpi-label">Facturación</div>
-              <div class="mini-kpi-val gold">$6.200</div>
-              <div class="mini-kpi-delta delta-up">+ 18% vs. inicio</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Clientes activos</div>
-              <div class="mini-kpi-val">22</div>
-              <div class="mini-kpi-delta delta-up">+ 5 nuevos</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Tasa de cierre</div>
-              <div class="mini-kpi-val">38%</div>
-              <div class="mini-kpi-delta delta-up">+ 12pp</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Horas operativas</div>
-              <div class="mini-kpi-val">14h</div>
-              <div class="mini-kpi-delta delta-up">− 9h liberadas</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="client-result">
-          <div class="client-result-head">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div class="client-avatar">JG</div>
-              <div>
-                <div class="client-result-name">Joaquín Galván</div>
-                <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">GALVÁN INMOBILIARIA · 2 MESES EN P02</div>
-              </div>
-            </div>
-            <span class="badge dot success">+ 24% leads cualificados</span>
-          </div>
-          <div class="client-result-body">
-            <div>
-              <div class="mini-kpi-label">Cierres</div>
-              <div class="mini-kpi-val gold">11</div>
-              <div class="mini-kpi-delta delta-up">+ 4 vs. mes 1</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Leads cualificados</div>
-              <div class="mini-kpi-val">68</div>
-              <div class="mini-kpi-delta delta-up">+ 24%</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Comisiones</div>
-              <div class="mini-kpi-val">$5.4k</div>
-              <div class="mini-kpi-delta delta-up">+ 21%</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Tiempo respuesta</div>
-              <div class="mini-kpi-val">8 min</div>
-              <div class="mini-kpi-delta delta-up">− 22 min</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="client-result">
-          <div class="client-result-head">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div class="client-avatar">PE</div>
-              <div>
-                <div class="client-result-name">Dra. Paula Esteban</div>
-                <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">AURORA SALUD · 1 MES EN P02 · ONBOARDING</div>
-              </div>
-            </div>
-            <span class="badge dot warning">Línea base en captura</span>
-          </div>
-          <div class="client-result-body">
-            <div>
-              <div class="mini-kpi-label">Pacientes/mes</div>
-              <div class="mini-kpi-val">142</div>
-              <div class="mini-kpi-delta" style="color:var(--text-muted);">Línea base</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Recurrencia</div>
-              <div class="mini-kpi-val">2.1×</div>
-              <div class="mini-kpi-delta" style="color:var(--text-muted);">Línea base</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">Ticket promedio</div>
-              <div class="mini-kpi-val">$48</div>
-              <div class="mini-kpi-delta" style="color:var(--text-muted);">Línea base</div>
-            </div>
-            <div>
-              <div class="mini-kpi-label">No-shows</div>
-              <div class="mini-kpi-val">18%</div>
-              <div class="mini-kpi-delta" style="color:var(--text-muted);">A reducir</div>
-            </div>
-          </div>
-        </div>
+        <div id="growthImpactSection"><!-- dinámico --></div>
       </div>
     </div>
     <!-- ===================== CALENDARIO ===================== -->
@@ -5278,6 +5140,7 @@
     if (page === 'calendario') renderCalendar(calYear, calMonth);
     if (page === 'servicios') renderServiciosGrid();
     if (page === 'finanzas') { refreshFinanzas(); setTimeout(initCharts, 80); }
+    if (page === 'resultados') { renderResultados(); setTimeout(initCharts, 80); }
     if (page === 'configuracion') { initRolePerms(); renderConsultorAccess(); }
     // Update back button label
     const backBtn = document.getElementById('detailBackBtn');
@@ -7157,8 +7020,7 @@
     const mrrEl = document.getElementById('mrrChart');
     if (mrrEl && mrrEl.offsetParent !== null) {
       const mrrByMonth = calcMRRByMonth(months7);
-      const data = mrrByMonth.some(v => v > 0) ? mrrByMonth
-        : [0.55,0.62,0.70,0.78,0.86,0.93,1].map(f => Math.round(base * f));
+      const data = mrrByMonth;
       // MoM growth del último mes vs anterior
       const lastMRR = data[data.length - 1] || 0;
       const prevMRR = data[data.length - 2] || 0;
@@ -7202,6 +7064,118 @@
         }
       });
     }
+  }
+
+  // ============ RESULTADOS ============
+  function _setResText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = String(text);
+  }
+  function _setResBar(id, pct) {
+    const el = document.getElementById(id);
+    if (el) el.style.width = Math.min(100, Math.max(0, pct || 0)) + '%';
+  }
+
+  function renderResultados() {
+    const allClients = FINCO.allClients();
+    const active = allClients.filter(c => c.status === 'active' || c.status === 'onboarding');
+    const now = new Date();
+    const mths2 = lastNMonths(2);
+    const mrrNow  = calcMRRByMonth([mths2[1]])[0] || 0;
+    const mrrPrev = calcMRRByMonth([mths2[0]])[0] || 0;
+    const mrrDiff = mrrPrev > 0 ? ((mrrNow - mrrPrev) / mrrPrev * 100) : null;
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const curMonth = monthNames[now.getMonth()] + ' ' + now.getFullYear();
+
+    // MRR
+    _setResText('resMRR', '$' + mrrNow.toLocaleString('es-AR'));
+    _setResText('resMRRPeriod', curMonth);
+    _setResText('resMRRTrend', mrrDiff !== null ? (mrrDiff >= 0 ? '+' : '') + mrrDiff.toFixed(1) + '% vs mes anterior' : 'Sin dato previo');
+    _setResBar('resMRRBar', mrrNow > 0 ? Math.min(100, mrrNow / Math.max(mrrNow * 1.5, 1000) * 100) : 0);
+
+    // Clientes activos
+    const clienteCount = active.length;
+    _setResText('resClientes', clienteCount);
+    _setResText('resClientesTrend', clienteCount + ' en cartera activa');
+    _setResBar('resClientesBar', Math.min(100, clienteCount / 10 * 100));
+
+    // Growth Partners (P02)
+    const p02 = active.filter(c => c.service === 'P02');
+    _setResText('resP02', p02.length);
+    _setResText('resP02Trend', p02.length + ' de ' + clienteCount + ' clientes');
+    _setResBar('resP02Bar', clienteCount > 0 ? p02.length / clienteCount * 100 : 0);
+
+    // Ticket promedio
+    const ticket = clienteCount > 0 ? Math.round(mrrNow / clienteCount) : 0;
+    _setResText('resTicket', '$' + ticket.toLocaleString('es-AR'));
+    _setResText('resTicketTrend', 'MRR / clientes activos');
+    _setResBar('resTicketBar', Math.min(100, ticket / 3000 * 100));
+
+    // Ingresos del mes
+    const allTxs = FINCO.allTransactions();
+    const ingresosMes = allTxs.filter(t => {
+      if (t.type !== 'in') return false;
+      const d = new Date((t.date || t.createdAt || '').slice(0, 10) + 'T12:00:00');
+      return !isNaN(d) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    }).reduce((s, t) => s + (parseFloat(t.amount) || 0), 0);
+    _setResText('resIngresos', '$' + ingresosMes.toLocaleString('es-AR'));
+    _setResText('resIngresosPeriod', curMonth);
+    _setResText('resIngresosTrend', mrrNow > 0
+      ? (ingresosMes >= mrrNow ? '↑ Por encima del MRR' : '↓ Por debajo del MRR')
+      : '—');
+    _setResBar('resIngresosBar', mrrNow > 0 ? Math.min(100, ingresosMes / mrrNow * 100) : 0);
+
+    // Churn
+    const churned = allClients.filter(c => c.status === 'churned');
+    _setResText('resChurn', churned.length);
+    _setResText('resChurnTrend', churned.length === 0 ? 'Sin bajas' : churned.length + ' baja(s) total');
+    _setResBar('resChurnBar', allClients.length > 0 ? Math.min(100, churned.length / allClients.length * 100) : 0);
+
+    renderGrowthImpact();
+  }
+
+  function renderGrowthImpact() {
+    const container = document.getElementById('growthImpactSection');
+    if (!container) return;
+    const p02 = FINCO.allClients().filter(c => c.service === 'P02' && (c.status === 'active' || c.status === 'onboarding'));
+    if (p02.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-muted);font-size:13px;font-style:italic;padding:20px 0;">No hay clientes Growth Partner activos todavía.</p>';
+      return;
+    }
+    const now = Date.now();
+    container.innerHTML = p02.map(c => {
+      const initials = (c.name || '?').split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+      let monthsInP02 = null;
+      if (c.startDate) {
+        const start = new Date(c.startDate + 'T12:00:00');
+        if (!isNaN(start)) monthsInP02 = Math.max(1, Math.round((now - start.getTime()) / (1000 * 60 * 60 * 24 * 30.5)));
+      }
+      const monthsStr = monthsInP02 ? monthsInP02 + (monthsInP02 === 1 ? ' MES EN P02' : ' MESES EN P02') : 'EN P02';
+      const companyStr = c.company ? c.company.toUpperCase() + ' · ' : '';
+      const kpis = Array.isArray(c.kpis) ? c.kpis : [];
+      const badgeClass = c.status === 'onboarding' ? 'warning' : 'success';
+      const badgeText = kpis.length > 0 && kpis[0].trend ? kpis[0].trend : (c.status === 'onboarding' ? 'Onboarding' : 'Activo');
+      const kpisHtml = kpis.length > 0
+        ? kpis.map(k => `<div>
+            <div class="mini-kpi-label">${k.label || ''}</div>
+            <div class="mini-kpi-val${k.gold ? ' gold' : ''}">${k.value || '—'}</div>
+            ${k.trend ? `<div class="mini-kpi-delta delta-up">${k.trend}</div>` : ''}
+          </div>`).join('')
+        : `<div style="grid-column:1/-1;color:var(--text-muted);font-size:13px;font-style:italic;padding:8px 0;">KPIs no configurados. Agregarlos desde el perfil del cliente.</div>`;
+      return `<div class="client-result">
+        <div class="client-result-head">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div class="client-avatar">${initials}</div>
+            <div>
+              <div class="client-result-name">${c.name || ''}</div>
+              <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;">${companyStr}${monthsStr}</div>
+            </div>
+          </div>
+          <span class="badge dot ${badgeClass}">${badgeText}</span>
+        </div>
+        <div class="client-result-body">${kpisHtml}</div>
+      </div>`;
+    }).join('');
   }
 
   // ============ INIT ============
