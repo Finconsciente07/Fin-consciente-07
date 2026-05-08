@@ -2032,6 +2032,7 @@
               <th>Empresa / Rubro</th>
               <th>Servicio</th>
               <th>Inicio</th>
+              <th>Duración</th>
               <th>MRR</th>
               <th class="td-right">Estado</th>
             </tr>
@@ -4080,6 +4081,12 @@
           <input type="number" name="fee" class="form-input" placeholder="100" min="0" required>
         </div>
         <div class="form-row">
+          <label class="form-label">Duración (meses)</label>
+          <input type="number" name="durationMonths" class="form-input" placeholder="Ej: 6 · vacío = indefinido" min="1" max="60">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
           <label class="form-label">Fecha de inicio<span class="req">*</span></label>
           <input type="date" name="startDate" class="form-input" required>
         </div>
@@ -4361,7 +4368,9 @@
     return {
       id: row.id, name: row.name, company: row.company,
       industry: row.industry, service: row.service, status: row.status,
-      fee: row.fee, startDate: row.start_date, email: row.email,
+      fee: row.fee, startDate: row.start_date,
+      durationMonths: row.duration_months || null,
+      email: row.email,
       notes: row.notes, createdAt: row.created_at,
       processes: [], meetings: { upcoming: [], past: [] },
       notesList: [], docs: []
@@ -4398,7 +4407,7 @@
   const FINCO_DEMO_CLIENTS = [
     {
       id: 'cm', name: 'Carolina Méndez', company: 'Estudio Veridia', industry: 'Servicios legales',
-      service: 'P02', status: 'active', fee: 420, startDate: '2026-01-15',
+      service: 'P02', status: 'active', fee: 420, durationMonths: null, startDate: '2026-01-15',
       email: 'carolina@estudioveridia.com.ar', phone: '+54 9 11 4422-8810', city: 'Buenos Aires · Microcentro',
       contactRole: 'Socia fundadora', teamSize: '12 personas', teamDetail: '3 socios · 6 abogados · 3 administrativos',
       recurringMeeting: 'Martes · 10:00 hs', recurringMeetingMeta: 'Growth weekly · 60 min · Google Meet',
@@ -4449,7 +4458,7 @@
     },
     {
       id: 'hp', name: 'Hernán Pereyra', company: 'Pereyra Consultores', industry: 'Consultoría',
-      service: 'P02', status: 'active', fee: 380, startDate: '2026-02-02',
+      service: 'P02', status: 'active', fee: 380, durationMonths: null, startDate: '2026-02-02',
       email: 'hernan@pereyra.com.ar', phone: '+54 9 11 5544-2210', city: 'Buenos Aires',
       contactRole: 'Director', teamSize: '6 personas', teamDetail: '2 consultores senior · 3 analistas · 1 admin',
       recurringMeeting: 'Martes · 14:30 hs', recurringMeetingMeta: 'Growth weekly · 45 min · Presencial',
@@ -4639,7 +4648,9 @@
       // Guardar localmente de inmediato (funciona aunque Supabase falle)
       const local = { id: _genId(), name: client.name, company: client.company,
         industry: client.industry, service: client.service, status: client.status || 'active',
-        fee: client.fee || 0, startDate: client.startDate, email: client.email,
+        fee: client.fee || 0, startDate: client.startDate,
+        durationMonths: client.durationMonths || null,
+        email: client.email,
         notes: client.notes, createdAt: new Date().toISOString(),
         processes: [], meetings: { upcoming: [], past: [] }, notesList: [], docs: [] };
       this.clients.unshift(local);
@@ -4650,6 +4661,7 @@
           name: client.name, company: client.company, industry: client.industry,
           service: client.service, status: client.status || 'active',
           fee: client.fee || 0, start_date: client.startDate,
+          duration_months: client.durationMonths || null,
           email: client.email, notes: client.notes
         }).select().single();
         if (!error && data) {
@@ -4675,7 +4687,8 @@
           sb.from('clients').update({
             name: changes.name, company: changes.company, industry: changes.industry,
             service: changes.service, status: changes.status, fee: changes.fee,
-            start_date: changes.startDate, email: changes.email, notes: changes.notes
+            start_date: changes.startDate, duration_months: changes.durationMonths || null,
+            email: changes.email, notes: changes.notes
           }).eq('id', id).then(({ error }) => {
             if (error) console.warn('Supabase updateClient:', error.message);
           });
@@ -4949,6 +4962,7 @@
           : '<span class="badge dot success">Activo</span>');
       const companyLabel = client.industry ? client.company + ' · ' + client.industry : client.company;
       const fee = (client.fee || 0).toLocaleString('es-AR');
+      const durationLabel = client.durationMonths ? client.durationMonths + ' meses' : 'Indefinida';
       const tr = document.createElement('tr');
       tr.dataset.id = client.id;
       tr.innerHTML = `
@@ -4956,6 +4970,7 @@
         <td class="td-secondary">${escapeHtml(companyLabel)}</td>
         <td><span class="badge">${serviceLabel}</span></td>
         <td class="td-secondary">${dateLabel}</td>
+        <td class="td-secondary">${durationLabel}</td>
         <td class="td-amount">$${fee}</td>
         <td class="td-right">${statusBadge} <button class="row-delete" onclick="event.stopPropagation(); deleteClient('${client.id}')" title="Eliminar">×</button></td>
       `;
@@ -5143,6 +5158,14 @@
     };
     const eyebrowText = (statusMap[c.status] || 'FICHA DE CLIENTE') + (c.service ? ' · ' + (c.service === 'P02' ? 'GROWTH PARTNER' : 'P01 SISTEMA') : '');
     document.getElementById('detailEyebrow').textContent = eyebrowText;
+    // Duration / revenue helpers
+    const _dur = c.durationMonths || null;
+    const _elapsed = c.startDate ? monthsSince(c.startDate) : null;
+    const _total = (c.fee && _dur) ? c.fee * _dur : null;
+    const _durLabel = _dur ? _dur + ' meses' : 'Indefinida';
+    const _progressLabel = (_dur && _elapsed !== null) ? `Mes ${Math.min(_elapsed + 1, _dur)} / ${_dur}` : '';
+    const _totalLabel = _total ? 'USD ' + _total.toLocaleString('es-AR') : (c.fee ? 'Indefinido' : '—');
+
     // Badges
     const badgesEl = document.querySelector('#page-cliente .detail-badges');
     if (badgesEl) {
@@ -5153,10 +5176,11 @@
             : '<span class="badge dot success">Activo</span>'));
       const serviceBadge = c.service ? `<span class="badge">${c.service === 'P02' ? 'P02 · Growth' : 'P01 · Sistema'}</span>` : '';
       const feeBadge = c.fee ? `<span class="badge">Fee USD ${c.fee}</span>` : '';
+      const durationBadge = _dur ? `<span class="badge">${_dur} meses${_progressLabel ? ' · ' + _progressLabel : ''}</span>` : '';
       const sinceBadge = c.startDate
         ? `<span class="badge muted">Cliente desde ${new Date(c.startDate).toLocaleDateString('es-AR', { month: 'short', year: 'numeric' })}</span>`
         : '';
-      badgesEl.innerHTML = [statusBadge, serviceBadge, feeBadge, sinceBadge].filter(Boolean).join('');
+      badgesEl.innerHTML = [statusBadge, serviceBadge, feeBadge, durationBadge, sinceBadge].filter(Boolean).join('');
     }
 
     // KPIs
@@ -5210,7 +5234,12 @@
           <div class="info-block">
             <div class="info-block-label">Servicio activo</div>
             <div class="info-block-value">${c.service === 'P02' ? 'P02 · Sistema + Growth Partner' : 'P01 · Sistema'}</div>
-            ${c.startDate ? `<div class="info-block-value" style="margin-top:6px;color:var(--text-muted);font-size:13px;">Inicio: ${new Date(c.startDate).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'})}${c.fee ? ' · Fee: USD ' + c.fee : ''}</div>` : ''}
+            ${c.startDate ? `<div class="info-block-value" style="margin-top:6px;color:var(--text-muted);font-size:13px;">Inicio: ${new Date(c.startDate).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'})}${c.fee ? ' · Fee: USD ' + c.fee : ''} · Duración: ${_durLabel}</div>` : ''}
+          </div>
+          <div class="info-block">
+            <div class="info-block-label">Ingreso total estimado</div>
+            <div class="info-block-value serif">${_totalLabel}</div>
+            ${_total ? `<div class="info-block-value" style="margin-top:6px;color:var(--text-muted);font-size:13px;">USD ${c.fee}/mes × ${_dur} meses${_progressLabel ? ' · ' + _progressLabel : ''}</div>` : (c.fee && !_dur ? `<div class="info-block-value" style="margin-top:6px;color:var(--text-muted);font-size:13px;">USD ${c.fee}/mes · sin fecha de fin</div>` : '')}
           </div>
           <div class="info-block">
             <div class="info-block-label">Reunión recurrente</div>
@@ -5659,6 +5688,7 @@
     f.status.value = c.status || 'active';
     f.fee.value = c.fee || 0;
     f.startDate.value = c.startDate || '';
+    if (f.durationMonths) f.durationMonths.value = c.durationMonths || '';
     f.email.value = c.email || '';
     f.notes.value = c.notes || '';
     // Cambiar título y botón
@@ -5944,6 +5974,7 @@
       service: f.service.value,
       status: f.status.value,
       fee: parseInt(f.fee.value || '0', 10),
+      durationMonths: f.durationMonths.value ? parseInt(f.durationMonths.value, 10) : null,
       startDate: f.startDate.value,
       email: f.email.value.trim(),
       notes: f.notes.value.trim()
