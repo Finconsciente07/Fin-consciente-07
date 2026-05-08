@@ -863,6 +863,7 @@
     grid-template-columns: repeat(7, 1fr);
     background: rgba(7,26,14,0.4);
     border-bottom: 1px solid var(--line);
+    border-left: 1px solid var(--line);
   }
   .cal-grid-head > div {
     padding: 12px;
@@ -2881,6 +2882,20 @@
           <div class="legend-item">
             <div class="legend-swatch" style="background: rgba(245,240,232,0.4);"></div>
             FINCO · Interno
+          </div>
+        </div>
+      </div>
+
+      <!-- Histórico de reuniones -->
+      <div class="section" style="margin-top: 36px;">
+        <div class="section-head">
+          <span class="section-num">Histórico</span>
+          <div class="section-line"></div>
+          <span id="calHistoricoSub" style="font-size:12px;color:var(--text-muted);white-space:nowrap;padding-left:12px;">—</span>
+        </div>
+        <div class="card">
+          <div class="card-body compact" id="calHistoricoList">
+            <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin reuniones pasadas registradas.</div>
           </div>
         </div>
       </div>
@@ -6672,9 +6687,10 @@
     const cardSub = document.getElementById('calCardSub');
     if (cardSub) cardSub.textContent = 'Vista mensual · ' + monthTotal + (monthTotal === 1 ? ' reunión' : ' reuniones');
 
-    // Actualizar panel "Hoy" y "Próximas"
+    // Actualizar panel "Hoy", "Próximas" e "Histórico"
     renderTodayPanel(todayStr, byDate[todayStr] || []);
     renderProximasList();
+    renderCalHistorico();
   }
 
   function renderTodayPanel(todayStr, events) {
@@ -6691,7 +6707,7 @@
     }
     list.innerHTML = events.map(ev => {
       const typeLabel = ev.type === 'p02' ? 'P02' : ev.type === 'p01' ? 'P01' : ev.type === 'lead' ? 'Lead' : 'Interno';
-      return `<div class="meeting-row">
+      return `<div class="meeting-row" style="position:relative;">
         <div>
           <div class="meeting-time">${escapeHtml(ev.time || '—')}</div>
           <div class="meeting-time-day">${typeLabel}</div>
@@ -6700,6 +6716,7 @@
           <div class="meeting-title">${escapeHtml(ev.title)}</div>
           ${ev.clientName ? `<div class="meeting-meta">${escapeHtml(ev.clientName)}</div>` : ''}
         </div>
+        <button onclick="deleteEvent('${escapeHtml(String(ev.id))}')" title="Eliminar" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1';this.style.color='var(--danger)'" onmouseleave="this.style.opacity='0'">×</button>
       </div>`;
     }).join('');
   }
@@ -6772,6 +6789,7 @@
     if (!confirm('¿Eliminar este evento?')) return;
     FINCO.removeEvent(id);
     renderCalendar(calYear, calMonth);
+    renderCalHistorico();
     if (currentClientId) renderClientReuniones();
   }
 
@@ -6854,8 +6872,9 @@
     if (!container) return;
     const todayStr = new Date().toISOString().slice(0, 10);
     const upcoming = FINCO.allEvents()
-      .filter(ev => ev.date >= todayStr)
-      .slice(0, 7);
+      .filter(ev => (ev.date || '') >= todayStr)
+      .sort((a, b) => a.date.localeCompare(b.date) || (a.time||'').localeCompare(b.time||''))
+      .slice(0, 8);
     if (!upcoming.length) {
       container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin reuniones próximas</div>';
       return;
@@ -6869,16 +6888,52 @@
         ? 'HOY'
         : dayNamesShort[d.getDay()] + ' ' + d.getDate() + ' ' + monthShort[d.getMonth()];
       const typeLabel = ev.type === 'p02' ? 'P02' : ev.type === 'p01' ? 'P01' : ev.type === 'lead' ? 'Lead' : 'Interno';
-      const clientLine = ev.clientName ? ev.clientName + ' · ' + typeLabel : typeLabel;
-      return `<div class="meeting-row">
+      const clientLine = ev.clientName ? escapeHtml(ev.clientName) + ' · ' + typeLabel : typeLabel;
+      return `<div class="meeting-row" style="position:relative;">
         <div>
           <div class="meeting-time">${escapeHtml(ev.time || '—')}</div>
           <div class="meeting-time-day">${dayLabel}</div>
         </div>
         <div class="meeting-info">
           <div class="meeting-title">${escapeHtml(ev.title)}</div>
-          <div class="meeting-meta">${escapeHtml(clientLine)}</div>
+          <div class="meeting-meta">${clientLine}</div>
         </div>
+        <button onclick="deleteEvent('${escapeHtml(String(ev.id))}')" title="Eliminar" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1';this.style.color='var(--danger)'" onmouseleave="this.style.opacity='0'">×</button>
+      </div>`;
+    }).join('');
+  }
+
+  function renderCalHistorico() {
+    const el  = document.getElementById('calHistoricoList');
+    const sub = document.getElementById('calHistoricoSub');
+    if (!el) return;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const past = FINCO.allEvents()
+      .filter(ev => (ev.date || '') < todayStr)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    if (!past.length) {
+      el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin reuniones pasadas registradas.</div>';
+      if (sub) sub.textContent = '—';
+      return;
+    }
+    if (sub) sub.textContent = `${past.length} reunión${past.length !== 1 ? 'es' : ''} completada${past.length !== 1 ? 's' : ''}`;
+    const dayNamesShort = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const monthShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    el.innerHTML = past.map(ev => {
+      const d = new Date(ev.date + 'T12:00:00');
+      const dayLabel = dayNamesShort[d.getDay()] + ' ' + d.getDate() + ' ' + monthShort[d.getMonth()] + ' ' + d.getFullYear();
+      const typeLabel = ev.type === 'p02' ? 'P02' : ev.type === 'p01' ? 'P01' : ev.type === 'lead' ? 'Lead' : 'Interno';
+      const clientLine = ev.clientName ? escapeHtml(ev.clientName) + ' · ' : '';
+      return `<div class="meeting-row" style="position:relative;">
+        <div>
+          <div class="meeting-time" style="color:var(--text-muted);">${escapeHtml(ev.time || '—')}</div>
+          <div class="meeting-time-day">${dayLabel}</div>
+        </div>
+        <div class="meeting-info">
+          <div class="meeting-title">${escapeHtml(ev.title)}</div>
+          <div class="meeting-meta">${clientLine}${typeLabel}</div>
+        </div>
+        <button onclick="deleteEvent('${escapeHtml(String(ev.id))}')" title="Eliminar" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;opacity:0;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1';this.style.color='var(--danger)'" onmouseleave="this.style.opacity='0'">×</button>
       </div>`;
     }).join('');
   }
