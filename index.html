@@ -1831,11 +1831,7 @@
           <div class="card-head">
             <div>
               <div class="card-title">Cashflow</div>
-              <div class="card-sub">Últimos 6 meses · USD</div>
-            </div>
-            <div class="tabs" style="border:none;margin:0;">
-              <span class="tab active">Mensual</span>
-              <span class="tab">Trimestral</span>
+              <div class="card-sub" id="dashCashflowSub">Últimos 7 meses · USD</div>
             </div>
           </div>
           <div class="chart-wrap">
@@ -1846,45 +1842,11 @@
           <div class="card-head">
             <div>
               <div class="card-title">Actividad reciente</div>
-              <div class="card-sub">Última hora</div>
+              <div class="card-sub" id="dashActivitySub">—</div>
             </div>
           </div>
-          <div class="card-body compact activity-list">
-            <div class="activity-item">
-              <div class="activity-icon">$</div>
-              <div>
-                <div class="activity-text"><strong>Estudio Veridia</strong> abonó fee mensual de USD 100</div>
-                <div class="activity-time">Hace 12 minutos</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon">✉</div>
-              <div>
-                <div class="activity-text">Nueva consulta de <strong>Camila Rivas</strong> por servicio P02</div>
-                <div class="activity-time">Hace 47 minutos</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon">✓</div>
-              <div>
-                <div class="activity-text">Reunión semanal con <strong>Refugio Café</strong> completada</div>
-                <div class="activity-time">Hace 2 horas</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon">◆</div>
-              <div>
-                <div class="activity-text">Hito 03 alcanzado en proyecto <strong>Aurora Salud</strong></div>
-                <div class="activity-time">Hace 4 horas</div>
-              </div>
-            </div>
-            <div class="activity-item">
-              <div class="activity-icon">◈</div>
-              <div>
-                <div class="activity-text">Lead nuevo: <strong>Tomás Linares</strong> (Inmobiliaria)</div>
-                <div class="activity-time">Ayer</div>
-              </div>
-            </div>
+          <div class="card-body compact activity-list" id="dashActivityList">
+            <div style="padding:32px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Cargando…</div>
           </div>
         </div>
       </div>
@@ -1895,37 +1857,11 @@
           <div class="card-head">
             <div>
               <div class="card-title">Reuniones de hoy</div>
-              <div class="card-sub">Martes 5 · 3 agendadas</div>
+              <div class="card-sub" id="dashTodaySub">—</div>
             </div>
           </div>
-          <div class="card-body compact">
-            <div class="flow-row">
-              <div></div>
-              <div>
-                <div class="flow-desc">Estudio Veridia — Growth weekly</div>
-                <div class="flow-meta">Carolina Méndez · P02</div>
-              </div>
-              <div></div>
-              <div class="flow-date">10:00</div>
-            </div>
-            <div class="flow-row">
-              <div></div>
-              <div>
-                <div class="flow-desc">Hernán Pereyra — Revisión KPIs</div>
-                <div class="flow-meta">Consultoría · P02</div>
-              </div>
-              <div></div>
-              <div class="flow-date">14:30</div>
-            </div>
-            <div class="flow-row">
-              <div></div>
-              <div>
-                <div class="flow-desc">Tomás Linares — Diagnóstico inicial</div>
-                <div class="flow-meta">Lead nuevo · Sin costo</div>
-              </div>
-              <div></div>
-              <div class="flow-date">17:00</div>
-            </div>
+          <div class="card-body compact" id="dashTodayMeetingsList">
+            <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Cargando…</div>
           </div>
         </div>
 
@@ -2247,15 +2183,22 @@
         </div>
       </div>
 
+      <!-- Selector de período -->
+      <div class="tabs" style="margin-bottom: 28px;">
+        <span class="tab active" id="finTabMes" onclick="setFinPeriod('month',this)">Mes actual</span>
+        <span class="tab" id="finTabYear" onclick="setFinPeriod('year',this)">Este año</span>
+        <span class="tab" id="finTabHistoric" onclick="setFinPeriod('historic',this)">Histórico</span>
+      </div>
+
       <!-- KPIs Finanzas -->
       <div class="kpi-grid">
         <div class="kpi-card">
-          <div class="kpi-label">Ingresos Mes</div>
+          <div class="kpi-label" id="finKpiIngLabel">Ingresos Mes</div>
           <div class="kpi-value gold" id="finKpiIngUSD">—</div>
           <div class="kpi-trend" id="finKpiIngARS"></div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Egresos Mes</div>
+          <div class="kpi-label" id="finKpiEgrLabel">Egresos Mes</div>
           <div class="kpi-value" id="finKpiEgrUSD">—</div>
           <div class="kpi-trend down" id="finKpiEgrARS"></div>
         </div>
@@ -2266,8 +2209,8 @@
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Por Cobrar</div>
-          <div class="kpi-value">$1.420</div>
-          <div class="kpi-trend down">3 vencidos</div>
+          <div class="kpi-value" id="finKpiPorCobrar">—</div>
+          <div class="kpi-trend down" id="finKpiPorCobrarTrend"></div>
         </div>
       </div>
 
@@ -2277,7 +2220,7 @@
           <div class="card-head">
             <div>
               <div class="card-title">Ingresos vs. Egresos</div>
-              <div class="card-sub">Últimos 12 meses · USD</div>
+              <div class="card-sub" id="finPnlSub">Últimos 7 meses · USD</div>
             </div>
           </div>
           <div class="chart-wrap">
@@ -2361,6 +2304,15 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Reportes -->
+      <div class="section" style="margin-top: 36px;">
+        <div class="section-head">
+          <span class="section-num">Reportes</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="kpi-detail-grid" id="finReportesGrid"><!-- dinámico --></div>
       </div>
     </div>
 
@@ -4658,6 +4610,154 @@
     const enCurso = clients.filter(c => c.status === 'active' || c.status === 'onboarding').length;
     setText('dashKpiProyectos', enCurso);
     setText('dashKpiProyectosTrend', `${active.length} activos · ${onboarding.length} en onboarding`);
+
+    // Dashboard — feeds dinámicos
+    renderDashActivity();
+    renderDashTodayMeetings();
+  }
+
+  // ── Dashboard: actividad reciente + reuniones de hoy ─────────
+  function timeAgo(isoDate) {
+    if (!isoDate) return '';
+    const d = new Date(isoDate);
+    if (isNaN(d)) return '';
+    const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (mins < 2)   return 'Ahora';
+    if (mins < 60)  return `Hace ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)   return `Hace ${hrs}h`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return 'Ayer';
+    if (days < 30)  return `Hace ${days} días`;
+    const mos = Math.floor(days / 30);
+    return `Hace ${mos} mes${mos !== 1 ? 'es' : ''}`;
+  }
+
+  function renderDashActivity() {
+    const el    = document.getElementById('dashActivityList');
+    const subEl = document.getElementById('dashActivitySub');
+    if (!el) return;
+    const now   = new Date();
+    const items = [];
+
+    // Transacciones últimos 30 días
+    const cut30 = now.getTime() - 30 * 86400000;
+    FINCO.allTransactions().forEach(t => {
+      const ts = new Date((t.createdAt || (t.date||'').slice(0,10)+'T12:00:00')).getTime();
+      if (ts >= cut30) {
+        const isIn = t.type === 'in';
+        items.push({
+          ts,
+          icon: isIn ? '$' : '↑',
+          color: isIn ? '#7fb069' : '#d97757',
+          bg: isIn ? 'rgba(127,176,105,0.06)' : 'rgba(217,119,87,0.06)',
+          border: isIn ? 'rgba(127,176,105,0.3)' : 'rgba(217,119,87,0.3)',
+          html: `<strong>${isIn ? 'Ingreso' : 'Egreso'} $${(parseFloat(t.amount)||0).toLocaleString('es-AR')}</strong> · ${escapeHtml(t.description||t.category||'')}`,
+          time: timeAgo(t.createdAt || t.date)
+        });
+      }
+    });
+
+    // Eventos pasados últimos 14 días
+    const cut14  = now.getTime() - 14 * 86400000;
+    const todayS = now.toISOString().slice(0,10);
+    FINCO.allEvents().forEach(ev => {
+      const evDate = (ev.date||'').slice(0,10);
+      const ts = new Date(evDate + 'T12:00:00').getTime();
+      if (ts >= cut14 && evDate <= todayS) {
+        const who = ev.clientName ? ` · ${escapeHtml(ev.clientName)}` : '';
+        items.push({
+          ts: new Date(ev.createdAt || evDate).getTime(),
+          icon: '◇', color: 'var(--gold)',
+          bg: 'rgba(201,168,76,0.06)', border: 'rgba(201,168,76,0.2)',
+          html: `<strong>Reunión</strong> · ${escapeHtml(ev.title)}${who}`,
+          time: timeAgo(evDate)
+        });
+      }
+    });
+
+    // Altas de clientes últimos 60 días
+    const cut60 = now.getTime() - 60 * 86400000;
+    FINCO.allClients().forEach(c => {
+      if (!c.createdAt) return;
+      const ts = new Date(c.createdAt).getTime();
+      if (ts >= cut60) {
+        items.push({
+          ts,
+          icon: '★', color: 'var(--gold)',
+          bg: 'rgba(201,168,76,0.08)', border: 'rgba(201,168,76,0.25)',
+          html: `<strong>Alta de cliente</strong> · ${escapeHtml(c.name)}${c.company ? ' · ' + escapeHtml(c.company) : ''}`,
+          time: timeAgo(c.createdAt)
+        });
+      }
+    });
+
+    // Leads nuevos últimos 30 días
+    FINCO.leads.forEach(l => {
+      if (!l.createdAt) return;
+      const ts = new Date(l.createdAt).getTime();
+      if (ts >= cut30) {
+        items.push({
+          ts,
+          icon: '◎', color: 'rgba(245,240,232,0.5)',
+          bg: 'rgba(245,240,232,0.04)', border: 'rgba(245,240,232,0.1)',
+          html: `<strong>Nuevo lead</strong> · ${escapeHtml(l.name)}${l.company ? ' · ' + escapeHtml(l.company) : ''}`,
+          time: timeAgo(l.createdAt)
+        });
+      }
+    });
+
+    items.sort((a, b) => b.ts - a.ts);
+    const top = items.slice(0, 8);
+
+    if (!top.length) {
+      el.innerHTML = `<div style="padding:32px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin actividad reciente.</div>`;
+      if (subEl) subEl.textContent = 'Sin actividad';
+      return;
+    }
+
+    el.innerHTML = top.map(it => `
+      <div class="activity-item">
+        <div class="activity-icon" style="color:${it.color};background:${it.bg};border-color:${it.border};">${it.icon}</div>
+        <div>
+          <div class="activity-text">${it.html}</div>
+          <div class="activity-time">${it.time}</div>
+        </div>
+      </div>`).join('');
+
+    if (subEl) subEl.textContent = `${items.length} evento${items.length !== 1 ? 's' : ''} recientes`;
+  }
+
+  function renderDashTodayMeetings() {
+    const el    = document.getElementById('dashTodayMeetingsList');
+    const subEl = document.getElementById('dashTodaySub');
+    if (!el) return;
+    const todayStr = new Date().toISOString().slice(0,10);
+    const evs = FINCO.allEvents()
+      .filter(ev => (ev.date||'').slice(0,10) === todayStr)
+      .sort((a, b) => (a.time||'').localeCompare(b.time||''));
+
+    if (!evs.length) {
+      el.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin reuniones para hoy.</div>`;
+      if (subEl) subEl.textContent = 'Día libre';
+      return;
+    }
+
+    const typeLabel = { p01: 'P01', p02: 'P02', lead: 'Lead', interno: 'Interno' };
+    el.innerHTML = evs.map(ev => {
+      const hourTag = ev.time ? ev.time.slice(0,5) : '—';
+      const typeTag = typeLabel[ev.type] || 'Interno';
+      const who = ev.clientName ? ` · ${escapeHtml(ev.clientName)}` : '';
+      return `<div class="activity-item">
+        <div class="activity-icon" style="font-size:10px;letter-spacing:-0.5px;">${hourTag}</div>
+        <div>
+          <div class="activity-text"><strong>${escapeHtml(ev.title)}</strong>${who}</div>
+          <div class="activity-time">${typeTag}${ev.notes ? ' · ' + escapeHtml(ev.notes.slice(0,50)) : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    if (subEl) subEl.textContent = `${evs.length} reunión${evs.length !== 1 ? 'es' : ''} hoy`;
   }
 
   // ── CRM: tabs ────────────────────────────────────────────────
@@ -4993,6 +5093,7 @@
     breadcrumb.textContent = labels[page] || 'Dashboard';
     document.querySelector('.main').scrollTop = 0;
     setTimeout(initCharts, 50);
+    if (page === 'dashboard')  { renderDashActivity(); renderDashTodayMeetings(); }
     if (page === 'calendario') renderCalendar(calYear, calMonth);
     if (page === 'servicios') renderServiciosGrid();
     if (page === 'finanzas') { refreshFinanzas(); setTimeout(initCharts, 80); }
@@ -5409,30 +5510,97 @@
     }).join('');
   }
 
+  // ── Período de Finanzas ──────────────────────────────────────
+  let _finPeriod = 'month';
+
+  function setFinPeriod(mode, tabEl) {
+    _finPeriod = mode;
+    document.querySelectorAll('#finTabMes, #finTabYear, #finTabHistoric').forEach(t => t.classList.remove('active'));
+    if (tabEl) tabEl.classList.add('active');
+    refreshFinanzas();
+    setTimeout(initCharts, 50);
+  }
+
+  function _finTxs() {
+    const all = FINCO.allTransactions();
+    const now = new Date();
+    if (_finPeriod === 'month') {
+      return all.filter(t => {
+        const d = new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00');
+        return !isNaN(d) && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+      });
+    }
+    if (_finPeriod === 'year') {
+      return all.filter(t => {
+        const d = new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00');
+        return !isNaN(d) && d.getFullYear()===now.getFullYear();
+      });
+    }
+    return all;
+  }
+
+  function _txYears(txs) {
+    const ys = [...new Set(txs.map(t => {
+      const d = new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00');
+      return isNaN(d) ? null : d.getFullYear();
+    }).filter(Boolean))].sort();
+    return ys.length ? ys : [new Date().getFullYear()];
+  }
+
+  function sumTxByYear(txs, years, type) {
+    return years.map(year =>
+      txs.filter(t => {
+        if (type && t.type !== type) return false;
+        const d = new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00');
+        return !isNaN(d) && d.getFullYear() === year;
+      }).reduce((s, t) => s + (parseFloat(t.amount)||0), 0)
+    );
+  }
+
+  function monthsOfYear(year) {
+    const names = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    return Array.from({length:12}, (_,i) => ({ year, month:i, label:names[i] }));
+  }
+
   function refreshFinanzas() {
     const now  = new Date();
-    const allTxs = FINCO.allTransactions();
-    // Filter to current month for KPIs
-    const txs = allTxs.filter(t => {
-      const d = new Date((t.date || t.createdAt || '').slice(0,10) + 'T12:00:00');
-      return !isNaN(d) && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    });
-    const ingUSD = txs.filter(t => t.type === 'in'  && t.currency !== 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
-    const egrUSD = txs.filter(t => t.type === 'out' && t.currency !== 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
-    const ingARS = txs.filter(t => t.type === 'in'  && t.currency === 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
-    const egrARS = txs.filter(t => t.type === 'out' && t.currency === 'ARS').reduce((s,t) => s + (parseFloat(t.amount)||0), 0);
+    const txs  = _finTxs();
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    const periodLabels = { month: 'Mes · ' + monthNames[now.getMonth()], year: 'Año ' + now.getFullYear(), historic: 'Total histórico' };
+    const kpiSuffix    = { month: 'Mes', year: 'Año', historic: 'Total' };
+    setText('finKpiIngLabel', 'Ingresos ' + (kpiSuffix[_finPeriod] || 'Mes'));
+    setText('finKpiEgrLabel', 'Egresos '  + (kpiSuffix[_finPeriod] || 'Mes'));
+
+    const ingUSD = txs.filter(t => t.type==='in'  && t.currency!=='ARS').reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+    const egrUSD = txs.filter(t => t.type==='out' && t.currency!=='ARS').reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+    const ingARS = txs.filter(t => t.type==='in'  && t.currency==='ARS').reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+    const egrARS = txs.filter(t => t.type==='out' && t.currency==='ARS').reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
     const netoUSD = ingUSD - egrUSD;
-    const fmt    = v => '$' + Math.abs(v).toLocaleString('es-AR', { minimumFractionDigits:0, maximumFractionDigits:0 });
-    const fmtARS = v => 'AR$' + Math.abs(v).toLocaleString('es-AR', { minimumFractionDigits:0, maximumFractionDigits:0 });
+    const fmt    = v => '$' + Math.abs(v).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
+    const fmtARS = v => 'AR$' + Math.abs(v).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
+
     setText('finKpiIngUSD', fmt(ingUSD));
-    setText('finKpiIngARS', ingARS > 0 ? '+ ' + fmtARS(ingARS) + ' ARS' : '');
+    setText('finKpiIngARS', ingARS>0 ? '+ '+fmtARS(ingARS)+' ARS' : periodLabels[_finPeriod]);
     setText('finKpiEgrUSD', fmt(egrUSD));
-    setText('finKpiEgrARS', egrARS > 0 ? '+ ' + fmtARS(egrARS) + ' ARS' : '');
-    setText('finKpiNetoUSD', (netoUSD < 0 ? '−' : '') + fmt(netoUSD));
+    setText('finKpiEgrARS', egrARS>0 ? '+ '+fmtARS(egrARS)+' ARS' : '');
+    setText('finKpiNetoUSD', (netoUSD<0?'−':'')+fmt(netoUSD));
     const netoEl = document.getElementById('finKpiNetoUSD');
-    if (netoEl) netoEl.className = 'kpi-value ' + (netoUSD >= 0 ? 'gold' : '');
-    setText('finKpiNetoTrend', netoUSD >= 0 ? 'Resultado positivo mes' : 'Resultado negativo mes');
+    if (netoEl) netoEl.className = 'kpi-value '+(netoUSD>=0?'gold':'');
+    const margen = ingUSD>0 ? Math.round(netoUSD/ingUSD*100) : 0;
+    setText('finKpiNetoTrend', (netoUSD>=0?'Positivo':'Negativo')+' · Margen '+margen+'%');
+
+    // Por Cobrar — fees pendientes del mes actual (siempre basado en clientes activos)
+    const billable = FINCO.allClients().filter(c=>(c.status==='active'||c.status==='onboarding')&&(parseFloat(c.fee)||0)>0);
+    const today = now.getDate();
+    const pendFees = billable.filter(c=>{ const d=c.startDate?new Date(c.startDate+'T12:00:00').getDate():1; return d>today; });
+    const vencFees = billable.filter(c=>{ const d=c.startDate?new Date(c.startDate+'T12:00:00').getDate():1; return (d+5)<today; });
+    const porCobrarTotal = pendFees.reduce((s,c)=>s+(parseFloat(c.fee)||0),0);
+    setText('finKpiPorCobrar', fmt(porCobrarTotal));
+    setText('finKpiPorCobrarTrend', vencFees.length>0?vencFees.length+' vencido(s)':'Al día');
+
     renderFacturacion();
+    renderFinReportes(txs, ingUSD, egrUSD, netoUSD);
   }
 
   function renderFacturacion() {
@@ -5441,43 +5609,81 @@
     const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     const shortMo = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     const emiLabel = document.getElementById('finBillEmitidasLabel');
-    if (emiLabel) emiLabel.textContent = 'EMITIDAS ' + monthNames[now.getMonth()].toUpperCase();
-    const billable = FINCO.allClients().filter(c =>
-      (c.status === 'active' || c.status === 'onboarding') && (parseFloat(c.fee) || 0) > 0
-    );
-    const emitidas  = billable.length;
-    const cobradas  = billable.filter(c => {
-      const d = c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1;
-      return d <= today;
-    }).length;
-    const pendientes = billable.filter(c => {
-      const d = c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1;
-      return d > today;
-    }).length;
-    const vencidas = billable.filter(c => {
-      const d = c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1;
-      return (d + 5) < today;
-    }).length;
+    if (emiLabel) emiLabel.textContent = 'EMITIDAS '+monthNames[now.getMonth()].toUpperCase();
+    const billable = FINCO.allClients().filter(c=>(c.status==='active'||c.status==='onboarding')&&(parseFloat(c.fee)||0)>0);
+    const emitidas   = billable.length;
+    const cobradas   = billable.filter(c=>{ const d=c.startDate?new Date(c.startDate+'T12:00:00').getDate():1; return d<=today; }).length;
+    const pendientes = billable.filter(c=>{ const d=c.startDate?new Date(c.startDate+'T12:00:00').getDate():1; return d>today; }).length;
+    const vencidas   = billable.filter(c=>{ const d=c.startDate?new Date(c.startDate+'T12:00:00').getDate():1; return (d+5)<today; }).length;
     setText('finBillEmitidas',  emitidas);
     setText('finBillCobradas',  cobradas);
-    setText('finBillPendientes', pendientes);
+    setText('finBillPendientes',pendientes);
     setText('finBillVencidas',  vencidas);
     const list = document.getElementById('finBillProximos');
     if (!list) return;
     const upcoming = billable
-      .map(c => ({ c, day: c.startDate ? new Date(c.startDate + 'T12:00:00').getDate() : 1 }))
-      .filter(x => x.day >= today)
-      .sort((a, b) => a.day - b.day)
-      .slice(0, 5);
-    if (!upcoming.length) {
-      list.innerHTML = `<div style="font-size:12px;color:var(--text-muted);font-style:italic;">Sin vencimientos próximos este mes.</div>`;
-      return;
-    }
-    list.innerHTML = upcoming.map(({ c, day }) => {
-      const label = day + ' ' + shortMo[now.getMonth()];
-      const fee   = (parseFloat(c.fee) || 0).toLocaleString('es-AR');
+      .map(c=>({c, day: c.startDate?new Date(c.startDate+'T12:00:00').getDate():1}))
+      .filter(x=>x.day>=today).sort((a,b)=>a.day-b.day).slice(0,5);
+    if (!upcoming.length) { list.innerHTML=`<div style="font-size:12px;color:var(--text-muted);font-style:italic;">Sin vencimientos próximos.</div>`; return; }
+    list.innerHTML = upcoming.map(({c,day})=>{
+      const label=day+' '+shortMo[now.getMonth()];
+      const fee=(parseFloat(c.fee)||0).toLocaleString('es-AR');
       return `<div style="font-size:12px;color:var(--cream);margin-bottom:6px;">${label} — ${escapeHtml(c.name)}<span style="color:var(--text-muted);float:right;">$${fee}</span></div>`;
     }).join('');
+  }
+
+  function renderFinReportes(txs, ingUSD, egrUSD, netoUSD) {
+    const grid = document.getElementById('finReportesGrid');
+    if (!grid) return;
+    const allTxs = FINCO.allTransactions();
+    const now = new Date();
+    const fmt = v => '$'+Math.round(Math.abs(v)).toLocaleString('es-AR');
+
+    // Margen neto
+    const margen = ingUSD>0 ? (netoUSD/ingUSD*100).toFixed(1) : '—';
+    const margenColor = netoUSD>=0 ? 'var(--success)' : 'var(--danger)';
+
+    // Ratio ingresos/egresos
+    const ratio = egrUSD>0 ? (ingUSD/egrUSD).toFixed(2) : '—';
+
+    // Ingreso promedio mensual (del año en curso)
+    const yearTxs = allTxs.filter(t=>{ const d=new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00'); return !isNaN(d)&&d.getFullYear()===now.getFullYear(); });
+    const monthsWithData = new Set(yearTxs.filter(t=>t.type==='in').map(t=>new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00').getMonth())).size || 1;
+    const ingAnio = yearTxs.filter(t=>t.type==='in'&&t.currency!=='ARS').reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+    const promMensual = ingAnio / monthsWithData;
+
+    // Mes con mayor ingreso (año actual)
+    const byMonth = Array.from({length:12},(_,i)=>i).map(m=>({
+      m, total: yearTxs.filter(t=>t.type==='in'&&!isNaN(new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00'))&&new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00').getMonth()===m).reduce((s,t)=>s+(parseFloat(t.amount)||0),0)
+    }));
+    const bestMonth = byMonth.reduce((a,b)=>b.total>a.total?b:a, byMonth[0]);
+    const monthShortNames=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const bestMonthLabel = bestMonth.total>0 ? monthShortNames[bestMonth.m]+' · '+fmt(bestMonth.total) : '—';
+
+    // Crecimiento vs mes anterior
+    const prevMonth = now.getMonth()===0 ? {year:now.getFullYear()-1,month:11} : {year:now.getFullYear(),month:now.getMonth()-1};
+    const prevTxs = allTxs.filter(t=>{ const d=new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00'); return !isNaN(d)&&d.getFullYear()===prevMonth.year&&d.getMonth()===prevMonth.month; });
+    const ingPrev = prevTxs.filter(t=>t.type==='in'&&t.currency!=='ARS').reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+    const curMonthIng = allTxs.filter(t=>{ const d=new Date((t.date||t.createdAt||'').slice(0,10)+'T12:00:00'); return !isNaN(d)&&d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()&&t.type==='in'&&t.currency!=='ARS'; }).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+    const growthMoM = ingPrev>0 ? ((curMonthIng-ingPrev)/ingPrev*100).toFixed(1) : null;
+    const growthStr = growthMoM!==null ? (growthMoM>=0?'+':'')+growthMoM+'% vs mes anterior' : 'Sin dato previo';
+    const growthColor = growthMoM===null?'var(--text-muted)':growthMoM>=0?'var(--success)':'var(--danger)';
+
+    grid.innerHTML = [
+      { name:'Margen neto', val: margen!=='—'?margen+'%':'—', sub:'Ingresos − Egresos / Ingresos', color:margenColor },
+      { name:'Ratio Ing/Egr', val: ratio, sub: egrUSD>0?'Por cada $1 de egreso':'Sin egresos', color:'var(--cream)' },
+      { name:'Promedio mensual', val: fmt(promMensual), sub:'Ingreso promedio · '+now.getFullYear(), color:'var(--gold)' },
+      { name:'Mejor mes', val: bestMonthLabel, sub:'Mayor ingreso del año', color:'var(--cream)' },
+      { name:'Crecimiento MoM', val: growthMoM!==null?(growthMoM>=0?'↑ ':'↓ ')+Math.abs(growthMoM)+'%':'—', sub:growthStr, color:growthColor },
+      { name:'Ingresos del año', val: fmt(ingAnio), sub: monthsWithData+' meses con datos · '+now.getFullYear(), color:'var(--gold)' },
+    ].map(r=>`
+      <div class="kpi-detail">
+        <div class="kpi-detail-head">
+          <div class="kpi-detail-name">${r.name}</div>
+        </div>
+        <div class="kpi-detail-value" style="color:${r.color};font-size:22px;">${r.val}</div>
+        <div class="kpi-detail-prev">${r.sub}</div>
+      </div>`).join('');
   }
 
   // ── Equipo ──────────────────────────────────────────────────
@@ -6905,6 +7111,7 @@
     // ── Cashflow (Dashboard) — ingresos vs egresos reales ────
     const cashflowEl = document.getElementById('cashflowChart');
     if (cashflowEl && cashflowEl.offsetParent !== null) {
+      setText('dashCashflowSub', `${mlabels[0]} – ${mlabels[mlabels.length-1]} · USD`);
       const ingData = sumTxByMonth(allTxs, months7, 'in');
       const egrData = sumTxByMonth(allTxs, months7, 'out');
       chartInstances.cashflow = new Chart(cashflowEl, {
@@ -6943,15 +7150,33 @@
       });
     }
 
-    // ── P&L (Finanzas) — ingresos vs egresos reales ──────────
+    // ── P&L (Finanzas) — ingresos vs egresos · period-aware ──
     const pnlEl = document.getElementById('pnlChart');
     if (pnlEl && pnlEl.offsetParent !== null) {
-      const ingFinal = sumTxByMonth(allTxs, months7, 'in');
-      const egrFinal = sumTxByMonth(allTxs, months7, 'out');
+      let pnlLabels, ingFinal, egrFinal, pnlSub;
+      if (_finPeriod === 'historic') {
+        const years = _txYears(allTxs);
+        pnlLabels = years.map(String);
+        ingFinal  = sumTxByYear(allTxs, years, 'in');
+        egrFinal  = sumTxByYear(allTxs, years, 'out');
+        pnlSub    = 'Histórico anual · USD';
+      } else if (_finPeriod === 'year') {
+        const mths12 = monthsOfYear(new Date().getFullYear());
+        pnlLabels = mths12.map(m => m.label);
+        ingFinal  = sumTxByMonth(allTxs, mths12, 'in');
+        egrFinal  = sumTxByMonth(allTxs, mths12, 'out');
+        pnlSub    = 'Año ' + new Date().getFullYear() + ' · USD';
+      } else {
+        pnlLabels = mlabels;
+        ingFinal  = sumTxByMonth(allTxs, months7, 'in');
+        egrFinal  = sumTxByMonth(allTxs, months7, 'out');
+        pnlSub    = 'Últimos 7 meses · USD';
+      }
+      setText('finPnlSub', pnlSub);
       chartInstances.pnl = new Chart(pnlEl, {
         type: 'bar',
         data: {
-          labels: mlabels,
+          labels: pnlLabels,
           datasets: [
             { label: 'Ingresos', data: ingFinal, backgroundColor: 'rgba(201,168,76,0.55)', borderRadius: 4 },
             { label: 'Egresos',  data: egrFinal, backgroundColor: 'rgba(217,119,87,0.45)', borderRadius: 4 }
@@ -6968,26 +7193,30 @@
       });
     }
 
-    // ── Mix de servicios (Finanzas) — fees reales por tipo ───
+    // ── Mix de ingresos — por tipo de servicio (transacciones reales) ──
     const mixEl = document.getElementById('mixChart');
     if (mixEl && mixEl.offsetParent !== null) {
-      const p01fee   = live.filter(c => c.service==='P01').reduce((s,c) => s+(parseFloat(c.fee)||0), 0);
-      const p02fee   = live.filter(c => c.service==='P02').reduce((s,c) => s+(parseFloat(c.fee)||0), 0);
-      const otrosFee = allTxs.filter(t => t.type==='in' && t.category !== 'Fee P01' && t.category !== 'Fee P02').reduce((s,t) => s+(parseFloat(t.amount)||0), 0);
-      const totalMix = p01fee + p02fee + otrosFee || 1;
-      const pct = v => Math.round(v / totalMix * 100);
-      setText('mixLegP02',   '$' + p02fee.toLocaleString('es-AR')   + ' · ' + pct(p02fee) + '%');
-      setText('mixLegP01',   '$' + p01fee.toLocaleString('es-AR')   + ' · ' + pct(p01fee) + '%');
-      setText('mixLegOtros', '$' + otrosFee.toLocaleString('es-AR') + ' · ' + pct(otrosFee) + '%');
+      const periodTxs = _finTxs();
+      const inTxs = periodTxs.filter(t => t.type === 'in');
+      const isP02 = t => t.service === 'P02' || (t.category||'').includes('P02');
+      const isP01 = t => t.service === 'P01' || (t.category||'').includes('P01');
+      const p02Income = inTxs.filter(isP02).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+      const p01Income = inTxs.filter(t=>isP01(t)&&!isP02(t)).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+      const otrosInc  = inTxs.filter(t=>!isP01(t)&&!isP02(t)).reduce((s,t)=>s+(parseFloat(t.amount)||0),0);
+      const totalMix  = p02Income + p01Income + otrosInc || 1;
+      const pct = v => Math.round(v/totalMix*100);
+      setText('mixLegP02',   '$'+p02Income.toLocaleString('es-AR')+' · '+pct(p02Income)+'%');
+      setText('mixLegP01',   '$'+p01Income.toLocaleString('es-AR')+' · '+pct(p01Income)+'%');
+      setText('mixLegOtros', '$'+otrosInc.toLocaleString('es-AR') +' · '+pct(otrosInc) +'%');
       chartInstances.mix = new Chart(mixEl, {
         type: 'doughnut',
         data: {
-          labels: ['P01 · Implementación', 'P02 · Growth Partner', 'Otros'],
-          datasets: [{ data: [p01fee||1, p02fee||1, otrosFee||0], backgroundColor: ['rgba(201,168,76,0.7)', 'rgba(127,176,105,0.7)', 'rgba(138,110,42,0.5)'], borderWidth: 0 }]
+          labels: ['P02 · Growth', 'P01 · Sistema', 'Otros'],
+          datasets: [{ data: [p02Income||0, p01Income||0, otrosInc||0], backgroundColor: ['rgba(201,168,76,0.75)', 'rgba(127,176,105,0.7)', 'rgba(138,110,42,0.5)'], borderWidth: 0 }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: 'rgba(245,240,232,0.55)', font: { size: 11 }, padding: 16 } } },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.label+': $'+ctx.parsed.toLocaleString('es-AR') } } },
           cutout: '68%'
         }
       });
