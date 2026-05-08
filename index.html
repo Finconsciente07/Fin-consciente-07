@@ -62,7 +62,9 @@
   .app {
     display: grid;
     grid-template-columns: 248px 1fr;
+    grid-template-rows: 100vh;
     height: 100vh;
+    overflow: hidden;
     position: relative;
     z-index: 1;
   }
@@ -74,6 +76,8 @@
     padding: 28px 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    min-height: 0;
     backdrop-filter: blur(20px);
   }
   .sidebar-brand {
@@ -3666,6 +3670,214 @@
       </div>
     </div>
 
+    <!-- ===================== EQUIPO ===================== -->
+    <div class="page" id="page-equipo">
+      <div class="page-header-row" style="margin-bottom: 36px;">
+        <div>
+          <div class="page-eyebrow">Organización interna</div>
+          <h1 class="page-title">El <em>equipo</em>.</h1>
+          <p class="page-sub">Personas que hacen funcionar a FINCO.</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn">+ Agregar miembro</button>
+        </div>
+      </div>
+
+      <div class="dashboard-grid" style="grid-template-columns: repeat(3,1fr); gap:18px;">
+
+        <div class="card">
+          <div class="card-head" style="flex-direction:column; align-items:flex-start; gap:14px;">
+            <div style="display:flex; align-items:center; gap:16px;">
+              <div class="detail-avatar" style="width:56px;height:56px;font-size:22px;flex-shrink:0;">JC</div>
+              <div>
+                <div style="font-size:15px;font-weight:500;color:var(--cream);">Juan Cruz</div>
+                <div style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;">Founder</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="badge dot success">Activo</span>
+              <span class="badge">Estrategia</span>
+              <span class="badge">Growth</span>
+            </div>
+          </div>
+          <div class="card-body compact">
+            <div class="flow-row" style="border:none;padding:10px 0 4px;">
+              <span class="flow-label">Rol</span>
+              <span class="flow-val" style="color:var(--cream);">Founder · Director General</span>
+            </div>
+            <div class="flow-row" style="border:none;padding:4px 0;">
+              <span class="flow-label">Clientes a cargo</span>
+              <span class="flow-val" style="color:var(--cream);">Todos</span>
+            </div>
+            <div class="flow-row" style="border:none;padding:4px 0;">
+              <span class="flow-label">Acceso</span>
+              <span class="flow-val" style="color:var(--gold);">Admin total</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Placeholder — próximo miembro -->
+        <div class="card" style="border-style:dashed; opacity:0.5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px; gap:12px; cursor:pointer;">
+          <div style="font-size:28px;color:var(--gold-dim);">+</div>
+          <div style="font-size:13px;color:var(--text-muted);">Agregar miembro</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================== CONFIGURACIÓN ===================== -->
+    <div class="page" id="page-configuracion">
+      <div class="page-header-row" style="margin-bottom: 36px;">
+        <div>
+          <div class="page-eyebrow">Sistema</div>
+          <h1 class="page-title">Configuración <em>general</em>.</h1>
+          <p class="page-sub">Ajustes del sistema, roles de acceso y datos de la cuenta.</p>
+        </div>
+      </div>
+
+      <!-- Sección: Cuenta -->
+      <div class="section" style="margin-bottom:32px;">
+        <div class="section-head">
+          <span class="section-num">01 — Cuenta</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="card" style="max-width:640px;">
+          <div class="card-body">
+            <div class="form-row-2" style="margin-bottom:16px;">
+              <div class="form-row">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-input" value="Juan Cruz" readonly>
+              </div>
+              <div class="form-row">
+                <label class="form-label">Empresa</label>
+                <input type="text" class="form-input" value="FINCO" readonly>
+              </div>
+            </div>
+            <div class="form-row" style="margin-bottom:16px;">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" value="juanalonso.6a@gmail.com" readonly>
+            </div>
+            <div class="form-row">
+              <label class="form-label">Moneda principal</label>
+              <select class="form-select" style="max-width:200px;">
+                <option selected>USD</option>
+                <option>ARS</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección: Roles y permisos -->
+      <div class="section" style="margin-bottom:32px;">
+        <div class="section-head">
+          <span class="section-num">02 — Roles y permisos</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="card" style="max-width:800px;">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Control de acceso</div>
+              <div class="card-sub">Definí qué puede ver y hacer cada rol dentro del sistema.</div>
+            </div>
+            <button class="btn btn-ghost" style="font-size:12px;">+ Nuevo rol</button>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <table class="table" style="margin:0;">
+              <thead>
+                <tr>
+                  <th>Rol</th>
+                  <th>Dashboard</th>
+                  <th>Clientes</th>
+                  <th>Finanzas</th>
+                  <th>CRM</th>
+                  <th>Configuración</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge dot success">Admin</span></td>
+                  <td><span style="color:var(--success);">✓ Total</span></td>
+                  <td><span style="color:var(--success);">✓ Total</span></td>
+                  <td><span style="color:var(--success);">✓ Total</span></td>
+                  <td><span style="color:var(--success);">✓ Total</span></td>
+                  <td><span style="color:var(--success);">✓ Total</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge dot warning">Consultor</span></td>
+                  <td><span style="color:var(--success);">✓ Ver</span></td>
+                  <td><span style="color:var(--success);">✓ Ver + editar</span></td>
+                  <td><span style="color:var(--text-muted);">— Sin acceso</span></td>
+                  <td><span style="color:var(--success);">✓ Total</span></td>
+                  <td><span style="color:var(--text-muted);">— Sin acceso</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge">Solo lectura</span></td>
+                  <td><span style="color:var(--success);">✓ Ver</span></td>
+                  <td><span style="color:var(--success);">✓ Ver</span></td>
+                  <td><span style="color:var(--text-muted);">— Sin acceso</span></td>
+                  <td><span style="color:var(--success);">✓ Ver</span></td>
+                  <td><span style="color:var(--text-muted);">— Sin acceso</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección: Sistema -->
+      <div class="section">
+        <div class="section-head">
+          <span class="section-num">03 — Sistema</span>
+          <div class="section-line"></div>
+        </div>
+        <div class="dashboard-grid" style="grid-template-columns: repeat(2,1fr); gap:16px; max-width:800px;">
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Base de datos</div>
+                <div class="card-sub">Supabase · conectado</div>
+              </div>
+              <span class="badge dot success">Online</span>
+            </div>
+            <div class="card-body compact">
+              <div class="flow-row" style="border:none;padding:8px 0;">
+                <span class="flow-label">Proveedor</span>
+                <span class="flow-val">Supabase (PostgreSQL)</span>
+              </div>
+              <div class="flow-row" style="border:none;padding:8px 0;">
+                <span class="flow-label">Proyecto</span>
+                <span class="flow-val">rppvtkwwnqwdabqeobtb</span>
+              </div>
+              <div class="flow-row" style="border:none;padding:8px 0;">
+                <span class="flow-label">Tablas activas</span>
+                <span class="flow-val">leads · clients · transactions · events · documents</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <div>
+                <div class="card-title">Datos locales</div>
+                <div class="card-sub">Cache en este dispositivo</div>
+              </div>
+            </div>
+            <div class="card-body compact">
+              <div class="flow-row" style="border:none;padding:8px 0;">
+                <span class="flow-label">Almacenamiento</span>
+                <span class="flow-val">localStorage (finco_v3)</span>
+              </div>
+              <div class="flow-row" style="border:none;padding:8px 0 16px;">
+                <span class="flow-label">Modo offline</span>
+                <span class="flow-val" style="color:var(--success);">Activo</span>
+              </div>
+              <button class="btn btn-ghost" style="font-size:12px;width:100%;" onclick="if(confirm('¿Limpiar cache local? Los datos en Supabase no se borran.')) { localStorage.removeItem('finco_v3'); location.reload(); }">Limpiar cache local</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -4736,9 +4948,11 @@
     finanzas:    'Finanzas',
     servicios:   'Servicios',
     resultados:  'Resultados',
-    calendario:  'Calendario',
-    documentos:  'Documentos',
-    cliente:     'Ficha de cliente'
+    calendario:    'Calendario',
+    documentos:    'Documentos',
+    equipo:        'Equipo',
+    configuracion: 'Configuración',
+    cliente:       'Ficha de cliente'
   };
 
   let currentPage = 'dashboard';
