@@ -1481,7 +1481,8 @@
     display: inline-flex;
   }
   .lead-card:hover .card-delete,
-  .table tr:hover .row-delete {
+  .table tr:hover .row-delete,
+  .flow-row:hover .row-delete {
     opacity: 1;
   }
   .card-delete:hover, .row-delete:hover {
@@ -3897,13 +3898,13 @@
             <div class="card-body compact">
               <div class="flow-row" style="border:none;padding:8px 0;">
                 <span class="flow-label">Almacenamiento</span>
-                <span class="flow-val">localStorage (finco_v3)</span>
+                <span class="flow-val">localStorage (finco_v4)</span>
               </div>
               <div class="flow-row" style="border:none;padding:8px 0 16px;">
                 <span class="flow-label">Modo offline</span>
                 <span class="flow-val" style="color:var(--success);">Activo</span>
               </div>
-              <button class="btn btn-ghost" style="font-size:12px;width:100%;" onclick="if(confirm('¿Limpiar cache local? Los datos en Supabase no se borran.')) { localStorage.removeItem('finco_v3'); location.reload(); }">Limpiar cache local</button>
+              <button class="btn btn-ghost" style="font-size:12px;width:100%;" onclick="if(confirm('¿Limpiar cache local? Los datos en Supabase no se borran.')) { localStorage.removeItem('finco_v4'); location.reload(); }">Limpiar cache local</button>
             </div>
           </div>
         </div>
@@ -4525,7 +4526,7 @@
   let currentTxFilter = 'all';
 
   // ── Helpers: persistencia local (localStorage) ─────────────
-  const FINCO_LS_KEY = 'finco_v3';
+  const FINCO_LS_KEY = 'finco_v4';
   function _saveLocal() {
     try {
       localStorage.setItem(FINCO_LS_KEY, JSON.stringify({
