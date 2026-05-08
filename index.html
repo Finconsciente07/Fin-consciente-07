@@ -1493,6 +1493,16 @@
   .card-delete:hover, .row-delete:hover {
     color: var(--danger); background: rgba(217,119,87,0.1);
   }
+  .card-convert {
+    display: block; width: 100%; margin-top: 8px;
+    background: none; border: none; border-top: 1px solid var(--line);
+    color: var(--gold); font-size: 11px; cursor: pointer;
+    padding: 6px 0 0; text-align: left; letter-spacing: 0.3px;
+    opacity: 0; max-height: 0; overflow: hidden;
+    transition: opacity 0.2s, max-height 0.2s;
+  }
+  .lead-card:hover .card-convert { opacity: 1; max-height: 30px; }
+  .card-convert:hover { text-decoration: underline; }
 
   /* Search highlighting */
   .search-active mark {
@@ -2061,60 +2071,46 @@
       </div>
 
       <!-- Tabs -->
-      <div class="tabs">
-        <span class="tab active">Pipeline</span>
-        <span class="tab">Conversiones</span>
-        <span class="tab">Historial</span>
-        <span class="tab">Segmentos</span>
+      <div class="tabs" id="crmTabs">
+        <span class="tab active" onclick="switchCrmTab('pipeline',this)">Pipeline</span>
+        <span class="tab" onclick="switchCrmTab('conversiones',this)">Conversiones</span>
+        <span class="tab" onclick="switchCrmTab('historial',this)">Historial</span>
+        <span class="tab" onclick="switchCrmTab('segmentos',this)">Segmentos</span>
       </div>
 
-      <!-- Pipeline kanban -->
+      <!-- ── Sección Pipeline ───────────────────────────────── -->
+      <div id="crmSectionPipeline">
       <div class="pipeline" style="grid-template-columns: repeat(4, 1fr);">
         <div class="pipeline-col">
           <div class="pipeline-head">
             <span class="pipeline-head-name">Leads</span>
-            <span class="pipeline-head-count">5</span>
+            <span class="pipeline-head-count" id="pipeCount0">—</span>
           </div>
           <div class="pipeline-body">
-            <div class="lead-card" onclick="openLead('Tomás Linares')">
+            <div class="lead-card" data-demo data-lead-name="Tomás Linares">
               <div class="lead-name">Tomás Linares</div>
               <div class="lead-company">Linares Propiedades · Inmobiliaria</div>
-              <div class="lead-meta">
-                <span>Hace 2 días</span>
-                <span class="lead-value">$1.200</span>
-              </div>
+              <div class="lead-meta"><span>Hace 2 días</span><span class="lead-value">$1.200</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Sofía Donato')">
+            <div class="lead-card" data-demo data-lead-name="Sofía Donato">
               <div class="lead-name">Sofía Donato</div>
               <div class="lead-company">Atelier Luna · Diseño</div>
-              <div class="lead-meta">
-                <span>Hace 4 días</span>
-                <span class="lead-value">$600</span>
-              </div>
+              <div class="lead-meta"><span>Hace 4 días</span><span class="lead-value">$600</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Federico Aguilar')">
+            <div class="lead-card" data-demo data-lead-name="Federico Aguilar">
               <div class="lead-name">Federico Aguilar</div>
               <div class="lead-company">Aguilar & Asoc · Contabilidad</div>
-              <div class="lead-meta">
-                <span>Hace 5 días</span>
-                <span class="lead-value">$1.800</span>
-              </div>
+              <div class="lead-meta"><span>Hace 5 días</span><span class="lead-value">$1.800</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Lucía Bermúdez')">
+            <div class="lead-card" data-demo data-lead-name="Lucía Bermúdez">
               <div class="lead-name">Lucía Bermúdez</div>
               <div class="lead-company">Casa Bermúdez · Eventos</div>
-              <div class="lead-meta">
-                <span>Hace 6 días</span>
-                <span class="lead-value">$600</span>
-              </div>
+              <div class="lead-meta"><span>Hace 6 días</span><span class="lead-value">$600</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Pablo Quiroga')">
+            <div class="lead-card" data-demo data-lead-name="Pablo Quiroga">
               <div class="lead-name">Pablo Quiroga</div>
               <div class="lead-company">Quiroga Talleres</div>
-              <div class="lead-meta">
-                <span>Hace 1 sem</span>
-                <span class="lead-value">$600</span>
-              </div>
+              <div class="lead-meta"><span>Hace 1 sem</span><span class="lead-value">$600</span></div>
             </div>
           </div>
         </div>
@@ -2122,40 +2118,28 @@
         <div class="pipeline-col">
           <div class="pipeline-head">
             <span class="pipeline-head-name">Diagnóstico</span>
-            <span class="pipeline-head-count">4</span>
+            <span class="pipeline-head-count" id="pipeCount1">—</span>
           </div>
           <div class="pipeline-body">
-            <div class="lead-card" onclick="openLead('Camila Rivas')">
+            <div class="lead-card" data-demo data-lead-name="Camila Rivas">
               <div class="lead-name">Camila Rivas</div>
               <div class="lead-company">Rivas Coaching</div>
-              <div class="lead-meta">
-                <span>Reunión 7 may</span>
-                <span class="lead-value">$1.800</span>
-              </div>
+              <div class="lead-meta"><span>Reunión 7 may</span><span class="lead-value">$1.800</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Mateo Saavedra')">
+            <div class="lead-card" data-demo data-lead-name="Mateo Saavedra">
               <div class="lead-name">Mateo Saavedra</div>
               <div class="lead-company">Estudio Saavedra · Arquitectura</div>
-              <div class="lead-meta">
-                <span>Reunión 9 may</span>
-                <span class="lead-value">$1.200</span>
-              </div>
+              <div class="lead-meta"><span>Reunión 9 may</span><span class="lead-value">$1.200</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Valentina Cruz')">
+            <div class="lead-card" data-demo data-lead-name="Valentina Cruz">
               <div class="lead-name">Valentina Cruz</div>
               <div class="lead-company">Cruz Wellness</div>
-              <div class="lead-meta">
-                <span>Reunión 10 may</span>
-                <span class="lead-value">$1.800</span>
-              </div>
+              <div class="lead-meta"><span>Reunión 10 may</span><span class="lead-value">$1.800</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Ignacio Belmonte')">
+            <div class="lead-card" data-demo data-lead-name="Ignacio Belmonte">
               <div class="lead-name">Ignacio Belmonte</div>
               <div class="lead-company">Belmonte Vinos</div>
-              <div class="lead-meta">
-                <span>Reunión 12 may</span>
-                <span class="lead-value">$600</span>
-              </div>
+              <div class="lead-meta"><span>Reunión 12 may</span><span class="lead-value">$600</span></div>
             </div>
           </div>
         </div>
@@ -2163,32 +2147,23 @@
         <div class="pipeline-col">
           <div class="pipeline-head">
             <span class="pipeline-head-name">Propuesta</span>
-            <span class="pipeline-head-count">3</span>
+            <span class="pipeline-head-count" id="pipeCount2">—</span>
           </div>
           <div class="pipeline-body">
-            <div class="lead-card" onclick="openLead('Granja Verde')">
+            <div class="lead-card" data-demo data-lead-name="Granja Verde">
               <div class="lead-name">Granja Verde</div>
               <div class="lead-company">Cooperativa agroecológica</div>
-              <div class="lead-meta">
-                <span>Enviada 3 may</span>
-                <span class="lead-value">$1.800</span>
-              </div>
+              <div class="lead-meta"><span>Enviada 3 may</span><span class="lead-value">$1.800</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Martín Luque')">
+            <div class="lead-card" data-demo data-lead-name="Martín Luque">
               <div class="lead-name">Martín Luque</div>
               <div class="lead-company">Luque Logística</div>
-              <div class="lead-meta">
-                <span>Enviada 1 may</span>
-                <span class="lead-value">$1.800</span>
-              </div>
+              <div class="lead-meta"><span>Enviada 1 may</span><span class="lead-value">$1.800</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Antonella Ríos')">
+            <div class="lead-card" data-demo data-lead-name="Antonella Ríos">
               <div class="lead-name">Antonella Ríos</div>
               <div class="lead-company">Ríos Marketing</div>
-              <div class="lead-meta">
-                <span>Enviada 28 abr</span>
-                <span class="lead-value">$600</span>
-              </div>
+              <div class="lead-meta"><span>Enviada 28 abr</span><span class="lead-value">$600</span></div>
             </div>
           </div>
         </div>
@@ -2196,74 +2171,55 @@
         <div class="pipeline-col">
           <div class="pipeline-head">
             <span class="pipeline-head-name">Negociación</span>
-            <span class="pipeline-head-count">2</span>
+            <span class="pipeline-head-count" id="pipeCount3">—</span>
           </div>
           <div class="pipeline-body">
-            <div class="lead-card" onclick="openLead('Carolina Méndez')">
+            <div class="lead-card" data-demo data-lead-name="Carolina Méndez">
               <div class="lead-name">Carolina Méndez</div>
               <div class="lead-company">Méndez Joyería</div>
-              <div class="lead-meta">
-                <span>Cierre prox.</span>
-                <span class="lead-value">$1.800</span>
-              </div>
+              <div class="lead-meta"><span>Cierre prox.</span><span class="lead-value">$1.800</span></div>
             </div>
-            <div class="lead-card" onclick="openLead('Rodrigo Vélez')">
+            <div class="lead-card" data-demo data-lead-name="Rodrigo Vélez">
               <div class="lead-name">Rodrigo Vélez</div>
               <div class="lead-company">Vélez Studios</div>
-              <div class="lead-meta">
-                <span>Cierre prox.</span>
-                <span class="lead-value">$600</span>
-              </div>
+              <div class="lead-meta"><span>Cierre prox.</span><span class="lead-value">$600</span></div>
             </div>
           </div>
         </div>
-
       </div>
+      </div><!-- /crmSectionPipeline -->
 
-      <!-- Conversiones recientes -->
-      <div class="section" style="margin-top: 36px;">
-        <div class="section-head">
-          <span class="section-num">— Conversiones recientes</span>
-          <div class="section-line"></div>
-        </div>
-        <p style="color:var(--text-muted); font-size:13px; margin-bottom: 18px;">Leads que se convirtieron en clientes en los últimos 60 días.</p>
+      <!-- ── Sección Conversiones ───────────────────────────── -->
+      <div id="crmSectionConversiones" style="display:none;">
+        <p style="color:var(--text-muted);font-size:13px;margin-bottom:18px;">Leads convertidos en clientes (últimos 60 días).</p>
         <div class="card">
           <table class="table">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Origen</th>
-                <th>Tiempo de cierre</th>
-                <th>Servicio</th>
-                <th class="td-right">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><div class="name-cell"><div class="client-avatar">DV</div><span class="td-name">Diego Valverde</span></div></td>
-                <td class="td-secondary">Referido · Hernán Pereyra</td>
-                <td class="td-secondary">9 días</td>
-                <td><span class="badge">P02 · Growth</span></td>
-                <td class="td-right td-amount">$390</td>
-              </tr>
-              <tr>
-                <td><div class="name-cell"><div class="client-avatar">FR</div><span class="td-name">Florencia Ruíz</span></div></td>
-                <td class="td-secondary">Instagram orgánico</td>
-                <td class="td-secondary">14 días</td>
-                <td><span class="badge">P02 · Growth</span></td>
-                <td class="td-right td-amount">$510</td>
-              </tr>
-              <tr>
-                <td><div class="name-cell"><div class="client-avatar">MF</div><span class="td-name">Mariana Ferraro</span></div></td>
-                <td class="td-secondary">Referido · Carolina Méndez</td>
-                <td class="td-secondary">6 días</td>
-                <td><span class="badge">P01 · Sistema</span></td>
-                <td class="td-right td-amount">$100</td>
-              </tr>
-            </tbody>
+            <thead><tr>
+              <th>Cliente</th><th>Origen</th><th>Servicio</th><th class="td-right">Fee mensual</th>
+            </tr></thead>
+            <tbody id="conversionesTbody"><!-- dinámico --></tbody>
           </table>
         </div>
       </div>
+
+      <!-- ── Sección Historial ──────────────────────────────── -->
+      <div id="crmSectionHistorial" style="display:none;">
+        <div class="card">
+          <div class="card-head"><div><div class="card-title">Todos los leads</div><div class="card-sub" id="crmHistorialSub">—</div></div></div>
+          <table class="table">
+            <thead><tr><th>Nombre</th><th>Empresa</th><th>Etapa</th><th class="td-right">Valor</th></tr></thead>
+            <tbody id="crmHistorialTbody"><!-- dinámico --></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Sección Segmentos ──────────────────────────────── -->
+      <div id="crmSectionSegmentos" style="display:none;">
+        <div style="padding:56px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">
+          Segmentación próximamente — aquí podrás agrupar leads por industria, valor y fuente.
+        </div>
+      </div>
+
     </div>
 
     <!-- ===================== FINANZAS ===================== -->
@@ -4527,6 +4483,7 @@
       localStorage.setItem(FINCO_LS_KEY, JSON.stringify({
         leads: FINCO.leads, clients: FINCO.clients,
         clientOverrides: FINCO.clientOverrides, deletedDemoIds: FINCO.deletedDemoIds,
+        deletedDemoLeadNames: FINCO.deletedDemoLeadNames,
         transactions: FINCO.transactions, deletedDemoTxIds: FINCO.deletedDemoTxIds,
         events: FINCO.events, deletedDemoEventIds: FINCO.deletedDemoEventIds
       }));
@@ -4540,7 +4497,8 @@
       FINCO.leads            = d.leads            || [];
       FINCO.clients          = d.clients          || [];
       FINCO.clientOverrides  = d.clientOverrides  || {};
-      FINCO.deletedDemoIds   = d.deletedDemoIds   || [];
+      FINCO.deletedDemoIds      = d.deletedDemoIds      || [];
+      FINCO.deletedDemoLeadNames = d.deletedDemoLeadNames || [];
       FINCO.transactions       = d.transactions       || [];
       FINCO.deletedDemoTxIds   = d.deletedDemoTxIds   || [];
       FINCO.events             = d.events             || [];
@@ -4557,6 +4515,7 @@
     clients: [],
     clientOverrides: {},
     deletedDemoIds: [],
+    deletedDemoLeadNames: [],
     transactions: [],
     deletedDemoTxIds: [],
     events: [],
@@ -4903,7 +4862,7 @@
     let leadCount = 0;
     const stageCounts = [0, 0, 0, 0];
     cols.forEach((col, idx) => {
-      const cards = col.querySelectorAll('.lead-card').length;
+      const cards = Array.from(col.querySelectorAll('.lead-card')).filter(c => c.style.display !== 'none').length;
       stageCounts[idx] = cards;
       leadCount += cards;
       const head = col.querySelector('.pipeline-head-count');
@@ -4934,21 +4893,131 @@
     setText('dashKpiProyectosTrend', `${active.length} activos · ${onboarding.length} en onboarding`);
   }
 
-  // Agregar botón × a las cards de leads demo del HTML para poder borrarlas
+  // ── CRM: tabs ────────────────────────────────────────────────
+  function switchCrmTab(section, el) {
+    document.querySelectorAll('#crmTabs .tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    ['Pipeline','Conversiones','Historial','Segmentos'].forEach(s => {
+      const div = document.getElementById('crmSection' + s);
+      if (div) div.style.display = (s.toLowerCase() === section) ? '' : 'none';
+    });
+    if (section === 'conversiones') renderConversiones();
+    if (section === 'historial') renderCrmHistorial();
+  }
+
+  function renderConversiones() {
+    const tbody = document.getElementById('conversionesTbody');
+    if (!tbody) return;
+    const now = new Date();
+    const cutoff = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+    const recent = FINCO.allClients()
+      .filter(c => c.createdAt && new Date(c.createdAt) >= cutoff)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (!recent.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;font-style:italic;">Sin conversiones en los últimos 60 días.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = recent.map(c => {
+      const svc = c.service === 'P02' ? 'P02 · Growth' : 'P01 · Sistema';
+      const fee = (parseFloat(c.fee) || 0).toLocaleString('es-AR');
+      const company = c.company ? escapeHtml(c.company) : '—';
+      const daysAgo = Math.floor((now - new Date(c.createdAt)) / (1000*60*60*24));
+      const when = daysAgo === 0 ? 'Hoy' : daysAgo === 1 ? 'Ayer' : `Hace ${daysAgo} días`;
+      return `<tr onclick="openClient('${c.id}')" style="cursor:pointer">
+        <td><strong>${escapeHtml(c.name)}</strong><br><span style="color:var(--text-muted);font-size:12px;">${company}</span></td>
+        <td class="td-secondary">${when}</td>
+        <td><span class="badge">${svc}</span></td>
+        <td class="td-right td-amount">$${fee}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderCrmHistorial() {
+    const tbody = document.getElementById('crmHistorialTbody');
+    if (!tbody) return;
+    const stageNames = ['Leads','Diagnóstico','Propuesta','Negociación'];
+    const leads = FINCO.leads;
+    const sub = document.getElementById('crmHistorialSub');
+    if (sub) sub.textContent = `${leads.length} lead${leads.length !== 1 ? 's' : ''} guardado${leads.length !== 1 ? 's' : ''}`;
+    if (!leads.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted);font-size:13px;font-style:italic;">Aún no hay leads registrados. Los del pipeline demo no se guardan en historial.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = leads.map(l => {
+      const stage = stageNames[l.stageIdx || 0] || 'Lead';
+      const val = (parseFloat(l.value) || 0).toLocaleString('es-AR');
+      return `<tr>
+        <td>${escapeHtml(l.name)}</td>
+        <td class="td-secondary">${escapeHtml(l.company || '—')}</td>
+        <td><span class="badge">${stage}</span></td>
+        <td class="td-right td-amount">$${val}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── CRM: conversión lead → cliente ───────────────────────────
+  function convertDemoLeadToClient(leadName, company, industry) {
+    openNewClient();
+    const modal = document.getElementById('newClientModal');
+    const f = modal.querySelector('form');
+    f.name.value = leadName;
+    f.company.value = company;
+    f.industry.value = industry;
+    modal.querySelector('.modal-form-head h2').innerHTML = 'Convertir <em>lead</em>';
+    modal.querySelector('.modal-form-head .page-eyebrow').textContent = 'CRM · Conversión';
+    modal.dataset.convertingDemoLead = leadName;
+  }
+
+  function convertLeadToClient(leadId, name, company, industry) {
+    openNewClient();
+    const modal = document.getElementById('newClientModal');
+    const f = modal.querySelector('form');
+    f.name.value = name;
+    f.company.value = company;
+    f.industry.value = industry;
+    modal.querySelector('.modal-form-head h2').innerHTML = 'Convertir <em>lead</em>';
+    modal.querySelector('.modal-form-head .page-eyebrow').textContent = 'CRM · Conversión';
+    modal.dataset.convertingLeadId = leadId;
+  }
+
+  // ── CRM: wire demo lead cards ────────────────────────────────
   function wireDemoLeadCards() {
-    document.querySelectorAll('#page-crm .lead-card').forEach(card => {
+    document.querySelectorAll('#page-crm .lead-card[data-demo]').forEach(card => {
+      const leadName = card.dataset.leadName;
+      // Hide if previously deleted
+      if (FINCO.deletedDemoLeadNames && FINCO.deletedDemoLeadNames.includes(leadName)) {
+        card.style.display = 'none';
+        return;
+      }
       if (card.querySelector('.card-delete')) return;
-      const btn = document.createElement('button');
-      btn.className = 'card-delete';
-      btn.textContent = '×';
-      btn.onclick = (e) => {
+      // Delete button
+      const delBtn = document.createElement('button');
+      delBtn.className = 'card-delete';
+      delBtn.textContent = '×';
+      delBtn.onclick = (e) => {
         e.stopPropagation();
         if (!confirm('¿Eliminar este lead?')) return;
-        card.remove();
+        if (!FINCO.deletedDemoLeadNames.includes(leadName)) FINCO.deletedDemoLeadNames.push(leadName);
+        _saveLocal();
+        card.style.display = 'none';
         refreshStats();
         showToast('Lead eliminado');
       };
-      card.appendChild(btn);
+      card.appendChild(delBtn);
+      // Convert button
+      const companyEl = card.querySelector('.lead-company');
+      const rawCompany = companyEl ? companyEl.textContent : '';
+      const parts = rawCompany.split('·');
+      const company = parts[0].trim();
+      const industry = parts[1] ? parts[1].trim() : '';
+      const cvtBtn = document.createElement('button');
+      cvtBtn.className = 'card-convert';
+      cvtBtn.textContent = '→ Convertir a cliente';
+      cvtBtn.onclick = (e) => {
+        e.stopPropagation();
+        convertDemoLeadToClient(leadName, company, industry);
+      };
+      card.appendChild(cvtBtn);
     });
   }
 
@@ -5072,6 +5141,10 @@
     card.setAttribute('onclick', `openClient('${(lead.name || '').replace(/'/g, "\\'")}')`);
     const value = (lead.value || 0).toLocaleString('es-AR');
     const meta = lead.industry ? lead.company + ' · ' + lead.industry : lead.company;
+    const safeId = lead.id.replace(/'/g, "\\'");
+    const safeName = (lead.name || '').replace(/'/g, "\\'");
+    const safeCompany = (lead.company || '').replace(/'/g, "\\'");
+    const safeIndustry = (lead.industry || '').replace(/'/g, "\\'");
     card.innerHTML = `
       <div class="lead-name">${escapeHtml(lead.name)}</div>
       <div class="lead-company">${escapeHtml(meta)}</div>
@@ -5079,7 +5152,8 @@
         <span>${formatDate(lead.createdAt)}</span>
         <span class="lead-value">$${value}</span>
       </div>
-      <button class="card-delete" onclick="event.stopPropagation(); deleteLead('${lead.id}')">×</button>
+      <button class="card-delete" onclick="event.stopPropagation(); deleteLead('${safeId}')">×</button>
+      <button class="card-convert" onclick="event.stopPropagation(); convertLeadToClient('${safeId}','${safeName}','${safeCompany}','${safeIndustry}')">→ Convertir a cliente</button>
     `;
     cols[stageIdx].querySelector('.pipeline-body').appendChild(card);
     refreshStats();
@@ -6206,7 +6280,10 @@
     modal.classList.add('show');
   }
   function closeNewClient() {
-    document.getElementById('newClientModal').classList.remove('show');
+    const modal = document.getElementById('newClientModal');
+    modal.classList.remove('show');
+    delete modal.dataset.convertingDemoLead;
+    delete modal.dataset.convertingLeadId;
     editMode = null;
   }
   async function submitNewClient(e) {
@@ -6239,7 +6316,26 @@
       } else {
         const client = await FINCO.addClient(data);
         renderClientsTable();
+        const modal = document.getElementById('newClientModal');
+        const convertingDemoLead = modal.dataset.convertingDemoLead;
+        const convertingLeadId   = modal.dataset.convertingLeadId;
         closeNewClient();
+        delete modal.dataset.convertingDemoLead;
+        delete modal.dataset.convertingLeadId;
+        // Hide the converted lead card
+        if (convertingDemoLead) {
+          if (!FINCO.deletedDemoLeadNames.includes(convertingDemoLead)) FINCO.deletedDemoLeadNames.push(convertingDemoLead);
+          _saveLocal();
+          const card = document.querySelector(`.lead-card[data-lead-name="${convertingDemoLead}"]`);
+          if (card) card.style.display = 'none';
+          refreshStats();
+        }
+        if (convertingLeadId) {
+          const card = document.querySelector(`.lead-card[data-id="${convertingLeadId}"]`);
+          if (card) card.remove();
+          FINCO.removeLead(convertingLeadId);
+          refreshStats();
+        }
         showToast('Cliente "' + client.name + '" agregado a la cartera');
       }
     } catch(err) {
