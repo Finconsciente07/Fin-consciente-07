@@ -947,6 +947,15 @@
   .legend-grid {
     display: flex; gap: 24px; flex-wrap: wrap;
   }
+
+  /* Equipo */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 1100px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 700px)  { .team-grid { grid-template-columns: 1fr; } }
   .legend-item {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 18px;
@@ -3336,45 +3345,8 @@
         </div>
       </div>
 
-      <div class="dashboard-grid" style="grid-template-columns: repeat(3,1fr); gap:18px;">
-
-        <div class="card">
-          <div class="card-head" style="flex-direction:column; align-items:flex-start; gap:14px;">
-            <div style="display:flex; align-items:center; gap:16px;">
-              <div class="detail-avatar" style="width:56px;height:56px;font-size:22px;flex-shrink:0;">JC</div>
-              <div>
-                <div style="font-size:15px;font-weight:500;color:var(--cream);">Juan Cruz</div>
-                <div style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;">Founder</div>
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <span class="badge dot success">Activo</span>
-              <span class="badge">Estrategia</span>
-              <span class="badge">Growth</span>
-            </div>
-          </div>
-          <div class="card-body compact">
-            <div class="flow-row" style="border:none;padding:10px 0 4px;">
-              <span class="flow-label">Rol</span>
-              <span class="flow-val" style="color:var(--cream);">Founder · Director General</span>
-            </div>
-            <div class="flow-row" style="border:none;padding:4px 0;">
-              <span class="flow-label">Clientes a cargo</span>
-              <span class="flow-val" style="color:var(--cream);">Todos</span>
-            </div>
-            <div class="flow-row" style="border:none;padding:4px 0;">
-              <span class="flow-label">Acceso</span>
-              <span class="flow-val" style="color:var(--gold);">Admin total</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Placeholder — próximo miembro -->
-        <div class="card" onclick="openNewMember()" style="border-style:dashed; opacity:0.5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px; gap:12px; cursor:pointer;">
-          <div style="font-size:28px;color:var(--gold-dim);">+</div>
-          <div style="font-size:13px;color:var(--text-muted);">Agregar miembro</div>
-        </div>
-
+      <div class="team-grid" id="teamGrid">
+        <!-- renderizado dinámicamente por renderTeamGrid() -->
       </div>
     </div>
 
@@ -5111,8 +5083,9 @@
     setTimeout(initCharts, 50);
     if (page === 'dashboard')  { renderDashActivity(); renderDashTodayMeetings(); }
     if (page === 'calendario') renderCalendar(calYear, calMonth);
-    if (page === 'servicios') renderServiciosGrid();
-    if (page === 'finanzas') { refreshFinanzas(); setTimeout(initCharts, 80); }
+    if (page === 'equipo')     renderTeamGrid();
+    if (page === 'servicios')  renderServiciosGrid();
+    if (page === 'finanzas')   { refreshFinanzas(); setTimeout(initCharts, 80); }
     if (page === 'resultados') { renderResultados(); setTimeout(initCharts, 80); }
     if (page === 'configuracion') { initRolePerms(); renderConsultorAccess(); }
     // Update back button label
@@ -5801,47 +5774,49 @@
   }
 
   function renderTeamGrid() {
-    const grid = document.querySelector('#page-equipo .dashboard-grid');
+    const grid = document.querySelector('#page-equipo .team-grid');
     if (!grid) return;
     const accessLabels = { admin:'Admin total', consultor:'Consultor', readonly:'Solo lectura' };
     const accessColors = { admin:'var(--gold)', consultor:'var(--warning)', readonly:'var(--text-soft)' };
+
+    function memberRow(label, value, color) {
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(201,168,76,0.06);">
+        <span style="font-size:11px;color:var(--text-muted);letter-spacing:0.5px;text-transform:uppercase;">${label}</span>
+        <span style="font-size:13px;color:${color||'var(--cream)'};">${value}</span>
+      </div>`;
+    }
+
     grid.innerHTML = _teamMembers.map((m, idx) => `
-      <div class="card" style="position:relative;">
-        <div style="position:absolute;top:14px;right:14px;display:flex;gap:4px;opacity:0;transition:opacity 0.2s;" class="member-actions">
-          <button onclick="openEditMember(${idx})" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:2px;cursor:pointer;letter-spacing:0.3px;">Editar</button>
-          ${idx > 0 ? `<button onclick="deleteMember(${idx})" style="background:none;border:none;color:var(--text-muted);font-size:16px;width:22px;height:22px;cursor:pointer;border-radius:3px;display:flex;align-items:center;justify-content:center;" title="Eliminar">×</button>` : ''}
+      <div class="card member-card" style="position:relative;">
+        <div class="member-actions" style="position:absolute;top:12px;right:12px;display:flex;gap:6px;opacity:0;transition:opacity 0.2s;">
+          <button onclick="openEditMember(${idx})" style="background:none;border:1px solid var(--line-bright);color:var(--gold);font-size:11px;padding:3px 10px;border-radius:2px;cursor:pointer;">Editar</button>
+          ${idx > 0 ? `<button onclick="deleteMember(${idx})" title="Eliminar" style="background:none;border:none;color:var(--text-muted);font-size:18px;line-height:1;cursor:pointer;padding:0 4px;">×</button>` : ''}
         </div>
-        <div class="card-head" style="flex-direction:column; align-items:flex-start; gap:14px;">
-          <div style="display:flex; align-items:center; gap:16px;">
-            <div class="detail-avatar" style="width:56px;height:56px;font-size:22px;flex-shrink:0;">${escapeHtml(m.initials)}</div>
+        <div class="card-head" style="flex-direction:column;align-items:flex-start;gap:16px;padding-bottom:0;">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="detail-avatar" style="width:52px;height:52px;font-size:20px;flex-shrink:0;">${escapeHtml(m.initials||'??')}</div>
             <div>
-              <div style="font-size:15px;font-weight:500;color:var(--cream);">${escapeHtml(m.name)}</div>
-              <div style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;">${escapeHtml(m.area || '')}</div>
+              <div style="font-size:15px;font-weight:500;color:var(--cream);margin-bottom:3px;">${escapeHtml(m.name)}</div>
+              <div style="font-size:10px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;">${escapeHtml(m.area||'')}</div>
             </div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <span class="badge dot success">Activo</span>
-            <span class="badge">${escapeHtml(m.area || '')}</span>
+            ${m.area ? `<span class="badge">${escapeHtml(m.area)}</span>` : ''}
           </div>
         </div>
-        <div class="card-body compact">
-          <div class="flow-row" style="border:none;padding:10px 0 4px;">
-            <span class="flow-label">Rol</span>
-            <span class="flow-val" style="color:var(--cream);">${escapeHtml(m.role)}</span>
-          </div>
-          ${m.email ? `<div class="flow-row" style="border:none;padding:4px 0;"><span class="flow-label">Email</span><span class="flow-val">${escapeHtml(m.email)}</span></div>` : ''}
-          <div class="flow-row" style="border:none;padding:4px 0;">
-            <span class="flow-label">Acceso</span>
-            <span class="flow-val" style="color:${accessColors[m.access] || 'var(--cream)'};">${accessLabels[m.access] || m.access}</span>
-          </div>
+        <div class="card-body" style="padding:4px 24px 20px;">
+          ${memberRow('Rol', escapeHtml(m.role||'—'))}
+          ${m.email ? memberRow('Email', escapeHtml(m.email)) : ''}
+          ${memberRow('Acceso', accessLabels[m.access]||m.access, accessColors[m.access])}
         </div>
-      </div>`).join('') + `
-      <div class="card" onclick="openNewMember()" style="border-style:dashed; opacity:0.5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px; gap:12px; cursor:pointer;">
-        <div style="font-size:28px;color:var(--gold-dim);">+</div>
-        <div style="font-size:13px;color:var(--text-muted);">Agregar miembro</div>
+      </div>`).join('') +
+      `<div class="card" onclick="openNewMember()" style="border-style:dashed;opacity:0.45;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:180px;gap:10px;cursor:pointer;">
+        <div style="font-size:32px;color:var(--gold);opacity:0.6;">+</div>
+        <div style="font-size:12px;color:var(--text-muted);letter-spacing:0.5px;">Agregar miembro</div>
       </div>`;
-    // Show actions on hover
-    grid.querySelectorAll('.card').forEach(card => {
+
+    grid.querySelectorAll('.member-card').forEach(card => {
       const actions = card.querySelector('.member-actions');
       if (!actions) return;
       card.addEventListener('mouseenter', () => actions.style.opacity = '1');
