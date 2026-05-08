@@ -878,6 +878,8 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     grid-auto-rows: minmax(108px, auto);
+    border-left: 1px solid var(--line);
+    border-top: 1px solid var(--line);
   }
   .cal-cell {
     padding: 10px;
@@ -2862,7 +2864,7 @@
           <div class="card-head">
             <div>
               <div class="card-title" id="calMonthTitle">Mayo 2026</div>
-              <div class="card-sub">Vista mensual · 17 reuniones</div>
+              <div class="card-sub" id="calCardSub">Vista mensual</div>
             </div>
             <div class="tabs" style="border:none; margin:0;">
               <span class="tab active">Mes</span>
@@ -2898,57 +2900,8 @@
                 <div class="card-sub">Esta semana</div>
               </div>
             </div>
-            <div class="card-body compact">
-              <div class="meeting-row" onclick="openClient('Refugio Café')">
-                <div>
-                  <div class="meeting-time">11:00</div>
-                  <div class="meeting-time-day">Mié 6</div>
-                </div>
-                <div class="meeting-info">
-                  <div class="meeting-title">Refugio Café · Soporte mensual</div>
-                  <div class="meeting-meta">Lautaro Méndez · P01</div>
-                </div>
-              </div>
-              <div class="meeting-row" onclick="openClient('Camila Rivas')">
-                <div>
-                  <div class="meeting-time">16:00</div>
-                  <div class="meeting-time-day">Jue 7</div>
-                </div>
-                <div class="meeting-info">
-                  <div class="meeting-title">Camila Rivas · Diagnóstico</div>
-                  <div class="meeting-meta">Lead · Sin costo</div>
-                </div>
-              </div>
-              <div class="meeting-row" onclick="openClient('Marina Costas')">
-                <div>
-                  <div class="meeting-time">10:30</div>
-                  <div class="meeting-time-day">Vie 8</div>
-                </div>
-                <div class="meeting-info">
-                  <div class="meeting-title">Marina Costas · Iteración</div>
-                  <div class="meeting-meta">Costas Diseño · P01</div>
-                </div>
-              </div>
-              <div class="meeting-row" onclick="openClient('Joaquín Galván')">
-                <div>
-                  <div class="meeting-time">15:00</div>
-                  <div class="meeting-time-day">Vie 8</div>
-                </div>
-                <div class="meeting-info">
-                  <div class="meeting-title">Galván Inmobiliaria · Growth</div>
-                  <div class="meeting-meta">Joaquín Galván · P02</div>
-                </div>
-              </div>
-              <div class="meeting-row" onclick="openClient('Mateo Saavedra')">
-                <div>
-                  <div class="meeting-time">11:00</div>
-                  <div class="meeting-time-day">Sáb 9</div>
-                </div>
-                <div class="meeting-info">
-                  <div class="meeting-title">Mateo Saavedra · Diagnóstico</div>
-                  <div class="meeting-meta">Lead · Arquitectura</div>
-                </div>
-              </div>
+            <div class="card-body compact" id="calProximasList">
+              <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin reuniones próximas</div>
             </div>
           </div>
         </div>
@@ -3200,110 +3153,7 @@
       </div>
 
       <!-- REUNIONES -->
-      <div class="detail-tab-content" id="tab-reuniones">
-        <div class="card" style="margin-bottom: 20px;">
-          <div class="card-head">
-            <div>
-              <div class="card-title">Próximas reuniones</div>
-              <div class="card-sub">Recurrentes y agendadas</div>
-            </div>
-            <button class="btn">+ Agendar nueva</button>
-          </div>
-          <div class="card-body compact">
-            <div class="meeting-row">
-              <div>
-                <div class="meeting-time">10:00</div>
-                <div class="meeting-time-day">HOY · Mar 5</div>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">Growth weekly · Mayo semana 2</div>
-                <div class="meeting-meta">60 min · Google Meet · Recurrente martes</div>
-              </div>
-            </div>
-            <div class="meeting-row">
-              <div>
-                <div class="meeting-time">10:00</div>
-                <div class="meeting-time-day">Mar 12 may</div>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">Growth weekly · Mayo semana 3</div>
-                <div class="meeting-meta">60 min · Google Meet</div>
-              </div>
-            </div>
-            <div class="meeting-row">
-              <div>
-                <div class="meeting-time">10:00</div>
-                <div class="meeting-time-day">Mar 19 may</div>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">Growth weekly · Mayo semana 4</div>
-                <div class="meeting-meta">60 min · Google Meet</div>
-              </div>
-            </div>
-            <div class="meeting-row">
-              <div>
-                <div class="meeting-time">10:00</div>
-                <div class="meeting-time-day">Mar 26 may</div>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">Review mensual · Cierre Mayo</div>
-                <div class="meeting-meta">90 min · Presencial · Con 3 socios</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <div class="card-title">Historial de reuniones</div>
-              <div class="card-sub">8 reuniones completadas</div>
-            </div>
-          </div>
-          <div class="card-body compact">
-            <div class="meeting-row">
-              <div>
-                <div class="meeting-time" style="color:var(--text-muted);">10:00</div>
-                <div class="meeting-time-day">28 Abr</div>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">Growth weekly · Cierre Abril</div>
-                <div class="meeting-meta">Notas · 5 acción items completados</div>
-              </div>
-            </div>
-            <div class="meeting-row">
-              <div>
-                <div class="meeting-time" style="color:var(--text-muted);">11:00</div>
-                <div class="meeting-time-day">21 Abr</div>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">Demo iteración 2 · Cobros automáticos</div>
-                <div class="meeting-meta">Notas · Aprobado por socios</div>
-              </div>
-            </div>
-            <div class="meeting-row">
-              <div>
-                <div class="meeting-time" style="color:var(--text-muted);">10:00</div>
-                <div class="meeting-time-day">14 Abr</div>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">Growth weekly</div>
-                <div class="meeting-meta">Notas</div>
-              </div>
-            </div>
-            <div class="meeting-row">
-              <div>
-                <div class="meeting-time" style="color:var(--text-muted);">15:00</div>
-                <div class="meeting-time-day">02 Abr</div>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">Review trimestral Q1</div>
-                <div class="meeting-meta">120 min · Presencial · Notas extensas</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div class="detail-tab-content" id="tab-reuniones"><!-- dinámico --></div>
 
       <!-- NOTAS -->
       <div class="detail-tab-content" id="tab-notas">
@@ -3888,6 +3738,8 @@
           <select name="status" class="form-select" required>
             <option value="active">Activo</option>
             <option value="onboarding">Onboarding</option>
+            <option value="paused">Pausado</option>
+            <option value="churned">Histórico (baja)</option>
           </select>
         </div>
       </div>
@@ -4088,7 +3940,9 @@
         </div>
         <div class="form-row">
           <label class="form-label">Cliente / Contacto</label>
-          <input type="text" name="client_name" class="form-input" placeholder="Nombre (opcional)">
+          <select name="client_id" id="evClientSelect" class="form-select">
+            <option value="">— Sin cliente —</option>
+          </select>
         </div>
       </div>
       <div class="form-row">
@@ -4654,8 +4508,8 @@
     },
     async addEvent(ev) {
       const local = { id: _genId(), title: ev.title, date: ev.date, time: ev.time || '',
-        type: ev.type || 'interno', clientName: ev.clientName || '', notes: ev.notes || '',
-        createdAt: new Date().toISOString() };
+        type: ev.type || 'interno', clientName: ev.clientName || '', clientId: ev.clientId || '',
+        notes: ev.notes || '', createdAt: new Date().toISOString() };
       this.events.push(local);
       _saveLocal();
       try {
@@ -5016,9 +4870,11 @@
       const serviceLabel = client.service === 'P02' ? 'P02 · Growth' : 'P01 · Sistema';
       const statusBadge = client.status === 'onboarding'
         ? '<span class="badge dot warning">Onboarding</span>'
-        : (client.status === 'paused'
+        : client.status === 'paused'
           ? '<span class="badge dot muted">Pausado</span>'
-          : '<span class="badge dot success">Activo</span>');
+          : client.status === 'churned'
+            ? '<span class="badge dot danger">Histórico</span>'
+            : '<span class="badge dot success">Activo</span>';
       const companyLabel = client.industry ? client.company + ' · ' + client.industry : client.company;
       const fee = (client.fee || 0).toLocaleString('es-AR');
       const durationLabel = client.durationMonths ? client.durationMonths + ' meses' : 'Indefinida';
@@ -5222,6 +5078,7 @@
       active: 'CLIENTE ACTIVO',
       onboarding: 'EN ONBOARDING',
       paused: 'CLIENTE PAUSADO',
+      churned: 'CLIENTE HISTÓRICO',
       lead: 'LEAD EN GESTIÓN'
     };
     const eyebrowText = (statusMap[c.status] || 'FICHA DE CLIENTE') + (c.service ? ' · ' + (c.service === 'P02' ? 'GROWTH PARTNER' : 'P01 SISTEMA') : '');
@@ -5239,9 +5096,10 @@
     if (badgesEl) {
       const statusBadge = c.status === 'onboarding'
         ? '<span class="badge dot warning">Onboarding</span>'
-        : (c.status === 'paused' ? '<span class="badge dot muted">Pausado</span>'
-          : (c.status === 'lead' ? '<span class="badge dot warning">Lead</span>'
-            : '<span class="badge dot success">Activo</span>'));
+        : c.status === 'paused' ? '<span class="badge dot muted">Pausado</span>'
+        : c.status === 'churned' ? '<span class="badge dot danger">Histórico</span>'
+        : c.status === 'lead' ? '<span class="badge dot warning">Lead</span>'
+        : '<span class="badge dot success">Activo</span>';
       const serviceBadge = c.service ? `<span class="badge">${c.service === 'P02' ? 'P02 · Growth' : 'P01 · Sistema'}</span>` : '';
       const feeBadge = c.fee ? `<span class="badge">Fee USD ${c.fee}</span>` : '';
       const durationBadge = _dur ? `<span class="badge">${_dur} meses${_progressLabel ? ' · ' + _progressLabel : ''}</span>` : '';
@@ -5381,37 +5239,7 @@
     }
 
     // REUNIONES
-    const meetingsPanel = document.getElementById('tab-reuniones');
-    if (meetingsPanel) {
-      const m = c.meetings || { upcoming: [], past: [] };
-      const total = (m.upcoming || []).length + (m.past || []).length;
-      const tabM = document.querySelector('[data-detail-tab="reuniones"]');
-      if (tabM) tabM.textContent = `Reuniones · ${total}`;
-      if (total > 0) {
-        meetingsPanel.innerHTML = `
-          ${m.upcoming && m.upcoming.length ? `
-          <div class="card" style="margin-bottom: 20px;">
-            <div class="card-head">
-              <div><div class="card-title">Próximas reuniones</div><div class="card-sub">${m.upcoming.length} agendadas</div></div>
-              <button class="btn">+ Agendar nueva</button>
-            </div>
-            <div class="card-body compact">
-              ${m.upcoming.map(mt => meetingRowHTML(mt)).join('')}
-            </div>
-          </div>` : ''}
-          ${m.past && m.past.length ? `
-          <div class="card">
-            <div class="card-head">
-              <div><div class="card-title">Historial</div><div class="card-sub">${m.past.length} completadas</div></div>
-            </div>
-            <div class="card-body compact">
-              ${m.past.map(mt => meetingRowHTML(mt, true)).join('')}
-            </div>
-          </div>` : ''}`;
-      } else {
-        meetingsPanel.innerHTML = emptyState('Sin reuniones agendadas', 'Cargá la primera reunión con este cliente.', '+ Agendar reunión');
-      }
-    }
+    renderClientReuniones();
 
     // NOTAS
     const notesPanel = document.getElementById('tab-notas');
@@ -6632,8 +6460,14 @@
     }
     grid.innerHTML = html;
 
-    // Actualizar panel "Hoy"
+    // Card subtitle — count events this month
+    const monthTotal = Object.values(byDate).reduce((s, arr) => s + arr.length, 0);
+    const cardSub = document.getElementById('calCardSub');
+    if (cardSub) cardSub.textContent = 'Vista mensual · ' + monthTotal + (monthTotal === 1 ? ' reunión' : ' reuniones');
+
+    // Actualizar panel "Hoy" y "Próximas"
     renderTodayPanel(todayStr, byDate[todayStr] || []);
+    renderProximasList();
   }
 
   function renderTodayPanel(todayStr, events) {
@@ -6664,41 +6498,184 @@
   }
 
   // Funciones de eventos del calendario
-  function openNewEvent(dateStr) {
+  function populateEventClientSelect(preSelectId) {
+    const sel = document.getElementById('evClientSelect');
+    if (!sel) return;
+    const clients = FINCO.allClients().filter(c => c.status !== 'churned');
+    sel.innerHTML = '<option value="">— Sin cliente —</option>' +
+      clients.map(c => `<option value="${escapeHtml(String(c.id))}"${String(c.id) === String(preSelectId) ? ' selected' : ''}>${escapeHtml(c.name)}${c.company ? ' · ' + escapeHtml(c.company) : ''}</option>`).join('');
+  }
+
+  function openNewEvent(dateStr, preSelectClientId) {
     const m = document.getElementById('newEventModal');
     if (!m) return;
     m.querySelector('form').reset();
     const dateInput = document.getElementById('evDate');
     if (dateInput) dateInput.value = dateStr || new Date().toISOString().slice(0, 10);
+    populateEventClientSelect(preSelectClientId || '');
     m.classList.add('show');
   }
+
+  function openNewEventForClient() {
+    if (!currentClientId) { openNewEvent(); return; }
+    const c = FINCO.getClient(currentClientId);
+    openNewEvent(new Date().toISOString().slice(0, 10), c ? c.id : '');
+    if (c) {
+      const sel = document.getElementById('evClientSelect');
+      if (sel) sel.value = c.id;
+      // Auto-set type based on service
+      const typeEl = document.querySelector('#newEventModal select[name="type"]');
+      if (typeEl && c.service) typeEl.value = c.service === 'P02' ? 'p02' : 'p01';
+    }
+  }
+
   function closeNewEvent() {
     document.getElementById('newEventModal').classList.remove('show');
   }
+
   async function submitNewEvent(e) {
     e.preventDefault();
     const form = e.target;
     const fd   = new FormData(form);
     const btn  = form.querySelector('[type=submit]');
     btn.disabled = true; btn.textContent = 'Guardando…';
+    const clientId = fd.get('client_id') || '';
+    let clientName = '';
+    if (clientId) {
+      const cl = FINCO.getClient(clientId);
+      clientName = cl ? cl.name : '';
+    }
     await FINCO.addEvent({
       title:      fd.get('title'),
       date:       fd.get('date'),
       time:       fd.get('time') || '',
       type:       fd.get('type'),
-      clientName: fd.get('client_name') || '',
+      clientId,
+      clientName,
       notes:      fd.get('notes') || ''
     });
     renderCalendar(calYear, calMonth);
+    if (currentClientId) renderClientReuniones();
     closeNewEvent();
     showToast('Evento guardado');
     btn.disabled = false; btn.textContent = 'Guardar evento';
   }
+
   function deleteEvent(id) {
     if (!confirm('¿Eliminar este evento?')) return;
     FINCO.removeEvent(id);
     renderCalendar(calYear, calMonth);
+    if (currentClientId) renderClientReuniones();
   }
+
+  function renderClientReuniones() {
+    const panel = document.getElementById('tab-reuniones');
+    if (!panel) return;
+    const c = currentClientId ? FINCO.getClient(currentClientId) : null;
+    const tabM = document.querySelector('[data-detail-tab="reuniones"]');
+
+    if (!c) { panel.innerHTML = ''; return; }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const allEvs = FINCO.allEvents().filter(ev =>
+      ev.clientId === c.id || ev.clientName === c.name || ev.clientName === c.company
+    );
+    const upcoming = allEvs.filter(ev => ev.date >= todayStr);
+    const past     = allEvs.filter(ev => ev.date <  todayStr).reverse();
+
+    if (tabM) tabM.textContent = `Reuniones · ${allEvs.length}`;
+
+    const dayNamesShort = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const monthShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+    function evRow(ev, isPast) {
+      const d = new Date(ev.date + 'T12:00:00');
+      const isToday = ev.date === todayStr;
+      const dayLabel = isToday ? 'HOY · ' + dayNamesShort[d.getDay()] + ' ' + d.getDate()
+        : dayNamesShort[d.getDay()] + ' ' + d.getDate() + ' ' + monthShort[d.getMonth()];
+      return `<div class="meeting-row" style="position:relative;">
+        <div>
+          <div class="meeting-time"${isPast ? ' style="color:var(--text-muted);"' : ''}>${escapeHtml(ev.time || '—')}</div>
+          <div class="meeting-time-day">${dayLabel}</div>
+        </div>
+        <div class="meeting-info">
+          <div class="meeting-title">${escapeHtml(ev.title)}</div>
+          ${ev.notes ? `<div class="meeting-meta">${escapeHtml(ev.notes)}</div>` : ''}
+        </div>
+        <button onclick="deleteEvent('${escapeHtml(String(ev.id))}')" title="Eliminar" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:14px;opacity:0;transition:opacity 0.2s;" onmouseenter="this.style.opacity='1';this.style.color='var(--danger)'" onmouseleave="this.style.opacity='0'">×</button>
+      </div>`;
+    }
+
+    if (!allEvs.length) {
+      panel.innerHTML = `
+        <div class="card">
+          <div class="card-head">
+            <div><div class="card-title">Reuniones</div><div class="card-sub">Sin reuniones agendadas</div></div>
+            <button class="btn" onclick="openNewEventForClient()">+ Agendar reunión</button>
+          </div>
+          <div class="card-body" style="text-align:center;padding:48px 32px;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--text-muted);margin-bottom:8px;">Sin reuniones todavía</div>
+            <div style="font-size:13px;color:var(--text-muted);">Las reuniones agendadas aparecen acá automáticamente.</div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    panel.innerHTML = `
+      ${upcoming.length ? `
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-head">
+          <div><div class="card-title">Próximas reuniones</div><div class="card-sub">${upcoming.length} agendada${upcoming.length !== 1 ? 's' : ''}</div></div>
+          <button class="btn" onclick="openNewEventForClient()">+ Agendar nueva</button>
+        </div>
+        <div class="card-body compact">${upcoming.map(ev => evRow(ev, false)).join('')}</div>
+      </div>` : `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button class="btn" onclick="openNewEventForClient()">+ Agendar nueva</button>
+      </div>`}
+      ${past.length ? `
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Historial de reuniones</div><div class="card-sub">${past.length} completada${past.length !== 1 ? 's' : ''}</div></div>
+        </div>
+        <div class="card-body compact">${past.map(ev => evRow(ev, true)).join('')}</div>
+      </div>` : ''}`;
+  }
+
+  function renderProximasList() {
+    const container = document.getElementById('calProximasList');
+    if (!container) return;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const upcoming = FINCO.allEvents()
+      .filter(ev => ev.date >= todayStr)
+      .slice(0, 7);
+    if (!upcoming.length) {
+      container.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;font-style:italic;">Sin reuniones próximas</div>';
+      return;
+    }
+    const dayNamesShort = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    const monthShort = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    container.innerHTML = upcoming.map(ev => {
+      const d = new Date(ev.date + 'T12:00:00');
+      const isToday = ev.date === todayStr;
+      const dayLabel = isToday
+        ? 'HOY'
+        : dayNamesShort[d.getDay()] + ' ' + d.getDate() + ' ' + monthShort[d.getMonth()];
+      const typeLabel = ev.type === 'p02' ? 'P02' : ev.type === 'p01' ? 'P01' : ev.type === 'lead' ? 'Lead' : 'Interno';
+      const clientLine = ev.clientName ? ev.clientName + ' · ' + typeLabel : typeLabel;
+      return `<div class="meeting-row">
+        <div>
+          <div class="meeting-time">${escapeHtml(ev.time || '—')}</div>
+          <div class="meeting-time-day">${dayLabel}</div>
+        </div>
+        <div class="meeting-info">
+          <div class="meeting-title">${escapeHtml(ev.title)}</div>
+          <div class="meeting-meta">${escapeHtml(clientLine)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
   function goToday() {
     const now = new Date();
     calYear = now.getFullYear(); calMonth = now.getMonth();
@@ -6899,7 +6876,7 @@
     );
   }
   function calcMRRByMonth(months) {
-    const active = FINCO.allClients().filter(c => c.status !== 'churned' && (parseFloat(c.fee) || 0) > 0);
+    const active = FINCO.allClients().filter(c => c.status === 'active' || c.status === 'onboarding').filter(c => (parseFloat(c.fee) || 0) > 0);
     return months.map(({ year, month }) => {
       const monthEnd = new Date(year, month + 1, 0); // último día del mes
       return active
