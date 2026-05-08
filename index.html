@@ -31,7 +31,7 @@
     --warning:     #e8b04b;
   }
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  html, body { height: 100%; }
+  html, body { height: 100%; overflow: hidden; }
   body {
     background: var(--green-deep);
     color: var(--cream);
@@ -39,7 +39,6 @@
     font-weight: 300;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
   }
   /* Diagonal pattern */
   body::before {
@@ -62,9 +61,6 @@
   .app {
     display: grid;
     grid-template-columns: 248px 1fr;
-    grid-template-rows: 100vh;
-    height: 100vh;
-    overflow: hidden;
     position: relative;
     z-index: 1;
   }
@@ -76,8 +72,10 @@
     padding: 28px 0;
     display: flex;
     flex-direction: column;
+    height: 100vh;
     overflow-y: auto;
-    min-height: 0;
+    position: sticky;
+    top: 0;
     backdrop-filter: blur(20px);
   }
   .sidebar-brand {
@@ -179,8 +177,8 @@
 
   /* ============ MAIN ============ */
   .main {
+    height: 100vh;
     overflow-y: auto;
-    min-height: 0;        /* CSS Grid: permite que el item se encoja y active el scroll */
     background: var(--green-deep);
     position: relative;
   }
@@ -601,6 +599,37 @@
     display: flex; justify-content: space-between;
     font-size: 11px; color: var(--text-muted);
   }
+
+  /* Permission toggles */
+  .perm-toggle {
+    display: inline-flex; align-items: center; cursor: pointer;
+  }
+  .perm-toggle input { display: none; }
+  .perm-slider {
+    width: 36px; height: 20px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    position: relative;
+    transition: background .2s, border-color .2s;
+  }
+  .perm-slider::after {
+    content: '';
+    position: absolute; top: 3px; left: 3px;
+    width: 12px; height: 12px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: transform .2s, background .2s;
+  }
+  .perm-toggle input:checked + .perm-slider {
+    background: rgba(127,176,105,0.2);
+    border-color: var(--success);
+  }
+  .perm-toggle input:checked + .perm-slider::after {
+    background: var(--success);
+    transform: translateX(16px);
+  }
+  .perm-toggle input:disabled + .perm-slider { opacity: 0.5; cursor: not-allowed; }
 
   /* Catalog cards */
   .catalog-grid {
@@ -1495,16 +1524,18 @@
     .cal-event { font-size: 9px; }
   }
   @media (max-width: 768px) {
-    body { overflow: auto; }
-    .app { grid-template-columns: 1fr; height: auto; }
-    .sidebar { position: static; }
+    html, body { overflow: auto; }
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; }
+    .main { height: auto; overflow-y: visible; }
     .page { padding: 24px; }
     .topbar { padding: 14px 24px; flex-wrap: wrap; gap: 12px; }
     .search-box { width: 100%; }
   }
 
   /* ============ DOCUMENTOS ============ */
-  .docs-layout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+  .docs-layout { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
+  .docs-layout > * { min-width: 0; }
   .drop-zone {
     border: 1.5px dashed var(--line-bright);
     border-radius: 12px;
@@ -3679,7 +3710,7 @@
           <p class="page-sub">Personas que hacen funcionar a FINCO.</p>
         </div>
         <div style="display:flex; gap:10px;">
-          <button class="btn">+ Agregar miembro</button>
+          <button class="btn" onclick="openNewMember()">+ Agregar miembro</button>
         </div>
       </div>
 
@@ -3717,7 +3748,7 @@
         </div>
 
         <!-- Placeholder — próximo miembro -->
-        <div class="card" style="border-style:dashed; opacity:0.5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px; gap:12px; cursor:pointer;">
+        <div class="card" onclick="openNewMember()" style="border-style:dashed; opacity:0.5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px; gap:12px; cursor:pointer;">
           <div style="font-size:28px;color:var(--gold-dim);">+</div>
           <div style="font-size:13px;color:var(--text-muted);">Agregar miembro</div>
         </div>
@@ -3794,30 +3825,30 @@
                   <th>Configuración</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="rolesTableBody">
                 <tr>
-                  <td><span class="badge dot success">Admin</span></td>
-                  <td><span style="color:var(--success);">✓ Total</span></td>
-                  <td><span style="color:var(--success);">✓ Total</span></td>
-                  <td><span style="color:var(--success);">✓ Total</span></td>
-                  <td><span style="color:var(--success);">✓ Total</span></td>
-                  <td><span style="color:var(--success);">✓ Total</span></td>
+                  <td><span class="badge dot success">Admin</span><div style="font-size:10px;color:var(--text-muted);margin-top:3px;">Sin restricciones</div></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked disabled><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked disabled><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked disabled><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked disabled><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked disabled><span class="perm-slider"></span></label></td>
                 </tr>
                 <tr>
                   <td><span class="badge dot warning">Consultor</span></td>
-                  <td><span style="color:var(--success);">✓ Ver</span></td>
-                  <td><span style="color:var(--success);">✓ Ver + editar</span></td>
-                  <td><span style="color:var(--text-muted);">— Sin acceso</span></td>
-                  <td><span style="color:var(--success);">✓ Total</span></td>
-                  <td><span style="color:var(--text-muted);">— Sin acceso</span></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
                 </tr>
                 <tr>
                   <td><span class="badge">Solo lectura</span></td>
-                  <td><span style="color:var(--success);">✓ Ver</span></td>
-                  <td><span style="color:var(--success);">✓ Ver</span></td>
-                  <td><span style="color:var(--text-muted);">— Sin acceso</span></td>
-                  <td><span style="color:var(--success);">✓ Ver</span></td>
-                  <td><span style="color:var(--text-muted);">— Sin acceso</span></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" checked onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
+                  <td><label class="perm-toggle"><input type="checkbox" onchange="saveRolePerm(this)"><span class="perm-slider"></span></label></td>
                 </tr>
               </tbody>
             </table>
@@ -3879,6 +3910,62 @@
     </div>
 
   </main>
+</div>
+
+<!-- ============ MODAL: NUEVO MIEMBRO ============ -->
+<div class="modal-overlay" id="newMemberModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeNewMember()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow">Equipo · Nuevo Miembro</div>
+      <h2>Agregar <em>miembro</em></h2>
+      <p class="modal-form-sub">Completá los datos del nuevo integrante del equipo.</p>
+    </div>
+    <form class="modal-form" onsubmit="submitNewMember(event); return false;">
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Nombre completo<span class="req">*</span></label>
+          <input type="text" name="name" class="form-input" placeholder="Ej: María González" required>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Iniciales (avatar)</label>
+          <input type="text" name="initials" class="form-input" placeholder="MG" maxlength="2">
+        </div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label">Rol / Cargo<span class="req">*</span></label>
+          <input type="text" name="role" class="form-input" placeholder="Ej: Consultora Growth" required>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Área</label>
+          <select name="area" class="form-select">
+            <option>Growth</option>
+            <option>Sistemas</option>
+            <option>Operaciones</option>
+            <option>Administración</option>
+            <option>Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-input" placeholder="maria@finco.com">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Nivel de acceso</label>
+        <select name="access" class="form-select">
+          <option value="admin">Admin total</option>
+          <option value="consultor" selected>Consultor</option>
+          <option value="readonly">Solo lectura</option>
+        </select>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeNewMember()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Agregar miembro</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- ============ MODAL: NUEVO LEAD ============ -->
@@ -5410,6 +5497,78 @@
     setText('finKpiNetoTrend', netoUSD >= 0 ? 'Resultado positivo' : 'Resultado negativo');
   }
 
+  // ── Equipo ──────────────────────────────────────────────────
+  const _teamMembers = [
+    { name:'Juan Cruz', initials:'JC', role:'Founder · Director General', area:'Growth', email:'juanalonso.6a@gmail.com', access:'admin' }
+  ];
+  function openNewMember() {
+    const m = document.getElementById('newMemberModal');
+    if (!m) return;
+    m.querySelector('form').reset();
+    m.classList.add('show');
+  }
+  function closeNewMember() {
+    document.getElementById('newMemberModal').classList.remove('show');
+  }
+  function submitNewMember(e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const member = {
+      name:     fd.get('name'),
+      initials: (fd.get('initials') || fd.get('name').slice(0,2)).toUpperCase(),
+      role:     fd.get('role'),
+      area:     fd.get('area'),
+      email:    fd.get('email') || '',
+      access:   fd.get('access')
+    };
+    _teamMembers.push(member);
+    renderTeamGrid();
+    closeNewMember();
+    showToast('Miembro agregado');
+  }
+  function renderTeamGrid() {
+    const grid = document.querySelector('#page-equipo .dashboard-grid');
+    if (!grid) return;
+    const accessLabels = { admin:'Admin total', consultor:'Consultor', readonly:'Solo lectura' };
+    const accessColors = { admin:'var(--gold)', consultor:'var(--warning)', readonly:'var(--text-soft)' };
+    grid.innerHTML = _teamMembers.map(m => `
+      <div class="card">
+        <div class="card-head" style="flex-direction:column; align-items:flex-start; gap:14px;">
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div class="detail-avatar" style="width:56px;height:56px;font-size:22px;flex-shrink:0;">${escapeHtml(m.initials)}</div>
+            <div>
+              <div style="font-size:15px;font-weight:500;color:var(--cream);">${escapeHtml(m.name)}</div>
+              <div style="font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;">${escapeHtml(m.area || '')}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span class="badge dot success">Activo</span>
+            <span class="badge">${escapeHtml(m.area || '')}</span>
+          </div>
+        </div>
+        <div class="card-body compact">
+          <div class="flow-row" style="border:none;padding:10px 0 4px;">
+            <span class="flow-label">Rol</span>
+            <span class="flow-val" style="color:var(--cream);">${escapeHtml(m.role)}</span>
+          </div>
+          ${m.email ? `<div class="flow-row" style="border:none;padding:4px 0;"><span class="flow-label">Email</span><span class="flow-val">${escapeHtml(m.email)}</span></div>` : ''}
+          <div class="flow-row" style="border:none;padding:4px 0;">
+            <span class="flow-label">Acceso</span>
+            <span class="flow-val" style="color:${accessColors[m.access] || 'var(--cream)'};">${accessLabels[m.access] || m.access}</span>
+          </div>
+        </div>
+      </div>`).join('') + `
+      <div class="card" onclick="openNewMember()" style="border-style:dashed; opacity:0.5; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:200px; gap:12px; cursor:pointer;">
+        <div style="font-size:28px;color:var(--gold-dim);">+</div>
+        <div style="font-size:13px;color:var(--text-muted);">Agregar miembro</div>
+      </div>`;
+  }
+
+  // ── Configuración: roles ─────────────────────────────────────
+  function saveRolePerm(checkbox) {
+    showToast('Permiso actualizado');
+  }
+
   function switchServiciosTab(section, tab) {
     document.querySelectorAll('#serviciosTabs .tab').forEach(t => t.classList.remove('active'));
     if (tab) tab.classList.add('active');
@@ -5822,6 +5981,7 @@
   renderTransactionsList('all');
   refreshFinanzas();
   renderCalendar(calYear, calMonth);
+  renderTeamGrid();
 
   // ============ TOAST ============
   function showToast(msg) {
@@ -5843,7 +6003,7 @@
   }
 
   // Click outside to close form modals
-  ['newLeadModal', 'newClientModal', 'newTransactionModal', 'newEventModal'].forEach(id => {
+  ['newLeadModal', 'newClientModal', 'newTransactionModal', 'newEventModal', 'newMemberModal'].forEach(id => {
     const m = document.getElementById(id);
     if (m) m.addEventListener('click', e => {
       if (e.target === m) m.classList.remove('show');
@@ -5864,9 +6024,9 @@
 
   function renderCalendar(year, month) {
     const grid  = document.getElementById('calGrid');
-    const title = document.getElementById('calTitle');
+    const title = document.getElementById('calMonthTitle');
     const header = document.getElementById('calHeader');
-    if (!grid || !title) return;
+    if (!grid) return;
     const label = monthNames[month] + ' ' + year;
     title.textContent = label;
     if (header) header.textContent = label;
