@@ -1669,6 +1669,37 @@
   }
   .doc-form-field input:focus, .doc-form-field textarea:focus { border-color: var(--gold); }
   .doc-form-field textarea { resize: vertical; min-height: 60px; }
+
+  /* ── Export modal type tabs ── */
+  .export-type-tabs { display:flex; gap:0; border:1px solid var(--line-bright); border-radius:6px; overflow:hidden; margin-bottom:24px; }
+  .export-type-tab  { flex:1; padding:9px 0; text-align:center; font-size:12px; letter-spacing:1px; text-transform:uppercase; cursor:pointer; color:var(--text-muted); border:none; background:transparent; transition:all .15s; }
+  .export-type-tab.active { background:rgba(201,168,76,0.12); color:var(--gold); }
+
+  /* ── Print styles ── */
+  @media print {
+    body > *:not(#print-area) { display: none !important; }
+    #print-area { display: block !important; }
+    #print-area { font-family: 'Georgia', serif; color: #111; background: #fff; padding: 32px; }
+    #print-area .pr-header { border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 20px; }
+    #print-area .pr-title  { font-size: 22px; font-weight: bold; margin: 0 0 4px; }
+    #print-area .pr-sub    { font-size: 11px; color: #555; margin: 0; }
+    #print-area .pr-kpis   { display: flex; gap: 24px; margin-bottom: 20px; flex-wrap: wrap; }
+    #print-area .pr-kpi    { border: 1px solid #ddd; padding: 10px 16px; border-radius: 4px; min-width: 120px; }
+    #print-area .pr-kpi-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #666; }
+    #print-area .pr-kpi-val   { font-size: 20px; font-weight: bold; margin-top: 2px; }
+    #print-area table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    #print-area th { background: #f0f0f0; padding: 7px 10px; text-align: left; font-size: 9px; text-transform: uppercase; letter-spacing: .8px; color: #444; border-bottom: 1px solid #ccc; }
+    #print-area td { padding: 7px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+    #print-area tr:last-child td { border-bottom: none; }
+    #print-area .pr-section-title { font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 8px; color: #333; border-left: 3px solid #bbb; padding-left: 8px; }
+    #print-area .pr-total-row { font-weight: bold; border-top: 2px solid #333; }
+    #print-area .pr-footer { margin-top: 24px; font-size: 9px; color: #888; border-top: 1px solid #ddd; padding-top: 10px; display: flex; justify-content: space-between; }
+    #print-area .badge-paid    { color: #2d6a2d; }
+    #print-area .badge-pending { color: #8a6c00; }
+    #print-area .badge-overdue { color: #8a2d00; }
+    #print-area .badge-partial { color: #5a4500; }
+  }
+  #print-area { display: none; }
 </style>
 </head>
 <body>
@@ -2193,7 +2224,7 @@
           <p class="page-sub">P&L del mes, cobros, facturación y cashflow consolidado de FINCO.</p>
         </div>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-ghost">Exportar P&L</button>
+          <button class="btn btn-ghost" onclick="openExportModal('transacciones')">Exportar P&L</button>
           <button class="btn" onclick="openNewTransaction()">+ Registrar movimiento</button>
         </div>
       </div>
@@ -2340,6 +2371,7 @@
           <p class="page-sub">Estado de facturación mensual por cliente. Marcá cada cobro cuando ingresa.</p>
         </div>
         <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost" onclick="openExportModal('cobranzas')">Exportar</button>
           <button class="btn btn-ghost" onclick="renderCobranzas()">Actualizar</button>
           <button class="btn" onclick="_generateCobranzasManual()">+ Generar período</button>
         </div>
@@ -8666,8 +8698,308 @@
     }).join('');
   }
 
+  // ============ EXPORTAR ============
+  let _exportType = 'cobranzas';
+
+  function openExportModal(defaultType) {
+    _exportType = defaultType || 'cobranzas';
+    const now = new Date();
+    const thisMo = now.toISOString().slice(0, 7);
+    const sixAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().slice(0, 7);
+    document.getElementById('expFrom').value = sixAgo;
+    document.getElementById('expTo').value   = thisMo;
+    _syncExportTabs();
+    document.getElementById('exportModal').classList.add('show');
+  }
+
+  function closeExportModal() {
+    document.getElementById('exportModal').classList.remove('show');
+  }
+
+  function setExportType(type) {
+    _exportType = type;
+    _syncExportTabs();
+  }
+
+  function _syncExportTabs() {
+    document.getElementById('expTabCob').classList.toggle('active', _exportType === 'cobranzas');
+    document.getElementById('expTabTx').classList.toggle('active',  _exportType === 'transacciones');
+    const fmt = document.getElementById('expFormat').value;
+    document.getElementById('expSubmitBtn').textContent = fmt === 'pdf' ? 'Exportar PDF' : 'Exportar CSV';
+  }
+
+  document.getElementById('expFormat').addEventListener('change', function() {
+    document.getElementById('expSubmitBtn').textContent = this.value === 'pdf' ? 'Exportar PDF' : 'Exportar CSV';
+  });
+
+  function submitExport(e) {
+    e.preventDefault();
+    const fd     = new FormData(e.target);
+    const from   = fd.get('fromPeriod');
+    const to     = fd.get('toPeriod');
+    const format = fd.get('format');
+    if (from > to) { showToast('El período "Desde" debe ser anterior a "Hasta"'); return; }
+    if (format === 'csv') {
+      if (_exportType === 'cobranzas')     _exportCobranzasCSV(from, to);
+      else                                  _exportTransaccionesCSV(from, to);
+    } else {
+      if (_exportType === 'cobranzas')     _exportCobranzasPDF(from, to);
+      else                                  _exportTransaccionesPDF(from, to);
+    }
+    closeExportModal();
+  }
+
+  function _downloadCSV(rows, filename) {
+    const BOM = '﻿'; // UTF-8 BOM para Excel
+    const content = BOM + rows.map(r =>
+      r.map(cell => {
+        const s = String(cell == null ? '' : cell);
+        return s.includes(',') || s.includes('"') || s.includes('\n')
+          ? '"' + s.replace(/"/g, '""') + '"'
+          : s;
+      }).join(',')
+    ).join('\r\n');
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function _monthLabel(period) {
+    const [yr, mo] = period.split('-');
+    const names = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    return names[parseInt(mo)-1] + ' ' + yr;
+  }
+
+  function _exportCobranzasCSV(from, to) {
+    const clientMap = {};
+    FINCO.allClients().forEach(c => { clientMap[c.id] = c; });
+    const items = _cobranzas
+      .filter(c => c.period >= from && c.period <= to && clientMap[c.clientId])
+      .sort((a, b) => a.period.localeCompare(b.period) || (clientMap[a.clientId]?.name || '').localeCompare(clientMap[b.clientId]?.name || ''));
+
+    const statusLabel = { pending:'Pendiente', overdue:'Vencida', paid:'Cobrada', partial:'Parcial', waived:'Eximida' };
+    const rows = [
+      ['Período','Cliente','Empresa','Servicio','Monto USD','Cobrado USD','Estado','Fecha cobro','Ref. factura','Notas']
+    ];
+    items.forEach(cob => {
+      const cl = clientMap[cob.clientId];
+      rows.push([
+        _monthLabel(cob.period),
+        cl.name,
+        cl.company || '',
+        cl.service || '',
+        cob.amount || 0,
+        cob.amountPaid || 0,
+        statusLabel[cob.status] || cob.status,
+        cob.paidAt || '',
+        cob.invoiceRef || '',
+        cob.notes || ''
+      ]);
+    });
+    // Totals row
+    const totalAmount = items.reduce((s, c) => s + (c.amount || 0), 0);
+    const totalPaid   = items.reduce((s, c) => s + (c.amountPaid || 0), 0);
+    rows.push(['TOTAL', '', '', '', totalAmount.toFixed(2), totalPaid.toFixed(2), '', '', '', '']);
+
+    _downloadCSV(rows, `finco-cobranzas-${from}-${to}.csv`);
+    showToast('CSV de cobranzas descargado');
+  }
+
+  function _exportTransaccionesCSV(from, to) {
+    const fromDate = from + '-01';
+    const toDate   = to   + '-31';
+    const items = (FINCO.allTransactions ? FINCO.allTransactions() : _transactions)
+      .filter(t => t.date >= fromDate && t.date <= toDate)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const rows = [
+      ['Fecha','Tipo','Categoría','Descripción','Monto','Moneda','Método','Cliente','Notas']
+    ];
+    items.forEach(t => {
+      rows.push([
+        t.date,
+        t.type === 'in' ? 'Ingreso' : 'Egreso',
+        t.category || '',
+        t.description || '',
+        t.amount || 0,
+        t.currency || 'USD',
+        t.method || '',
+        t.clientId || '',
+        t.notes || ''
+      ]);
+    });
+    const totalIn  = items.filter(t => t.type === 'in').reduce((s, t) => s + (t.amount || 0), 0);
+    const totalOut = items.filter(t => t.type === 'out').reduce((s, t) => s + (t.amount || 0), 0);
+    rows.push(['', '', '', 'TOTAL INGRESOS', totalIn.toFixed(2), 'USD', '', '', '']);
+    rows.push(['', '', '', 'TOTAL EGRESOS',  totalOut.toFixed(2), 'USD', '', '', '']);
+    rows.push(['', '', '', 'RESULTADO NETO', (totalIn - totalOut).toFixed(2), 'USD', '', '', '']);
+
+    _downloadCSV(rows, `finco-transacciones-${from}-${to}.csv`);
+    showToast('CSV de transacciones descargado');
+  }
+
+  function _exportCobranzasPDF(from, to) {
+    const clientMap = {};
+    FINCO.allClients().forEach(c => { clientMap[c.id] = c; });
+    const items = _cobranzas
+      .filter(c => c.period >= from && c.period <= to && clientMap[c.clientId])
+      .sort((a, b) => a.period.localeCompare(b.period) || (clientMap[a.clientId]?.name || '').localeCompare(clientMap[b.clientId]?.name || ''));
+
+    const totalEsperado = items.reduce((s, c) => s + (c.amount || 0), 0);
+    const totalCobrado  = items.reduce((s, c) => s + (c.amountPaid || 0), 0);
+    const pendientes    = items.filter(c => c.status === 'pending' || c.status === 'overdue').length;
+
+    const statusMap = { pending:'Pendiente', overdue:'Vencida', paid:'Cobrada', partial:'Parcial', waived:'Eximida' };
+    const badgeClass = s => ({ pending:'badge-pending', overdue:'badge-overdue', paid:'badge-paid', partial:'badge-partial' }[s] || '');
+
+    // Group by period
+    const byPeriod = {};
+    items.forEach(c => { if (!byPeriod[c.period]) byPeriod[c.period] = []; byPeriod[c.period].push(c); });
+    const periods = Object.keys(byPeriod).sort();
+
+    const sections = periods.map(p => {
+      const group = byPeriod[p];
+      const pTotal   = group.reduce((s, c) => s + (c.amount || 0), 0);
+      const pCobrado = group.reduce((s, c) => s + (c.amountPaid || 0), 0);
+      const rows = group.map(cob => {
+        const cl = clientMap[cob.clientId];
+        return `<tr>
+          <td>${escapeHtml(cl.name)}</td>
+          <td>${escapeHtml(cl.company || '')}</td>
+          <td>${cl.service || ''}</td>
+          <td style="text-align:right;">$${(cob.amount||0).toLocaleString('es-AR',{minimumFractionDigits:2})}</td>
+          <td style="text-align:right;">$${(cob.amountPaid||0).toLocaleString('es-AR',{minimumFractionDigits:2})}</td>
+          <td class="${badgeClass(cob.status)}">${statusMap[cob.status]||cob.status}</td>
+          <td>${cob.paidAt || ''}</td>
+          <td>${escapeHtml(cob.invoiceRef||'')}</td>
+        </tr>`;
+      }).join('');
+      return `<div class="pr-section-title">${_monthLabel(p)}</div>
+        <table>
+          <thead><tr><th>Cliente</th><th>Empresa</th><th>Svc</th><th>Esperado</th><th>Cobrado</th><th>Estado</th><th>Fecha cobro</th><th>Referencia</th></tr></thead>
+          <tbody>${rows}
+          <tr class="pr-total-row"><td colspan="3">Subtotal</td><td style="text-align:right;">$${pTotal.toLocaleString('es-AR',{minimumFractionDigits:2})}</td><td style="text-align:right;">$${pCobrado.toLocaleString('es-AR',{minimumFractionDigits:2})}</td><td colspan="3"></td></tr>
+          </tbody>
+        </table>`;
+    }).join('');
+
+    document.getElementById('print-area').innerHTML = `
+      <div class="pr-header">
+        <div class="pr-title">FINCO · Reporte de Cobranzas</div>
+        <div class="pr-sub">Período: ${_monthLabel(from)} — ${_monthLabel(to)} · Generado el ${new Date().toLocaleDateString('es-AR')}</div>
+      </div>
+      <div class="pr-kpis">
+        <div class="pr-kpi"><div class="pr-kpi-label">Total esperado</div><div class="pr-kpi-val">$${totalEsperado.toLocaleString('es-AR',{minimumFractionDigits:2})}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Total cobrado</div><div class="pr-kpi-val">$${totalCobrado.toLocaleString('es-AR',{minimumFractionDigits:2})}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Pendientes</div><div class="pr-kpi-val">${pendientes}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Clientes</div><div class="pr-kpi-val">${new Set(items.map(c=>c.clientId)).size}</div></div>
+      </div>
+      ${sections}
+      <div class="pr-footer"><span>FINCO · Sistema de Gestión Interna</span><span>Confidencial</span></div>`;
+    window.print();
+  }
+
+  function _exportTransaccionesPDF(from, to) {
+    const fromDate = from + '-01';
+    const toDate   = to   + '-31';
+    const items = (FINCO.allTransactions ? FINCO.allTransactions() : _transactions)
+      .filter(t => t.date >= fromDate && t.date <= toDate)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const totalIn  = items.filter(t => t.type === 'in').reduce((s, t) => s + (t.amount || 0), 0);
+    const totalOut = items.filter(t => t.type === 'out').reduce((s, t) => s + (t.amount || 0), 0);
+    const neto     = totalIn - totalOut;
+
+    const rows = items.map(t => `<tr>
+      <td>${t.date}</td>
+      <td>${t.type === 'in' ? 'Ingreso' : 'Egreso'}</td>
+      <td>${escapeHtml(t.category||'')}</td>
+      <td>${escapeHtml(t.description||'')}</td>
+      <td style="text-align:right;${t.type==='in'?'':'color:#8a2d00;'}">
+        ${t.type==='in'?'+':'-'}$${(t.amount||0).toLocaleString('es-AR',{minimumFractionDigits:2})} ${t.currency||'USD'}
+      </td>
+      <td>${escapeHtml(t.method||'')}</td>
+    </tr>`).join('');
+
+    document.getElementById('print-area').innerHTML = `
+      <div class="pr-header">
+        <div class="pr-title">FINCO · P&L — Transacciones</div>
+        <div class="pr-sub">Período: ${_monthLabel(from)} — ${_monthLabel(to)} · Generado el ${new Date().toLocaleDateString('es-AR')}</div>
+      </div>
+      <div class="pr-kpis">
+        <div class="pr-kpi"><div class="pr-kpi-label">Ingresos</div><div class="pr-kpi-val">$${totalIn.toLocaleString('es-AR',{minimumFractionDigits:2})}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Egresos</div><div class="pr-kpi-val">$${totalOut.toLocaleString('es-AR',{minimumFractionDigits:2})}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Resultado neto</div><div class="pr-kpi-val">${neto>=0?'+':''}$${neto.toLocaleString('es-AR',{minimumFractionDigits:2})}</div></div>
+        <div class="pr-kpi"><div class="pr-kpi-label">Movimientos</div><div class="pr-kpi-val">${items.length}</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Descripción</th><th>Monto</th><th>Método</th></tr></thead>
+        <tbody>${rows}
+        <tr class="pr-total-row"><td colspan="4">Resultado neto</td><td style="text-align:right;">${neto>=0?'+':''}$${neto.toLocaleString('es-AR',{minimumFractionDigits:2})} USD</td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="pr-footer"><span>FINCO · Sistema de Gestión Interna</span><span>Confidencial</span></div>`;
+    window.print();
+  }
+
   // ============ INIT ============
   setTimeout(initCharts, 150);
 </script>
+
+<!-- ============ MODAL: EXPORTAR ============ -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeExportModal()">×</button>
+    <div class="modal-form-head">
+      <div class="page-eyebrow">FINCO · Exportar datos</div>
+      <h2>Exportar <em>reporte</em></h2>
+      <p class="modal-form-sub">Elegí qué exportar, el período y el formato.</p>
+    </div>
+    <form class="modal-form" onsubmit="submitExport(event); return false;">
+
+      <!-- Tipo de datos -->
+      <div class="form-row">
+        <label class="form-label">Datos a exportar</label>
+        <div class="export-type-tabs">
+          <button type="button" class="export-type-tab active" id="expTabCob" onclick="setExportType('cobranzas')">Cobranzas</button>
+          <button type="button" class="export-type-tab" id="expTabTx" onclick="setExportType('transacciones')">Transacciones</button>
+        </div>
+      </div>
+
+      <!-- Período -->
+      <div class="form-row-2">
+        <div class="form-row">
+          <label class="form-label" id="expFromLabel">Desde (mes)</label>
+          <input type="month" name="fromPeriod" id="expFrom" class="form-input" required>
+        </div>
+        <div class="form-row">
+          <label class="form-label" id="expToLabel">Hasta (mes)</label>
+          <input type="month" name="toPeriod" id="expTo" class="form-input" required>
+        </div>
+      </div>
+
+      <!-- Formato -->
+      <div class="form-row">
+        <label class="form-label">Formato</label>
+        <select name="format" id="expFormat" class="form-input">
+          <option value="csv">CSV (Excel / Google Sheets)</option>
+          <option value="pdf">PDF (imprimir / guardar)</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" onclick="closeExportModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="expSubmitBtn">Exportar CSV</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Área de impresión (visible solo al imprimir) -->
+<div id="print-area"></div>
 </body>
 </html>
