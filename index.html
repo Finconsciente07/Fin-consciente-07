@@ -1842,10 +1842,13 @@
     <!-- ===================== DASHBOARD ===================== -->
     <div class="page active" id="page-dashboard">
       <div class="page-header">
-        <div class="page-eyebrow">Vista General · Mayo 2026</div>
+        <div class="page-eyebrow" id="dashEyebrow">Vista General</div>
         <h1 class="page-title">Buen día, <em>Juan Cruz</em>.</h1>
-        <p class="page-sub">Hoy hay 3 reuniones de Growth Partner agendadas y 2 cobros pendientes para revisar.</p>
+        <p class="page-sub" id="dashSub">Cargando…</p>
       </div>
+
+      <!-- Alertas dinámicas -->
+      <div id="dashAlerts" style="display:none;margin-bottom:24px;"></div>
 
       <!-- KPIs principales -->
       <div class="kpi-grid">
@@ -2401,12 +2404,20 @@
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="tabs" id="cobTabs" style="margin-bottom:28px;">
-        <span class="tab active" onclick="switchCobTab('pendiente',this)">Pendientes</span>
-        <span class="tab" onclick="switchCobTab('overdue',this)">Vencidas</span>
-        <span class="tab" onclick="switchCobTab('paid',this)">Cobradas</span>
-        <span class="tab" onclick="switchCobTab('all',this)">Todas</span>
+      <!-- Filtros: estado + cliente -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px;">
+        <div class="tabs" id="cobTabs" style="margin-bottom:0;">
+          <span class="tab active" onclick="switchCobTab('pendiente',this)">Pendientes</span>
+          <span class="tab" onclick="switchCobTab('overdue',this)">Vencidas</span>
+          <span class="tab" onclick="switchCobTab('paid',this)">Cobradas</span>
+          <span class="tab" onclick="switchCobTab('all',this)">Todas</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--text-muted);letter-spacing:.5px;">Cliente:</span>
+          <select id="cobClientFilter" onchange="setCobClientFilter(this.value)" style="background:var(--card-bg);border:1px solid var(--line-bright);color:var(--cream);border-radius:4px;padding:5px 10px;font-size:12px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer;">
+            <option value="">Todos</option>
+          </select>
+        </div>
       </div>
 
       <!-- Lista de cobros -->
@@ -4910,6 +4921,8 @@
     // Dashboard — feeds dinámicos
     renderDashActivity();
     renderDashTodayMeetings();
+    renderDashAlerts();
+    _updateDashHeader();
   }
 
   // ── Dashboard: actividad reciente + reuniones de hoy ─────────
@@ -5232,6 +5245,85 @@
     }).length;
     const sub = el.closest('.card')?.querySelector('.card-sub');
     if (sub) sub.textContent = overdue > 0 ? `${overdue} vencido${overdue !== 1 ? 's' : ''}` : 'Por vencer este mes';
+  }
+
+  function _updateDashHeader() {
+    const now = new Date();
+    const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    const eyebrow = document.getElementById('dashEyebrow');
+    const sub     = document.getElementById('dashSub');
+    if (eyebrow) eyebrow.textContent = `Vista General · ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+    const todayStr = now.toISOString().slice(0,10);
+    const reunionesHoy = FINCO.allEvents().filter(ev => (ev.date||'').slice(0,10) === todayStr).length;
+    const thisMo = now.toISOString().slice(0,7);
+    const cobPendientes = _cobranzas.filter(c => (c.status === 'pending' || c.status === 'overdue') && c.period === thisMo).length;
+
+    let partes = [];
+    if (reunionesHoy > 0) partes.push(`${reunionesHoy} reunión${reunionesHoy !== 1 ? 'es' : ''} hoy`);
+    else partes.push('Sin reuniones hoy');
+    if (cobPendientes > 0) partes.push(`${cobPendientes} cobro${cobPendientes !== 1 ? 's' : ''} pendiente${cobPendientes !== 1 ? 's' : ''} este mes`);
+    if (sub) sub.textContent = partes.join(' · ') + '.';
+  }
+
+  function renderDashAlerts() {
+    const el = document.getElementById('dashAlerts');
+    if (!el) return;
+    const now     = new Date();
+    const todayStr = now.toISOString().slice(0,10);
+    const alerts  = [];
+
+    // Cobranzas vencidas
+    const vencidas = _cobranzas.filter(c => c.status === 'overdue');
+    if (vencidas.length) {
+      const clientMap = {};
+      FINCO.allClients().forEach(c => { clientMap[c.id] = c; });
+      const nombres = vencidas.slice(0,3).map(c => clientMap[c.clientId]?.name || '?').join(', ');
+      alerts.push({
+        color: 'var(--danger)', icon: '!',
+        text: `${vencidas.length} cobro${vencidas.length!==1?'s':''} vencido${vencidas.length!==1?'s':''}: ${nombres}${vencidas.length > 3 ? ` y ${vencidas.length-3} más` : ''}`,
+        action: `onclick="goToPage('cobranzas')"`, label: 'Ver Cobranzas'
+      });
+    }
+
+    // Objetivos próximos a vencer (≤7 días)
+    const objUrgentes = _fincoObjetivos.filter(o => {
+      if (o.archived || !o.deadline) return false;
+      const dl = new Date(o.deadline + 'T12:00:00');
+      const days = Math.ceil((dl - now) / 86400000);
+      return days >= 0 && days <= 7;
+    });
+    if (objUrgentes.length) {
+      const titulos = objUrgentes.slice(0,2).map(o => `"${o.title}"`).join(', ');
+      alerts.push({
+        color: 'var(--warning)', icon: '◎',
+        text: `Objetivo${objUrgentes.length!==1?'s':''} por vencer en ≤7 días: ${titulos}`,
+        action: `onclick="goToPage('resultados')"`, label: 'Ver Objetivos'
+      });
+    }
+
+    // Objetivos vencidos (deadline pasado, no archivados)
+    const objVencidos = _fincoObjetivos.filter(o => {
+      if (o.archived || !o.deadline) return false;
+      return new Date(o.deadline + 'T12:00:00') < now;
+    });
+    if (objVencidos.length) {
+      alerts.push({
+        color: 'var(--danger)', icon: '○',
+        text: `${objVencidos.length} objetivo${objVencidos.length!==1?'s':''} con plazo vencido sin archivar`,
+        action: `onclick="goToPage('resultados')"`, label: 'Ver Objetivos'
+      });
+    }
+
+    if (!alerts.length) { el.style.display = 'none'; return; }
+    el.style.display = 'flex';
+    el.style.cssText = 'display:flex;flex-direction:column;gap:8px;margin-bottom:24px;';
+    el.innerHTML = alerts.map(a => `
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:6px;border:1px solid ${a.color};background:${a.color}18;">
+        <span style="color:${a.color};font-size:16px;font-weight:bold;flex-shrink:0;">${a.icon}</span>
+        <span style="flex:1;font-size:13px;color:var(--cream);">${a.text}</span>
+        <button ${a.action} style="background:none;border:1px solid ${a.color};color:${a.color};font-size:10px;padding:4px 10px;border-radius:3px;cursor:pointer;white-space:nowrap;letter-spacing:.5px;">${a.label}</button>
+      </div>`).join('');
   }
 
   let currentClientFilter = 'active';
@@ -6867,7 +6959,26 @@
   } catch(e) {}
 
   let _cobFilter = 'pendiente';
+  let _cobClientFilter = '';
   let _cobMarkId = null;
+
+  function setCobClientFilter(val) {
+    _cobClientFilter = val;
+    renderCobranzas();
+  }
+
+  function _refreshCobClientDropdown() {
+    const sel = document.getElementById('cobClientFilter');
+    if (!sel) return;
+    const clientMap = {};
+    FINCO.allClients().forEach(c => { clientMap[c.id] = c; });
+    const clientIds = [...new Set(_cobranzas.map(c => c.clientId))].filter(id => clientMap[id]);
+    clientIds.sort((a, b) => (clientMap[a].name || '').localeCompare(clientMap[b].name || ''));
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Todos</option>' +
+      clientIds.map(id => `<option value="${id}"${id === prev ? ' selected' : ''}>${escapeHtml(clientMap[id].name)}</option>`).join('');
+    if (!clientIds.includes(prev)) _cobClientFilter = '';
+  }
 
   function _generateCobranzas() {
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -6970,10 +7081,12 @@
     st('cobKpiVencido',      _cobFmt(vencidoTotal));
 
     // ── Filter ────────────────────────────────────────
+    _refreshCobClientDropdown();
     let items = [..._cobranzas];
     if (_cobFilter === 'pendiente') items = items.filter(c => c.status === 'pending' || c.status === 'overdue');
     else if (_cobFilter === 'overdue') items = items.filter(c => c.status === 'overdue');
     else if (_cobFilter === 'paid')    items = items.filter(c => c.status === 'paid' || c.status === 'partial' || c.status === 'waived');
+    if (_cobClientFilter) items = items.filter(c => c.clientId === _cobClientFilter);
 
     // Sort: most recent period first, then client name
     items.sort((a, b) => b.period.localeCompare(a.period) || (a._clientName || '').localeCompare(b._clientName || ''));
